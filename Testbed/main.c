@@ -4,7 +4,7 @@
 #include <solis.h>
 
 const char* source =
-"5 <= 5\n";
+"\"Hello World\" == \"Hello World\" \n";
 
 int main(void) {
 

@@ -35,6 +35,8 @@ static inline void* solisReallocate(void* ptr, size_t oldSize, size_t newSize)
 
 }
 
+#define SOLIS_ALLOCATE(type, count) \
+    (type*)solisReallocate(NULL, 0, sizeof(type) * (count))
 
 
 #ifndef SOLIS_ASSERT

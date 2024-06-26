@@ -224,7 +224,7 @@ InterpretResult solisInterpret(VM* vm, const char* source)
 	Chunk chunk;
 	solisInitChunk(&chunk);
 
-	if (!solisCompile(source, &chunk))
+	if (!solisCompile(vm, source, &chunk))
 	{
 		solisFreeChunk(&chunk);
 

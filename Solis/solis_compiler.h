@@ -9,6 +9,6 @@
 
 typedef struct sCompiler Compiler;
 
-bool solisCompile(const char* source, Chunk* chunk);
+bool solisCompile(VM* vm, const char* source, Chunk* chunk);
 
 #endif // SOLIS_COMPILER_H
