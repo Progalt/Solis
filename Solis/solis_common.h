@@ -11,23 +11,23 @@
 typedef struct VM VM;
 typedef struct Chunk Chunk;
 
-#ifndef SOLIS_REALLOC
-#define SOLIS_REALLOC(ptr, newSize) realloc(ptr, newSize)
+#ifndef SOLIS_REALLOC_FUNC
+#define SOLIS_REALLOC_FUNC(ptr, newSize) realloc(ptr, newSize)
 #endif
 
-#ifndef SOLIS_FREE
-#define SOLIS_FREE(ptr) free(ptr)
+#ifndef SOLIS_FREE_FUNC
+#define SOLIS_FREE_FUNC(ptr) free(ptr)
 #endif
 
 static inline void* solisReallocate(void* ptr, size_t oldSize, size_t newSize)
 {
 
     if (newSize == 0) {
-        SOLIS_FREE(ptr);
+        SOLIS_FREE_FUNC(ptr);
         return NULL;
     }
 
-    void* result = SOLIS_REALLOC(ptr, newSize);
+    void* result = SOLIS_REALLOC_FUNC(ptr, newSize);
 
     if (result == NULL) exit(1);
 
@@ -35,9 +35,13 @@ static inline void* solisReallocate(void* ptr, size_t oldSize, size_t newSize)
 
 }
 
-#define SOLIS_ALLOCATE(type, count) \
-    (type*)solisReallocate(NULL, 0, sizeof(type) * (count))
+#define SOLIS_ALLOCATE( type, count) \
+    (type*)solisReallocate( NULL, 0, sizeof(type) * (count))
 
+#define SOLIS_FREE(type, ptr) solisReallocate(ptr, sizeof(type), 0)
+
+#define SOLIS_FREE_ARRAY(type, pointer, oldCount) \
+    solisReallocate(pointer, sizeof(type) * (oldCount), 0)
 
 #ifndef SOLIS_ASSERT
 #define SOLIS_ASSERT(x) assert(x)

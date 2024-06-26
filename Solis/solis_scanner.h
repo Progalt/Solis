@@ -117,7 +117,7 @@ TokenList solisScanSource(const char* source);
 */
 static inline void solisFreeTokenList(TokenList* list)
 {
-	SOLIS_FREE(list->tokens);
+	SOLIS_FREE_FUNC(list->tokens);
 	list->count = 0;
 }
 

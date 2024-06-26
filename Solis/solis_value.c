@@ -5,6 +5,8 @@
 #include "solis_vm.h"
 #include "solis_common.h"
 
+#include "solis_hashtable.h"
+
 #include <string.h>
 
 Object* solisAllocateObject(VM* vm, size_t size, ObjectType type)
@@ -20,10 +22,23 @@ Object* solisAllocateObject(VM* vm, size_t size, ObjectType type)
 	return object;
 }
 
-static ObjString* allocateString(VM* vm, char* chars, int length) {
+void solisFreeObject(VM* vm, Object* object)
+{
+	switch (object->type) {
+	case OBJ_STRING: {
+		ObjString* string = (ObjString*)object;
+		SOLIS_FREE_ARRAY(char, string->chars, string->length + 1);
+		SOLIS_FREE(ObjString, object);
+		break;
+	}
+	}
+}
+
+static ObjString* allocateString(VM* vm, char* chars, int length, uint32_t hash) {
 	ObjString* string = ALLOCATE_OBJ(vm, ObjString, OBJ_STRING);
 	string->length = length;
 	string->chars = chars;
+	string->hash = hash;
 	return string;
 }
 
@@ -33,9 +48,27 @@ ObjString* solisCopyString(VM* vm, const char* chars, int length)
 	char* heapChars = SOLIS_ALLOCATE(char, length + 1);
 	memcpy(heapChars, chars, length);
 	heapChars[length] = '\0';
-	return allocateString(vm, heapChars, length);
+
+	uint32_t hash = solisHashString(chars, length);
+	return allocateString(vm, heapChars, length, hash);
 }
 
+ObjString* solisTakeString(VM* vm, char* chars, int length)
+{
+	uint32_t hash = solisHashString(chars, length);
+	return allocateString(vm, chars, length, hash);
+}
+
+ObjString* solisConcatenateStrings(VM* vm, ObjString* a, ObjString* b)
+{
+	int length = a->length + b->length;
+	char* chars = SOLIS_ALLOCATE(char, length + 1);
+	memcpy(chars, a->chars, a->length);
+	memcpy(chars + a->length, b->chars, b->length);
+	chars[length] = '\0';
+
+	return solisTakeString(vm, chars, length);
+}
 
 
 bool solisValuesEqual(Value a, Value b)

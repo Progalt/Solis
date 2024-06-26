@@ -11,11 +11,23 @@
 void solisInitVM(VM* vm)
 {
 	vm->sp = vm->stack;
+	vm->objects = NULL;
+}
+
+
+static void freeObjects(VM* vm)
+{
+	Object* object = vm->objects;
+	while (object != NULL) {
+		Object* next = object->next;
+		solisFreeObject(vm, object);
+		object = next;
+	}
 }
 
 void solisFreeVM(VM* vm)
 {
-
+	freeObjects(vm);
 }
 
 
@@ -150,6 +162,13 @@ do {																		\
 		// Check if the values are numeric values
 		if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
 			val->as.number = val->as.number + a.as.number;
+
+		if (SOLIS_IS_STRING(*val) && SOLIS_IS_STRING(a))
+		{
+			ObjString* bstr = SOLIS_AS_STRING(*val);
+			ObjString* astr = SOLIS_AS_STRING(a);
+			*val = SOLIS_OBJECT_VALUE(solisConcatenateStrings(vm, bstr, astr));
+		}
 
 		DISPATCH();
 	}

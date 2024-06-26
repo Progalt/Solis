@@ -46,6 +46,8 @@ typedef enum
 */
 Object* solisAllocateObject(VM* vm, size_t size, ObjectType type);
 
+void solisFreeObject(VM* vm, Object* object);
+
 #define ALLOCATE_OBJ(vm, type, objectType) \
     (type*)solisAllocateObject(vm, sizeof(type), objectType)
 
@@ -85,6 +87,10 @@ struct ObjString
 
 	int length;
 	char* chars;
+
+	// We store the hash in the string
+	// TODO: Could this be moved out of string since other objects might want hashing
+	uint32_t hash;
 };
 
 #define SOLIS_IS_STRING(value)	solisIsObjType(value, OBJ_STRING)
@@ -108,6 +114,15 @@ static inline bool solisIsObjType(Value value, ObjectType type)
 */
 ObjString* solisCopyString(VM* vm, const char* chars, int length);
 
+/*
+	Takes owner ship of the supplied values and combines them into a String object
+*/
+ObjString* solisTakeString(VM* vm, char* chars, int length);
+
+/*
+	Concatenates two strings into a new string object
+*/
+ObjString* solisConcatenateStrings(VM* vm, ObjString* a, ObjString* b);
 
 /*
 	Checks if the values are strictly the same. Is true if both objects pointers are equal not their contents.
