@@ -1,8 +1,6 @@
 
-var x = 10;
+var x = 0;
 
-if x == 10 and true then
-	x = 20;
-else
-	x = 100;
+while x < 2 do
+	x = x + 1;
 end

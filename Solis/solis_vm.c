@@ -277,6 +277,13 @@ do {																		\
 
 		DISPATCH();
 	}
+	CASE_CODE(LOOP) :
+	{
+		uint16_t offset = READ_SHORT();
+		ip -= offset;
+
+		DISPATCH();
+	}
 	CASE_CODE(RETURN) :
 
 		Value result = POP();

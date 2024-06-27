@@ -58,6 +58,7 @@ static void variableDeclaration();
 static void constDeclaration();
 
 static void ifStatement();
+static void whileStatement();
 
 static void and_(bool canAssign);
 static void or_(bool canAssign);
@@ -423,6 +424,20 @@ static void declaration()
 	{
 		ifStatement();
 	}
+	else if (match(TOKEN_WHILE))
+	{
+		whileStatement();
+	}
+	else if (match(TOKEN_END))
+	{
+
+		if (current->scopeDepth - 1 <= -1)
+		{
+			error("Mismatched 'end' statements.");
+		}
+
+		endScope();
+	}
 	else
 	{
 		statement();
@@ -672,6 +687,16 @@ static void patchJump(int offset)
 	currentChunk()->code[offset + 1] = jump & 0xff;
 }
 
+static void emitLoop(int loopStart) {
+	emitByte(OP_LOOP);
+
+	int offset = currentChunk()->count - loopStart + 2;
+	if (offset > UINT16_MAX) error("Loop body too large.");
+
+	emitByte((offset >> 8) & 0xff);
+	emitByte(offset & 0xff);
+}
+
 static void ifStatement()
 {
 	expression();
@@ -712,6 +737,25 @@ static void ifStatement()
 	}
 
 	patchJump(elseJump);
+}
+
+static void whileStatement()
+{
+	int loopStart = currentChunk()->count;
+
+	expression();
+
+	consume(TOKEN_DO, "Expected 'do' after while expression.");
+	beginScope();
+
+	int exitJump = emitJump(OP_JUMP_IF_FALSE);
+	emitByte(OP_POP);
+
+	statement();
+	emitLoop(loopStart);
+
+	patchJump(exitJump);
+	emitByte(OP_POP);
 }
 
 static void and_(bool canAssign)
