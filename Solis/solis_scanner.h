@@ -50,6 +50,7 @@ typedef enum TokenType
 	TOKEN_DO,
 	TOKEN_THEN,
 	TOKEN_END, 
+	TOKEN_BREAK, 
 
 	// Control flow statements
 	TOKEN_FOR,

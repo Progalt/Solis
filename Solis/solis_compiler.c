@@ -13,6 +13,11 @@
 
 // Forward declare some functions
 
+SOLIS_DECLARE_BUFFER(Int, int);
+
+
+SOLIS_DEFINE_BUFFER(Int, int);
+
 
 
 typedef enum {
@@ -59,6 +64,7 @@ static void constDeclaration();
 
 static void ifStatement();
 static void whileStatement();
+static void breakStatement();
 
 static void and_(bool canAssign);
 static void or_(bool canAssign);
@@ -111,6 +117,7 @@ ParseRule rules[] = {
   [TOKEN_VAR] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_WHILE] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ERROR] = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_BREAK] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_EOF] = {NULL,     NULL,   PREC_NONE},
 };
 
@@ -234,6 +241,10 @@ struct sCompiler
 
 	Local locals[UINT8_COUNT];
 	int localCount;
+
+	// We store a list of current break statements
+	IntBuffer breakStatements;
+	bool withinLoop;
 };
 
 Compiler* current = NULL;
@@ -272,6 +283,9 @@ static void initCompiler(VM* vm, Chunk* chunk, Compiler* compiler)
 
 	compiler->vm = vm;
 	compiler->globalCount = 0;
+	compiler->withinLoop = false;
+
+	solisIntBufferInit(&compiler->breakStatements);
 
 	solisInitHashTable(&compiler->globalTable);
 
@@ -284,6 +298,7 @@ static void endCompiler(Compiler* compiler)
 	emitReturn();
 
 	solisFreeHashTable(&compiler->globalTable);
+	solisIntBufferClear(&compiler->breakStatements);
 }
 
 static void synchronize() {
@@ -414,30 +429,6 @@ static void declaration()
 	{
 		variableDeclaration();
 	}
-	else if (match(TOKEN_DO))
-	{
-		beginScope();
-		block();
-		endScope();
-	}
-	else if (match(TOKEN_IF))
-	{
-		ifStatement();
-	}
-	else if (match(TOKEN_WHILE))
-	{
-		whileStatement();
-	}
-	else if (match(TOKEN_END))
-	{
-
-		if (current->scopeDepth - 1 <= -1)
-		{
-			error("Mismatched 'end' statements.");
-		}
-
-		endScope();
-	}
 	else
 	{
 		statement();
@@ -449,7 +440,37 @@ static void declaration()
 
 static void statement()
 {
-	expressionStatement();
+	if (match(TOKEN_DO))
+	{
+		beginScope();
+		block();
+		endScope();
+		}
+	else if (match(TOKEN_IF))
+	{
+		ifStatement();
+	}
+	else if (match(TOKEN_WHILE))
+	{
+		whileStatement();
+	}
+	else if (match(TOKEN_BREAK))
+	{
+		breakStatement();
+	}
+	else if (match(TOKEN_END))
+	{
+		if (current->scopeDepth - 1 <= -1)
+		{
+			error("Mismatched 'end' statements.");
+		}
+
+		endScope();
+	}
+	else
+	{
+		expressionStatement();
+	}
 }
 
 static void expressionStatement()
@@ -711,7 +732,11 @@ static void ifStatement()
 
 	emitByte(OP_POP);
 
-	statement();
+	// We can't do block here since we do all the consuming manually 
+	while (!check(TOKEN_END) && !check(TOKEN_EOF) && !check(TOKEN_ELSE))
+	{
+		declaration();
+	}
 
 	int elseJump = emitJump(OP_JUMP);
 
@@ -724,7 +749,10 @@ static void ifStatement()
 	{
 		beginScope();
 
-		statement();
+		while (!check(TOKEN_END) && !check(TOKEN_EOF))
+		{
+			declaration();
+		}
 
 		consume(TOKEN_END, "Expected 'end' after else block.");
 
@@ -746,16 +774,51 @@ static void whileStatement()
 	expression();
 
 	consume(TOKEN_DO, "Expected 'do' after while expression.");
+
+	current->withinLoop = true;
 	beginScope();
 
 	int exitJump = emitJump(OP_JUMP_IF_FALSE);
 	emitByte(OP_POP);
 
-	statement();
+	block();
+
+	endScope();
+
 	emitLoop(loopStart);
 
 	patchJump(exitJump);
+
 	emitByte(OP_POP);
+
+	for (int i = 0; i < current->breakStatements.count; i++)
+	{
+		// Patch all break the jumps
+		int offset = current->breakStatements.data[i];
+		patchJump(offset);
+	}
+
+	// Clear the buffer for the next loop
+	solisIntBufferClear(&current->breakStatements);
+
+	
+	current->withinLoop = false;
+	
+}
+
+static void breakStatement()
+{
+	/*if (!current->withinLoop)
+	{
+		error("Cannot 'break' when not within a loop.");
+	}*/
+
+	consume(TOKEN_SEMICOLON, "Expected ';' after break statement.");
+
+	int exitJump = emitJump(OP_JUMP);
+
+	// Write it into the int buffer
+	solisIntBufferWrite(&current->breakStatements, exitJump);
 }
 
 static void and_(bool canAssign)

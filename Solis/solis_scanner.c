@@ -40,6 +40,7 @@ static Keyword keywords[] =
 	{ "do", 2, TOKEN_DO },
 	{ "then", 4, TOKEN_THEN },
 	{ "end", 3, TOKEN_END },
+	{ "break", 5, TOKEN_BREAK },
 
 	{ "in", 2, TOKEN_IN },
 	{ "and", 3, TOKEN_AND },
@@ -116,7 +117,7 @@ static char peek() {
 static void skipWhitespace() {
 	for (;;) {
 		char c = peek();
-		switch (c) {
+		/*switch (c) {
 		case ' ':
 		case '\r':
 		case '\t':
@@ -126,6 +127,20 @@ static void skipWhitespace() {
 			scanner.line++;
 			advance();
 		default:
+			return;
+		}*/
+
+		if (c == ' ' || c == '\r' || c == '\t')
+		{
+			advance();
+		}
+		else if (c == '\n')
+		{
+			scanner.line++;
+			advance();
+		}
+		else
+		{
 			return;
 		}
 	}
@@ -154,12 +169,10 @@ static Token string()
 static Token number()
 {
 	while (isDigit(peek())) advance();
-	bool decimal = false;
 
 	if (peek() == '.' && isDigit(peekNext()))
 	{
 		advance();
-		decimal = true;
 		while (isDigit(peek())) advance();
 	}
 	
@@ -197,7 +210,6 @@ void solisInitScanner(const char* sourceCode)
 
 Token solisScanToken()
 {
-	skipWhitespace();
 	skipWhitespace();
 
 	scanner.start = scanner.current;
