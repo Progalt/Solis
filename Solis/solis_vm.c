@@ -12,6 +12,8 @@ void solisInitVM(VM* vm)
 {
 	vm->sp = vm->stack;
 	vm->objects = NULL;
+
+	solisInitHashTable(&vm->strings);
 }
 
 
@@ -23,11 +25,14 @@ static void freeObjects(VM* vm)
 		solisFreeObject(vm, object);
 		object = next;
 	}
+
 }
 
 void solisFreeVM(VM* vm)
 {
+	solisFreeHashTable(&vm->strings);
 	freeObjects(vm);
+	
 }
 
 

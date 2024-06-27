@@ -39,23 +39,47 @@ static ObjString* allocateString(VM* vm, char* chars, int length, uint32_t hash)
 	string->length = length;
 	string->chars = chars;
 	string->hash = hash;
+
+	// Store it in a hash table
+	solisHashTableInsert(&vm->strings, string, SOLIS_NULL_VALUE());
+
 	return string;
 }
 
 ObjString* solisCopyString(VM* vm, const char* chars, int length)
 {
+	uint32_t hash = solisHashString(chars, length);
+	
+	// See if the string is interned
+	ObjString* interned = solisHashTableFindString(&vm->strings, chars, length, hash);
+
+	if (interned != NULL)
+	{
+		return interned;
+	}
+
 	// + 1 so we can add the null terminator
 	char* heapChars = SOLIS_ALLOCATE(char, length + 1);
 	memcpy(heapChars, chars, length);
 	heapChars[length] = '\0';
 
-	uint32_t hash = solisHashString(chars, length);
+	
 	return allocateString(vm, heapChars, length, hash);
 }
 
 ObjString* solisTakeString(VM* vm, char* chars, int length)
 {
 	uint32_t hash = solisHashString(chars, length);
+
+	// See if the string is interned 
+	ObjString* interned = solisHashTableFindString(&vm->strings, chars, length, hash);
+
+	if (interned != NULL) 
+	{
+		SOLIS_FREE_ARRAY(char, chars, length + 1);
+		return interned;
+	}
+
 	return allocateString(vm, chars, length, hash);
 }
 

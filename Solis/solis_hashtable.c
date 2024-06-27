@@ -1,6 +1,7 @@
 
 #include "solis_hashtable.h"
 #include "solis_common.h"
+#include <string.h>
 
 static TableEntry* findEntry(TableEntry* entries, int capacity, ObjString* key)
 {
@@ -8,10 +9,22 @@ static TableEntry* findEntry(TableEntry* entries, int capacity, ObjString* key)
 	// Since its faster
 	// Because % and / are slow on CPUs... well not really but slower than this 
 	uint32_t index = key->hash & (capacity - 1);
+	TableEntry* tombstone = NULL;
 
 	for (;;) {
 		TableEntry* entry = &entries[index];
-		if (entry->key == key || entry->key == NULL) {
+		if (entry->key == NULL) {
+			if (SOLIS_IS_NULL(entry->value)) {
+				// Empty entry.
+				return tombstone != NULL ? tombstone : entry;
+			}
+			else {
+				// We found a tombstone.
+				if (tombstone == NULL) tombstone = entry;
+			}
+		}
+		else if (entry->key == key) {
+			// We found the key.
 			return entry;
 		}
 
@@ -27,6 +40,7 @@ static void adjustCapacity(HashTable* table, int capacity) {
 		entries[i].value = SOLIS_NULL_VALUE();
 	}
 
+	table->count = 0;
 	for (int i = 0; i < table->capacity; i++) {
 		TableEntry* entry = &table->entries[i];
 		if (entry->key == NULL) continue;
@@ -34,6 +48,7 @@ static void adjustCapacity(HashTable* table, int capacity) {
 		TableEntry* dest = findEntry(entries, capacity, entry->key);
 		dest->key = entry->key;
 		dest->value = entry->value;
+		table->count++;
 	}
 
 	// Free the old memory
@@ -69,6 +84,10 @@ bool solisHashTableInsert(HashTable* table, ObjString* key, Value value)
 	TableEntry* entry = findEntry(table->entries, table->capacity, key);
 
 	bool isNewKey = entry->key == NULL;
+
+	if (isNewKey && SOLIS_IS_NULL(entry->value)) 
+		table->count++;
+
 	if (isNewKey) table->count++;
 
 	entry->key = key;
@@ -89,6 +108,46 @@ bool solisHashTableGet(HashTable* table, ObjString* key, Value* value)
 
 	*value = entry->value;
 	return true;
+}
+
+bool solisHashTableDelete(HashTable* table, ObjString* key)
+{
+	if (table->count == 0) 
+		return false;
+
+	TableEntry* entry = findEntry(table->entries, table->capacity, key);
+
+	if (entry->key == NULL) 
+		return false;
+
+	entry->key = NULL;
+	entry->value = SOLIS_BOOL_VALUE(true);
+	return true;
+
+}
+
+ObjString* solisHashTableFindString(HashTable* table, const char* chars, int length, uint32_t hash)
+{
+	if (table->count == 0) return NULL;
+
+	uint32_t index = hash & (table->capacity - 1);
+	for (;;) 
+	{
+		TableEntry* entry = &table->entries[index];
+
+		if (entry->key == NULL) 
+		{
+			if (SOLIS_IS_NULL(entry->value)) return NULL;
+		}
+		else if (entry->key->length == length &&
+			entry->key->hash == hash &&
+			memcmp(entry->key->chars, chars, length) == 0) 
+		{
+			return entry->key;
+		}
+
+		index = (index + 1) & (table->capacity - 1);
+	}
 }
 
 void solisHashTableCopy(HashTable* from, HashTable* to)

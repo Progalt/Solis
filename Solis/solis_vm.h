@@ -4,6 +4,7 @@
 
 #include "solis_chunk.h"
 #include "solis_value.h"
+#include "solis_hashtable.h"
 
 #define STACK_MAX 256
 
@@ -26,6 +27,9 @@ struct VM
 	Value* sp;
 
 	Object* objects;
+
+	// List of interned strings for the VM
+	HashTable strings;
 
 };
 

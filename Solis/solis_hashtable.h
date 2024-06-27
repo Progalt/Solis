@@ -44,6 +44,10 @@ bool solisHashTableInsert(HashTable* table, ObjString* key, Value value);
 
 bool solisHashTableGet(HashTable* table, ObjString* key, Value* value);
 
+bool solisHashTableDelete(HashTable* table, ObjString* key);
+
+ObjString* solisHashTableFindString(HashTable* table, const char* chars, int length, uint32_t hash);
+
 void solisHashTableCopy(HashTable* from, HashTable* to);
 
 #endif // SOLIS_HASHTABLE_H
