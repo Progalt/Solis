@@ -31,6 +31,8 @@ struct VM
 	// List of interned strings for the VM
 	HashTable strings;
 
+
+	HashTable globals;
 };
 
 

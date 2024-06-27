@@ -4,7 +4,8 @@
 #include <solis.h>
 
 const char* source =
-"\"Hello\" + \" World\" \n";
+"var x = 25 + 5;\n"
+"var y = x + 2;";
 
 int main(void) {
 

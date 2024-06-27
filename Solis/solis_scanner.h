@@ -43,7 +43,8 @@ typedef enum TokenType
 
 	TOKEN_SEMICOLON, 
 
-	TOKEN_LET,
+	TOKEN_VAR,
+	TOKEN_CONST, 
 	TOKEN_FUNCTION,
 
 	// Control flow statements

@@ -23,6 +23,22 @@ static int constantInstruction(const char* name, Chunk* chunk, int offset) {
 	return offset + 2;
 }
 
+static int constantInstructionLong(const char* name, Chunk* chunk, int offset) {
+	uint8_t upper = chunk->code[offset + 1];
+	uint8_t lower = chunk->code[offset + 2];
+
+	uint16_t constant = upper << 8;
+	constant |= lower;
+
+	printf("%-16s %4d '", name, constant);
+	solisPrintValue(chunk->constants.data[constant]);
+	printf("' -> ");
+	solisPrintValueType(chunk->constants.data[constant]);
+	printf("\n");
+
+	return offset + 2;
+}
+
 
 void solisInitChunk(Chunk* chunk)
 {
@@ -103,6 +119,14 @@ int solisDisassembleInstruction(Chunk* chunk, int offset)
 		return simpleInstruction("OP_GREATER", offset);
 	case OP_LESS:
 		return simpleInstruction("OP_LESS", offset);
+	case OP_POP:
+		return simpleInstruction("OP_POP", offset);
+	case OP_DEFINE_GLOBAL:
+		return constantInstructionLong("OP_DEFINE_GLOBAL", chunk, offset);
+	case OP_SET_GLOBAL:
+		return constantInstructionLong("OP_SET_GLOBAL", chunk, offset);
+	case OP_GET_GLOBAL:
+		return constantInstructionLong("OP_GET_GLOBAL", chunk, offset);
 	default:
 		printf("Unknown opcode %d\n", instruction);
 		return offset + 1;

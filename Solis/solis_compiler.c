@@ -1,9 +1,12 @@
 
+
 #include "solis_compiler.h"
 
 #include "solis_scanner.h"
 #include <stdio.h>
 #include <stdint.h>
+
+#include "solis_hashtable.h"
 
 
 // Forward declare some functions
@@ -39,10 +42,22 @@ static void grouping();
 static void number();
 static void expression();
 static void unary();
-static void parsePrecedence(Precedence precedence);
+
 static void binary();
 static void literal();
 static void string();
+
+static void declaration();
+static void statement();
+
+// Statements
+static void expressionStatement();
+static void variableDeclaration();
+static void constDeclaration();
+
+static void variable();
+
+static void parsePrecedence(Precedence precedence);
 static ParseRule* getRule(TokenType type);
 
 ParseRule rules[] = {
@@ -66,7 +81,7 @@ ParseRule rules[] = {
   [TOKEN_GTEQ] = {NULL,     binary,   PREC_COMPARISON},
   [TOKEN_LT] = {NULL,     binary,   PREC_COMPARISON},
   [TOKEN_LTEQ] = {NULL,     binary,   PREC_COMPARISON},
-  [TOKEN_IDENTIFIER] = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_IDENTIFIER] = {variable,     NULL,   PREC_NONE},
   [TOKEN_STRING] = {string,     NULL,   PREC_NONE},
   [TOKEN_NUMBER] = {number,   NULL,   PREC_NONE},
   [TOKEN_AND] = {NULL,     NULL,   PREC_NONE},
@@ -83,7 +98,7 @@ ParseRule rules[] = {
   // [TOKEN_SUPER] = {NULL,     NULL,   PREC_NONE},
   //[TOKEN_THIS] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_TRUE] = {literal,     NULL,   PREC_NONE},
-  [TOKEN_LET] = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_VAR] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_WHILE] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ERROR] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_EOF] = {NULL,     NULL,   PREC_NONE},
@@ -171,6 +186,19 @@ static void consume(TokenType type, const char* message)
 	errorAtCurrent(message);
 }
 
+static bool check(TokenType type)
+{
+	return parser.current.type == type;
+}
+
+static bool match(TokenType type) 
+{
+	if (!check(type)) return false;
+	advance();
+	return true;
+}
+
+
 
 
 struct sCompiler 
@@ -185,7 +213,7 @@ struct sCompiler
 
 	int scopeDepth;
 
-
+	HashTable constantTable;
 };
 
 Compiler compiler;
@@ -222,14 +250,39 @@ static void initCompiler(VM* vm, Chunk* chunk)
 	compiler.chunk = chunk;
 
 	compiler.vm = vm;
+
+	solisInitHashTable(&compiler.constantTable);
 }
 
 static void endCompiler()
 {
 	emitReturn();
+
+	solisFreeHashTable(&compiler.constantTable);
 }
 
+static void synchronize() {
+	parser.panicMode = false;
 
+	while (parser.current.type != TOKEN_EOF) {
+		if (parser.previous.type == TOKEN_SEMICOLON) return;
+		switch (parser.current.type) {
+		//case TOKEN_CLASS:
+		case TOKEN_FUNCTION:
+		case TOKEN_VAR:
+		case TOKEN_FOR:
+		case TOKEN_IF:
+		case TOKEN_WHILE:
+		case TOKEN_RETURN:
+			return;
+
+		default:
+			; // Do nothing.
+		}
+
+		advance();
+	}
+}
 
 
 // Constant functions
@@ -315,6 +368,114 @@ static void string() {
 	emitConstant(SOLIS_OBJECT_VALUE(solisCopyString(compiler.vm, parser.previous.start + 1, parser.previous.length - 2)));
 }
 
+static void declaration()
+{
+	if (match(TOKEN_VAR))
+	{
+		variableDeclaration();
+	}
+	else if (match(TOKEN_CONST))
+	{
+
+	}
+	else
+	{
+		statement();
+	}
+
+	// If we have an error ignore this statement to avoid unnecessary errors being printed
+	if (parser.panicMode) synchronize();
+}
+
+static void statement()
+{
+	expressionStatement();
+}
+
+static void expressionStatement()
+{
+	expression();
+	consume(TOKEN_SEMICOLON, "Expected ';' after expression.");
+	emitByte(OP_POP);
+}
+
+static uint16_t identifierConstant(Token* name) 
+{
+	return makeConstant(SOLIS_OBJECT_VALUE(solisCopyString(compiler.vm, name->start, name->length)));
+}
+
+static uint16_t parseVariable(const char* errorMessage) {
+	consume(TOKEN_IDENTIFIER, errorMessage);
+	return identifierConstant(&parser.previous);
+}
+
+static void defineVariable(uint16_t global) 
+{
+	emitByte(OP_DEFINE_GLOBAL);
+	emitShort(global);
+}
+
+static void variableDeclaration()
+{
+	uint16_t global = parseVariable("Expected variable name.");
+
+	if(match(TOKEN_EQ)) {
+		expression();
+	}
+	else {
+		emitByte(OP_NIL);
+	}
+
+	consume(TOKEN_SEMICOLON, "Expected ';' after variable declaration.");
+
+	defineVariable(global);
+}
+
+static void constDeclaration()
+{
+	Token nameTk = parser.previous;
+	ObjString* name = solisCopyString(compiler.vm, nameTk.start, nameTk.length);
+
+	consume(TOKEN_EQ, "Constant variable declarations must be assigned a value.");
+
+	// In theory we parse and evaluate this at compile time then store the constant in the constant table
+	// Whenever this comes up in the compiler it emits an OP_CONSTANT with the value instead of a GET_* name 
+	// TODO: Implement
+	// Could this be implemented using an internal VM here? 
+
+	// Just do this for now so we can still parse the rest 
+	expression();
+
+	consume(TOKEN_SEMICOLON, "Expected ';' at the end of constant variable declaration.");
+
+	error("Constant variables are not currently supported");
+}
+
+
+static void namedVariable(Token name) 
+{
+	uint16_t arg = identifierConstant(&name);
+
+	if (match(TOKEN_EQ)) 
+	{
+		expression();
+		emitByte(OP_SET_GLOBAL);
+		emitShort(arg);
+	}
+	else 
+	{
+		emitByte(OP_GET_GLOBAL);
+		emitShort(arg);
+	}
+
+
+}
+
+static void variable()
+{
+	namedVariable(parser.previous);
+}
+
 static void expression()
 {
 	parsePrecedence(PREC_ASSIGNMENT);
@@ -357,7 +518,11 @@ bool solisCompile(VM* vm, const char* source, Chunk* chunk)
 	parser.tokenList = tokenList;
 
 	advance();
-	expression();
+	
+	while (!match(TOKEN_EOF))
+	{
+		declaration();
+	}
 
 
 	endCompiler();

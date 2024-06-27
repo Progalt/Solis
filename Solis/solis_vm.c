@@ -14,6 +14,7 @@ void solisInitVM(VM* vm)
 	vm->objects = NULL;
 
 	solisInitHashTable(&vm->strings);
+	solisInitHashTable(&vm->globals);
 }
 
 
@@ -31,6 +32,7 @@ static void freeObjects(VM* vm)
 void solisFreeVM(VM* vm)
 {
 	solisFreeHashTable(&vm->strings);
+	solisFreeHashTable(&vm->globals);
 	freeObjects(vm);
 	
 }
@@ -218,6 +220,45 @@ do {																		\
 		// Check if the values are numeric values
 		if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
 			val->as.number = pow(val->as.number,  a.as.number);
+
+		DISPATCH();
+	}
+	CASE_CODE(POP) :
+	{
+		POP();
+		DISPATCH();
+	}
+	CASE_CODE(DEFINE_GLOBAL) :
+	{
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+		solisHashTableInsert(&vm->globals, name, PEEK());
+		POP();
+
+		DISPATCH();
+	}
+	CASE_CODE(SET_GLOBAL) :
+	{
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+		if (solisHashTableInsert(&vm->globals, name, PEEK()))
+		{
+			solisHashTableDelete(&vm->globals, name);
+
+			return INTERPRET_RUNTIME_ERROR;
+		}
+		
+
+		DISPATCH();
+	}
+	CASE_CODE(GET_GLOBAL) :
+	{
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+
+		Value value;
+		if (!solisHashTableGet(&vm->globals, name, &value)) {
+			
+			return INTERPRET_RUNTIME_ERROR;
+		}
+		PUSH(value);
 
 		DISPATCH();
 	}

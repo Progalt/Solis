@@ -29,7 +29,8 @@ typedef struct
 // List of the language keywords
 static Keyword keywords[] =
 {
-	{ "let", 3, TOKEN_LET },
+	{ "var", 3, TOKEN_VAR },
+	{ "const", 5, TOKEN_CONST },
 
 	{ "for", 3, TOKEN_FOR },
 	{ "while", 5, TOKEN_WHILE },
