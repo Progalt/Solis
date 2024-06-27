@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "solis_compiler.h"
 
+
 #include <math.h>
 
 #define SOLIS_DEBUG_TRACE_EXECUTION
@@ -12,6 +13,8 @@ void solisInitVM(VM* vm)
 {
 	vm->sp = vm->stack;
 	vm->objects = NULL;
+
+	vm->frameCount = 0;
 
 	solisInitHashTable(&vm->strings);
 	solisInitHashTable(&vm->globalMap);
@@ -42,17 +45,31 @@ void solisFreeVM(VM* vm)
 
 static InterpretResult run(VM* vm)
 {
+	CallFrame* frame = &vm->frames[vm->frameCount - 1];
+
+
 	// store the ip here
 	// This helps with pointer indirection
-	uint8_t* ip = vm->chunk->code;
+	uint8_t* ip = NULL;
+	ObjFunction* function = NULL;
+
+
+#define STORE_FRAME() frame->ip = ip
+
+#define LOAD_FRAME()			\
+	ip = frame->ip;				\
+	function = frame->function;	\
+	frame = &vm->frames[vm->frameCount - 1];
+
+	LOAD_FRAME();
 
 	uint8_t instruction = 0;
 
 	// Helper macros to read instructions or constants
 #define READ_BYTE() (*ip++)
 #define READ_SHORT() (ip+=2, (uint16_t)((ip[-2] << 8) | ip[-1]))
-#define READ_CONSTANT() (vm->chunk->constants.data[READ_BYTE()])
-#define READ_CONSTANT_LONG() (vm->chunk->constants.data[READ_SHORT()])
+#define READ_CONSTANT() (function->chunk.constants.data[READ_BYTE()])
+#define READ_CONSTANT_LONG() (function->chunk.constants.data[READ_SHORT()])
 
 #define PUSH(val) (*vm->sp++ = val)
 #define POP() (*(--vm->sp))
@@ -69,7 +86,7 @@ do {																		\
 		printf(" ]");														\
 	}																		\
 	printf("\n");															\
-	solisDisassembleInstruction(vm->chunk, (int)(ip - vm->chunk->code));	\
+	solisDisassembleInstruction(&function->chunk, (int)(ip - function->chunk.code));	\
 } while (false)
 
 #else 
@@ -254,12 +271,12 @@ do {																		\
 	}
 	CASE_CODE(SET_LOCAL) :
 	{
-		vm->stack[READ_SHORT()] = PEEK();
+		frame->slots[READ_SHORT()] = PEEK();
 		DISPATCH();
 	}
 	CASE_CODE(GET_LOCAL) :
 	{
-		PUSH(vm->stack[READ_SHORT()]);
+		PUSH(frame->slots[READ_SHORT()]);
 		DISPATCH();
 	}
 	CASE_CODE(JUMP_IF_FALSE) :
@@ -308,22 +325,23 @@ do {																		\
 InterpretResult solisInterpret(VM* vm, const char* source)
 {
 	
-	Chunk chunk;
-	solisInitChunk(&chunk);
 
-	if (!solisCompile(vm, source, &chunk))
+	ObjFunction* function = solisCompile(vm, source);
+
+	if (function == NULL)
 	{
-		solisFreeChunk(&chunk);
-
 		return INTERPRET_COMPILE_ERROR;
 	}
+	
+	solisPush(vm, SOLIS_OBJECT_VALUE(function));
 
-
-	vm->chunk = &chunk;
+	CallFrame* frame = &vm->frames[vm->frameCount++];
+	frame->function = function;
+	frame->ip = function->chunk.code;
+	frame->slots = vm->stack;
 	
 	InterpretResult result = run(vm);
 
-	solisFreeChunk(&chunk);
 	return result;
 }
 

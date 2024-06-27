@@ -13,6 +13,27 @@
 typedef struct VM VM;
 typedef struct Chunk Chunk;
 
+typedef struct Object Object;
+typedef struct ObjFiber ObjFiber;
+typedef struct ObjFunction ObjFunction;
+typedef struct ObjString ObjString;
+
+typedef enum
+{
+    VALUE_NULL,
+    VALUE_TRUE,
+    VALUE_FALSE,
+    VALUE_NUMERIC,
+    VALUE_OBJECT
+} ValueType;
+
+typedef enum
+{
+    OBJ_FUNCTION,
+    OBJ_STRING
+} ObjectType;
+
+
 #ifndef SOLIS_REALLOC_FUNC
 #define SOLIS_REALLOC_FUNC(ptr, newSize) realloc(ptr, newSize)
 #endif

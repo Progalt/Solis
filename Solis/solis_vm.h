@@ -6,7 +6,10 @@
 #include "solis_value.h"
 #include "solis_hashtable.h"
 
-#define STACK_MAX 256
+#include "solis_object.h"
+
+#define FRAMES_MAX 64
+#define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
 
 typedef enum
 {
@@ -15,10 +18,17 @@ typedef enum
 	INTERPRET_COMPILE_ERROR
 } InterpretResult;
 
+typedef struct {
+	ObjFunction* function;
+	uint8_t* ip;
+	Value* slots;
+} CallFrame;
+
 struct VM
 {
 
-	Chunk* chunk;
+	CallFrame frames[FRAMES_MAX];
+	int frameCount;
 
 	// TODO: Make this dynamic and not a static array
 	Value stack[STACK_MAX];

@@ -9,6 +9,12 @@
 
 typedef struct sCompiler Compiler;
 
-bool solisCompile(VM* vm, const char* source, Chunk* chunk);
+typedef enum
+{
+	TYPE_FUNCTION,
+	TYPE_SCRIPT, 
+} FunctionType;
+
+ObjFunction* solisCompile(VM* vm, const char* source);
 
 #endif // SOLIS_COMPILER_H

@@ -10,6 +10,9 @@
 
 #include <string.h>
 
+#include "solis_object.h"
+#include "solis_chunk.h"
+
 
 // Forward declare some functions
 
@@ -230,7 +233,7 @@ struct sCompiler
 	// This is needed for allocations
 	VM* vm;
 
-	Chunk* chunk;
+	// Chunk* chunk;
 
 	int scopeDepth;
 
@@ -245,6 +248,9 @@ struct sCompiler
 	// We store a list of current break statements
 	IntBuffer breakStatements;
 	bool withinLoop;
+
+	ObjFunction* function;
+	FunctionType type;
 };
 
 Compiler* current = NULL;
@@ -252,7 +258,7 @@ Compiler* current = NULL;
 
 static Chunk* currentChunk()
 {
-	return current->chunk;
+	return &current->function->chunk;
 }
 
 static void emitByte(uint8_t byte)
@@ -275,15 +281,19 @@ static void emitReturn() {
 	emitByte(OP_RETURN);
 }
 
-static void initCompiler(VM* vm, Chunk* chunk, Compiler* compiler)
+static void initCompiler(VM* vm, Compiler* compiler, FunctionType type)
 {
+	compiler->function = NULL;
+	compiler->type = type;
 	compiler->scopeDepth = 0;
 	compiler->localCount = 0;
-	compiler->chunk = chunk;
+	
 
 	compiler->vm = vm;
 	compiler->globalCount = 0;
 	compiler->withinLoop = false;
+
+	compiler->function = solisNewFunction(vm);
 
 	solisIntBufferInit(&compiler->breakStatements);
 
@@ -291,14 +301,23 @@ static void initCompiler(VM* vm, Chunk* chunk, Compiler* compiler)
 
 	current = compiler;
 
+	Local* local = &current->locals[current->localCount++];
+	local->depth = 0;
+	local->name.start = "";
+	local->name.length = 0;
+
 }
 
-static void endCompiler(Compiler* compiler)
+static ObjFunction* endCompiler(Compiler* compiler)
 {
 	emitReturn();
 
 	solisFreeHashTable(&compiler->globalTable);
 	solisIntBufferClear(&compiler->breakStatements);
+
+	ObjFunction* function = current->function;
+
+	return function;
 }
 
 static void synchronize() {
@@ -551,7 +570,7 @@ static void defineVariable(uint16_t global)
 
 	// Add the global to the hash table of globals
 	double index = (double)current->globalCount;
-	solisHashTableInsert(&current->globalTable, SOLIS_AS_STRING(current->chunk->constants.data[global]), SOLIS_NUMERIC_VALUE(index));
+	solisHashTableInsert(&current->globalTable, SOLIS_AS_STRING(current->function->chunk.constants.data[global]), SOLIS_NUMERIC_VALUE(index));
 	current->globalCount++;
 
 	emitByte(OP_DEFINE_GLOBAL);
@@ -808,12 +827,12 @@ static void whileStatement()
 
 static void breakStatement()
 {
-	/*if (!current->withinLoop)
+	// We only want to break in a loop
+	// Error if we aren't in one
+	if (!current->withinLoop)
 	{
 		error("Cannot 'break' when not within a loop.");
-	}*/
-
-	consume(TOKEN_SEMICOLON, "Expected ';' after break statement.");
+	}
 
 	int exitJump = emitJump(OP_JUMP);
 
@@ -875,7 +894,7 @@ static ParseRule* getRule(TokenType type) {
 	return &rules[type];
 }
 
-bool solisCompile(VM* vm, const char* source, Chunk* chunk)
+ObjFunction* solisCompile(VM* vm, const char* source)
 {
 	parser.hadError = false;
 	parser.panicMode = false;
@@ -884,7 +903,7 @@ bool solisCompile(VM* vm, const char* source, Chunk* chunk)
 	// Setup the compiler
 
 	Compiler compiler;
-	initCompiler(vm, chunk, &compiler);
+	initCompiler(vm, &compiler, TYPE_SCRIPT);
 
 	TokenList tokenList = solisScanSource(source);
 
@@ -898,7 +917,7 @@ bool solisCompile(VM* vm, const char* source, Chunk* chunk)
 	}
 
 
-	endCompiler(&compiler);
+	ObjFunction* function = endCompiler(&compiler);
 	solisFreeTokenList(&tokenList);
-	return !parser.hadError;
+	return parser.hadError ? NULL : function;
 }

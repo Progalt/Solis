@@ -2,6 +2,7 @@
 #include "solis_hashtable.h"
 #include "solis_common.h"
 #include <string.h>
+#include "solis_object.h"
 
 static TableEntry* findEntry(TableEntry* entries, int capacity, ObjString* key)
 {

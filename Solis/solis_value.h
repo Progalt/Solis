@@ -20,25 +20,7 @@
 #define SOLIS_IS_OBJECT(val) ((val).type == VALUE_OBJECT)
 
 
-typedef struct Object Object;
-typedef struct ObjFiber ObjFiber;
-typedef struct ObjFunction ObjFunction;
-typedef struct ObjString ObjString; 
 
-typedef enum
-{
-	VALUE_NULL,
-	VALUE_TRUE,
-	VALUE_FALSE,
-	VALUE_NUMERIC,
-	VALUE_OBJECT
-} ValueType;
-
-typedef enum
-{
-	OBJ_FIBER,
-	OBJ_STRING
-} ObjectType;
 
 
 /*
@@ -66,63 +48,6 @@ typedef struct
 
 } Value;
 
-
-struct Object
-{
-	ObjectType type;
-
-	// is the object marked by the gc
-	bool isMarked; 
-
-	// Next object in the allocated linked list
-	Object* next;
-};
-
-/*
-	Object that represent 
-*/
-struct ObjString
-{
-	Object obj;
-
-	int length;
-	char* chars;
-
-	// We store the hash in the string
-	// TODO: Could this be moved out of string since other objects might want hashing
-	uint32_t hash;
-};
-
-#define SOLIS_IS_STRING(value)	solisIsObjType(value, OBJ_STRING)
-
-#define SOLIS_AS_STRING(value) ((ObjString*)SOLIS_AS_OBJECT(value))
-#define SOLIS_AS_CSTRING(value) (((ObjString*)SOLIS_AS_OBJECT(value))->chars)
-
-
-/*
-	Returns the specified value is equal to the type
-	If the value is not an object it returns false.
-*/
-static inline bool solisIsObjType(Value value, ObjectType type) 
-{
-	return SOLIS_IS_OBJECT(value) && SOLIS_AS_OBJECT(value)->type == type;
-}
-
-
-/*
-	Copies a cstring into a String object and terminates it
-*/
-ObjString* solisCopyString(VM* vm, const char* chars, int length);
-
-/*
-	Takes owner ship of the supplied values and combines them into a String object
-*/
-ObjString* solisTakeString(VM* vm, char* chars, int length);
-
-/*
-	Concatenates two strings into a new string object
-*/
-ObjString* solisConcatenateStrings(VM* vm, ObjString* a, ObjString* b);
 
 /*
 	Checks if the values are strictly the same. Is true if both objects pointers are equal not their contents.
