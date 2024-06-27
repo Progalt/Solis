@@ -6,7 +6,7 @@
 
 #include <math.h>
 
-#define DEBUG_TRACE_EXECUTION
+#define SOLIS_DEBUG_TRACE_EXECUTION
 
 void solisInitVM(VM* vm)
 {
@@ -59,7 +59,7 @@ static InterpretResult run(VM* vm)
 #define PEEK() (*(vm->sp - 1))
 #define PEEK_PTR() (vm->sp - 1)
 
-#ifdef DEBUG_TRACE_EXECUTION
+#ifdef SOLIS_DEBUG_TRACE_EXECUTION
 #define STACK_TRACE()														\
 do {																		\
 	printf("          ");													\
@@ -244,18 +244,36 @@ do {																		\
 	}
 	CASE_CODE(SET_GLOBAL) :
 	{
-		// Get index
-		uint16_t idx = READ_SHORT();
-		vm->globals.data[idx] = PEEK();
-
+		vm->globals.data[READ_SHORT()] = PEEK();
 		DISPATCH();
 	}
 	CASE_CODE(GET_GLOBAL) :
 	{
-		uint16_t idx = READ_SHORT();
+		PUSH(vm->globals.data[READ_SHORT()]);
+		DISPATCH();
+	}
+	CASE_CODE(SET_LOCAL) :
+	{
+		vm->stack[READ_SHORT()] = PEEK();
+		DISPATCH();
+	}
+	CASE_CODE(GET_LOCAL) :
+	{
+		PUSH(vm->stack[READ_SHORT()]);
+		DISPATCH();
+	}
+	CASE_CODE(JUMP_IF_FALSE) :
+	{
+		uint16_t offset = READ_SHORT();
+		if (solisIsFalsy(PEEK()))
+			ip += offset;
 
-		PUSH(vm->globals.data[idx]);
-
+		DISPATCH();
+	}
+	CASE_CODE(JUMP) :
+	{
+		uint16_t offset = READ_SHORT();
+		ip += offset;
 
 		DISPATCH();
 	}

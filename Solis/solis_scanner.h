@@ -47,6 +47,10 @@ typedef enum TokenType
 	TOKEN_CONST, 
 	TOKEN_FUNCTION,
 
+	TOKEN_DO,
+	TOKEN_THEN,
+	TOKEN_END, 
+
 	// Control flow statements
 	TOKEN_FOR,
 	TOKEN_WHILE,

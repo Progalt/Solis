@@ -8,6 +8,8 @@
 
 #include "solis_hashtable.h"
 
+#include <string.h>
+
 
 // Forward declare some functions
 
@@ -55,6 +57,11 @@ static void expressionStatement();
 static void variableDeclaration();
 static void constDeclaration();
 
+static void ifStatement();
+
+static void and_(bool canAssign);
+static void or_(bool canAssign);
+
 static void variable(bool canAssign);
 
 static void block();
@@ -86,7 +93,7 @@ ParseRule rules[] = {
   [TOKEN_IDENTIFIER] = {variable,     NULL,   PREC_NONE},
   [TOKEN_STRING] = {string,     NULL,   PREC_NONE},
   [TOKEN_NUMBER] = {number,   NULL,   PREC_NONE},
-  [TOKEN_AND] = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_AND] = {NULL,     and_,   PREC_AND},
   // [TOKEN_CLASS] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ELSE] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_FALSE] = {literal,     NULL,   PREC_NONE},
@@ -94,7 +101,7 @@ ParseRule rules[] = {
   [TOKEN_FUNCTION] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_IF] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_NULL] = {literal,     NULL,   PREC_NONE},
-  [TOKEN_OR] = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_OR] = {NULL,     or_,   PREC_OR},
   // [TOKEN_PRINT] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_RETURN] = {NULL,     NULL,   PREC_NONE},
   // [TOKEN_SUPER] = {NULL,     NULL,   PREC_NONE},
@@ -330,6 +337,12 @@ static void beginScope()
 static void endScope() 
 {
 	current->scopeDepth--;
+
+	while (current->localCount > 0 && current->locals[current->localCount - 1].depth > current->scopeDepth) 
+	{
+		emitByte(OP_POP);
+		current->localCount--;
+	}
 }
 
 static void grouping(bool canAssign) {
@@ -400,11 +413,15 @@ static void declaration()
 	{
 		variableDeclaration();
 	}
-	else if (match(TOKEN_LEFT_BRACE))
+	else if (match(TOKEN_DO))
 	{
 		beginScope();
 		block();
 		endScope();
+	}
+	else if (match(TOKEN_IF))
+	{
+		ifStatement();
 	}
 	else
 	{
@@ -432,13 +449,70 @@ static uint16_t identifierConstant(Token* name)
 	return makeConstant(SOLIS_OBJECT_VALUE(solisCopyString(current->vm, name->start, name->length)));
 }
 
+static void addLocal(Token name) 
+{
+	if (current->localCount == UINT8_COUNT) 
+	{
+		error("Too many local variables in function.");
+		return;
+	}
+
+	Local* local = &current->locals[current->localCount++];
+	local->name = name;
+	local->depth = -1;
+}
+
+static bool identifiersEqual(Token* a, Token* b) 
+{
+	if (a->length != b->length) return false;
+	return memcmp(a->start, b->start, a->length) == 0;
+}
+
+static void declareVariable() 
+{
+	if (current->scopeDepth == 0) return;
+
+	Token* name = &parser.previous;
+
+	for (int i = current->localCount - 1; i >= 0; i--) 
+	{
+		Local* local = &current->locals[i];
+		if (local->depth != -1 && local->depth < current->scopeDepth) 
+		{
+			break;
+		}
+
+		if (identifiersEqual(name, &local->name)) {
+			error("Already a variable with this name in this scope.");
+		}
+	}
+
+	addLocal(*name);
+}
+
 static uint16_t parseVariable(const char* errorMessage) {
 	consume(TOKEN_IDENTIFIER, errorMessage);
+
+	declareVariable();
+	if (current->scopeDepth > 0) return 0;
+
 	return identifierConstant(&parser.previous);
+}
+
+static void markInitialized()
+{
+	current->locals[current->localCount - 1].depth =
+		current->scopeDepth;
 }
 
 static void defineVariable(uint16_t global) 
 {
+	// If we are in a local scope return 
+	if (current->scopeDepth > 0) {
+		markInitialized();
+		return;
+	}
+
 	// Add the global to the hash table of globals
 	double index = (double)current->globalCount;
 	solisHashTableInsert(&current->globalTable, SOLIS_AS_STRING(current->chunk->constants.data[global]), SOLIS_NUMERIC_VALUE(index));
@@ -486,13 +560,13 @@ static void constDeclaration()
 }
 
 // Resolve a global variable from the hash tables of globals
-static int resolveGlobalVariable(Token name)
+static int resolveGlobalVariable(Compiler* compiler, Token name)
 {
 	// Get the name
-	ObjString* nameStr = solisCopyString(current->vm, name.start, name.length);
+	ObjString* nameStr = solisCopyString(compiler->vm, name.start, name.length);
 
 	Value val;
-	if (!solisHashTableGet(&current->globalTable, nameStr, &val))
+	if (!solisHashTableGet(&compiler->globalTable, nameStr, &val))
 	{
 		// Not found so return -1
 		return -1;
@@ -505,28 +579,57 @@ static int resolveGlobalVariable(Token name)
 	return idx;
 }
 
-static void namedVariable(Token name, bool canAssign)
+static int resolveLocalVariable(Compiler* compiler, Token* name) 
 {
-	// resolve the global
-	int arg = resolveGlobalVariable(name);
-	if ( arg == -1)
+	for (int i = compiler->localCount - 1; i >= 0; i--) 
 	{
-		error("Could not resolve global variable.");
+		Local* local = &compiler->locals[i];
+		if (identifiersEqual(name, &local->name)) 
+		{
+			if (local->depth == -1) 
+			{
+				error("Can't read local variable in its own initializer.");
+			}
+
+			return i;
+		}
 	}
 
-	// The arg is the index into the global table of globals in the VM now. 
+	return -1;
+}
 
-	// uint16_t arg = identifierConstant(&name);
+static void namedVariable(Token name, bool canAssign)
+{
+	uint8_t getOp, setOp;
+	int arg = resolveLocalVariable(current, &name);
+	if (arg != -1)
+	{
+		getOp = OP_GET_LOCAL;
+		setOp = OP_SET_LOCAL;
+	}
+	else
+	{
+		// resolve the global
+		arg = resolveGlobalVariable(current, name);
+		if (arg == -1)
+		{
+			// If we reach here its not local or global
+			error("Could not resolve variable.");
+		}
+
+		getOp = OP_GET_GLOBAL;
+		setOp = OP_SET_GLOBAL;
+	}
 
 	if (match(TOKEN_EQ) && canAssign) 
 	{
 		expression();
-		emitByte(OP_SET_GLOBAL);
+		emitByte(setOp);
 		emitShort((uint16_t)arg);
 	}
 	else 
 	{
-		emitByte(OP_GET_GLOBAL);
+		emitByte(getOp);
 		emitShort((uint16_t)arg);
 	}
 
@@ -540,12 +643,97 @@ static void variable(bool canAssign)
 
 static void block()
 {
-	while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) 
+	while (!check(TOKEN_END) && !check(TOKEN_EOF)) 
 	{
 		declaration();
 	}
 
-	consume(TOKEN_RIGHT_BRACE, "Expected '}' after block.");
+	consume(TOKEN_END, "Expected 'end' after block.");
+}
+
+static int emitJump(uint8_t instruction) 
+{
+	emitByte(instruction);
+	emitByte(0xff);
+	emitByte(0xff);
+	return currentChunk()->count - 2;
+}
+
+static void patchJump(int offset) 
+{
+	// -2 to adjust for the bytecode for the jump offset itself.
+	int jump = currentChunk()->count - offset - 2;
+
+	if (jump > UINT16_MAX) {
+		error("Too much code to jump over.");
+	}
+
+	currentChunk()->code[offset] = (jump >> 8) & 0xff;
+	currentChunk()->code[offset + 1] = jump & 0xff;
+}
+
+static void ifStatement()
+{
+	expression();
+
+	consume(TOKEN_THEN, "Expected 'then' after if condition");
+
+	// Begin a scope
+	// Scopes are handled by if statements here 
+	beginScope();
+
+	int thenJump = emitJump(OP_JUMP_IF_FALSE);
+
+	emitByte(OP_POP);
+
+	statement();
+
+	int elseJump = emitJump(OP_JUMP);
+
+	patchJump(thenJump);
+	emitByte(OP_POP);
+
+	endScope();
+
+	if (match(TOKEN_ELSE))
+	{
+		beginScope();
+
+		statement();
+
+		consume(TOKEN_END, "Expected 'end' after else block.");
+
+		endScope();
+	}
+	else
+	{
+		// if there is no else we need an end 
+		consume(TOKEN_END, "Expected 'end' after if block.");
+	}
+
+	patchJump(elseJump);
+}
+
+static void and_(bool canAssign)
+{
+	int endJump = emitJump(OP_JUMP_IF_FALSE);
+
+	emitByte(OP_POP);
+	parsePrecedence(PREC_AND);
+
+	patchJump(endJump);
+}
+
+static void or_(bool canAssign)
+{
+	int elseJump = emitJump(OP_JUMP_IF_FALSE);
+	int endJump = emitJump(OP_JUMP);
+
+	patchJump(elseJump);
+	emitByte(OP_POP);
+
+	parsePrecedence(PREC_OR);
+	patchJump(endJump);
 }
 
 static void expression()

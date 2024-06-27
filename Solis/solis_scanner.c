@@ -37,6 +37,10 @@ static Keyword keywords[] =
 	{ "if", 2, TOKEN_IF },
 	{ "else", 4, TOKEN_ELSE },
 
+	{ "do", 2, TOKEN_DO },
+	{ "then", 4, TOKEN_THEN },
+	{ "end", 3, TOKEN_END },
+
 	{ "in", 2, TOKEN_IN },
 	{ "and", 3, TOKEN_AND },
 	{ "or", 2, TOKEN_OR },
@@ -194,12 +198,15 @@ void solisInitScanner(const char* sourceCode)
 Token solisScanToken()
 {
 	skipWhitespace();
+	skipWhitespace();
+
 	scanner.start = scanner.current;
 
 	if (isAtEnd())
 		return makeToken(TOKEN_EOF);
 
 	char c = advance();
+
 
 	// Test if its a number
 	if (isDigit(c)) 
