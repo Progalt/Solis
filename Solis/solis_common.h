@@ -7,6 +7,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#define UINT8_COUNT (UINT8_MAX + 1)
+
 // Some forward declares
 typedef struct VM VM;
 typedef struct Chunk Chunk;

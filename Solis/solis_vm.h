@@ -31,8 +31,10 @@ struct VM
 	// List of interned strings for the VM
 	HashTable strings;
 
+	// So we can map names to global indexes
+	HashTable globalMap;
 
-	HashTable globals;
+	ValueBuffer globals;
 };
 
 
@@ -72,5 +74,6 @@ static inline bool solisIsFalsy(Value value)
 {
 	return SOLIS_IS_NULL(value) || (SOLIS_IS_BOOL(value) && !SOLIS_AS_BOOL(value));
 }
+
 
 #endif // SOLIS_VM_H

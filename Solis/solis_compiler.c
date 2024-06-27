@@ -28,7 +28,7 @@ typedef enum {
 	PREC_PRIMARY
 } Precedence;
 
-typedef void (*ParseFn)();
+typedef void (*ParseFn)(bool canAssign);
 
 typedef struct {
 	ParseFn prefix;
@@ -38,14 +38,14 @@ typedef struct {
 
 
 
-static void grouping();
-static void number();
+static void grouping(bool canAssign);
+static void number(bool canAssign);
 static void expression();
-static void unary();
+static void unary(bool canAssign);
 
-static void binary();
-static void literal();
-static void string();
+static void binary(bool canAssign);
+static void literal(bool canAssign);
+static void string(bool canAssign);
 
 static void declaration();
 static void statement();
@@ -55,7 +55,9 @@ static void expressionStatement();
 static void variableDeclaration();
 static void constDeclaration();
 
-static void variable();
+static void variable(bool canAssign);
+
+static void block();
 
 static void parsePrecedence(Precedence precedence);
 static ParseRule* getRule(TokenType type);
@@ -198,7 +200,11 @@ static bool match(TokenType type)
 	return true;
 }
 
-
+typedef struct
+{
+	Token name;
+	int depth;
+} Local;
 
 
 struct sCompiler 
@@ -213,16 +219,21 @@ struct sCompiler
 
 	int scopeDepth;
 
-	HashTable constantTable;
+	// Each global variable is assigned an index as it is created 
+	HashTable globalTable;
+	int globalCount;
+
+
+	Local locals[UINT8_COUNT];
+	int localCount;
 };
 
-Compiler compiler;
-
+Compiler* current = NULL;
 
 
 static Chunk* currentChunk()
 {
-	return compiler.chunk;
+	return current->chunk;
 }
 
 static void emitByte(uint8_t byte)
@@ -245,20 +256,26 @@ static void emitReturn() {
 	emitByte(OP_RETURN);
 }
 
-static void initCompiler(VM* vm, Chunk* chunk)
+static void initCompiler(VM* vm, Chunk* chunk, Compiler* compiler)
 {
-	compiler.chunk = chunk;
+	compiler->scopeDepth = 0;
+	compiler->localCount = 0;
+	compiler->chunk = chunk;
 
-	compiler.vm = vm;
+	compiler->vm = vm;
+	compiler->globalCount = 0;
 
-	solisInitHashTable(&compiler.constantTable);
+	solisInitHashTable(&compiler->globalTable);
+
+	current = compiler;
+
 }
 
-static void endCompiler()
+static void endCompiler(Compiler* compiler)
 {
 	emitReturn();
 
-	solisFreeHashTable(&compiler.constantTable);
+	solisFreeHashTable(&compiler->globalTable);
 }
 
 static void synchronize() {
@@ -305,18 +322,27 @@ static void emitConstant(Value value) {
 	emitBytes(OP_CONSTANT, (uint8_t)constant);
 }
 
+static void beginScope() 
+{
+	current->scopeDepth++;
+}
 
-static void grouping() {
+static void endScope() 
+{
+	current->scopeDepth--;
+}
+
+static void grouping(bool canAssign) {
 	expression();
 	consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-static void number() {
+static void number(bool canAssign) {
 	double value = strtod(parser.previous.start, NULL);
 	emitConstant(SOLIS_NUMERIC_VALUE(value));
 }
 
-static void unary() {
+static void unary(bool canAssign) {
 	TokenType operatorType = parser.previous.type;
 
 	// Compile the operand.
@@ -330,7 +356,7 @@ static void unary() {
 	}
 }
 
-static void binary() 
+static void binary(bool canAssign)
 {
 
 	TokenType operatorType = parser.previous.type;
@@ -355,7 +381,7 @@ static void binary()
 	}
 }
 
-static void literal() {
+static void literal(bool canAssign) {
 	switch (parser.previous.type) {
 	case TOKEN_FALSE: emitByte(OP_FALSE); break;
 	case TOKEN_NULL: emitByte(OP_NIL); break;
@@ -364,8 +390,8 @@ static void literal() {
 	}
 }
 
-static void string() {
-	emitConstant(SOLIS_OBJECT_VALUE(solisCopyString(compiler.vm, parser.previous.start + 1, parser.previous.length - 2)));
+static void string(bool canAssign) {
+	emitConstant(SOLIS_OBJECT_VALUE(solisCopyString(current->vm, parser.previous.start + 1, parser.previous.length - 2)));
 }
 
 static void declaration()
@@ -374,9 +400,11 @@ static void declaration()
 	{
 		variableDeclaration();
 	}
-	else if (match(TOKEN_CONST))
+	else if (match(TOKEN_LEFT_BRACE))
 	{
-
+		beginScope();
+		block();
+		endScope();
 	}
 	else
 	{
@@ -401,7 +429,7 @@ static void expressionStatement()
 
 static uint16_t identifierConstant(Token* name) 
 {
-	return makeConstant(SOLIS_OBJECT_VALUE(solisCopyString(compiler.vm, name->start, name->length)));
+	return makeConstant(SOLIS_OBJECT_VALUE(solisCopyString(current->vm, name->start, name->length)));
 }
 
 static uint16_t parseVariable(const char* errorMessage) {
@@ -411,6 +439,11 @@ static uint16_t parseVariable(const char* errorMessage) {
 
 static void defineVariable(uint16_t global) 
 {
+	// Add the global to the hash table of globals
+	double index = (double)current->globalCount;
+	solisHashTableInsert(&current->globalTable, SOLIS_AS_STRING(current->chunk->constants.data[global]), SOLIS_NUMERIC_VALUE(index));
+	current->globalCount++;
+
 	emitByte(OP_DEFINE_GLOBAL);
 	emitShort(global);
 }
@@ -434,7 +467,9 @@ static void variableDeclaration()
 static void constDeclaration()
 {
 	Token nameTk = parser.previous;
-	ObjString* name = solisCopyString(compiler.vm, nameTk.start, nameTk.length);
+	ObjString* name = solisCopyString(current->vm, nameTk.start, nameTk.length);
+
+	error("Constant variables are not currently supported");
 
 	consume(TOKEN_EQ, "Constant variable declarations must be assigned a value.");
 
@@ -448,32 +483,69 @@ static void constDeclaration()
 
 	consume(TOKEN_SEMICOLON, "Expected ';' at the end of constant variable declaration.");
 
-	error("Constant variables are not currently supported");
 }
 
-
-static void namedVariable(Token name) 
+// Resolve a global variable from the hash tables of globals
+static int resolveGlobalVariable(Token name)
 {
-	uint16_t arg = identifierConstant(&name);
+	// Get the name
+	ObjString* nameStr = solisCopyString(current->vm, name.start, name.length);
 
-	if (match(TOKEN_EQ)) 
+	Value val;
+	if (!solisHashTableGet(&current->globalTable, nameStr, &val))
+	{
+		// Not found so return -1
+		return -1;
+	}
+
+	// We should have an index here
+
+	int idx = (int)SOLIS_AS_NUMBER(val);
+
+	return idx;
+}
+
+static void namedVariable(Token name, bool canAssign)
+{
+	// resolve the global
+	int arg = resolveGlobalVariable(name);
+	if ( arg == -1)
+	{
+		error("Could not resolve global variable.");
+	}
+
+	// The arg is the index into the global table of globals in the VM now. 
+
+	// uint16_t arg = identifierConstant(&name);
+
+	if (match(TOKEN_EQ) && canAssign) 
 	{
 		expression();
 		emitByte(OP_SET_GLOBAL);
-		emitShort(arg);
+		emitShort((uint16_t)arg);
 	}
 	else 
 	{
 		emitByte(OP_GET_GLOBAL);
-		emitShort(arg);
+		emitShort((uint16_t)arg);
 	}
 
 
 }
 
-static void variable()
+static void variable(bool canAssign)
 {
-	namedVariable(parser.previous);
+	namedVariable(parser.previous, canAssign);
+}
+
+static void block()
+{
+	while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) 
+	{
+		declaration();
+	}
+
+	consume(TOKEN_RIGHT_BRACE, "Expected '}' after block.");
 }
 
 static void expression()
@@ -490,12 +562,17 @@ static void parsePrecedence(Precedence precedence)
 		return;
 	}
 
-	prefixRule();
+	bool canAssign = precedence <= PREC_ASSIGNMENT;
+	prefixRule(canAssign);
 
 	while (precedence <= getRule(parser.current.type)->precedence) {
 		advance();
 		ParseFn infixRule = getRule(parser.previous.type)->infix;
-		infixRule();
+		infixRule(canAssign);
+	}
+
+	if (canAssign && match(TOKEN_EQ)) {
+		error("Invalid assignment target.");
 	}
 }
 
@@ -511,7 +588,8 @@ bool solisCompile(VM* vm, const char* source, Chunk* chunk)
 
 	// Setup the compiler
 
-	initCompiler(vm, chunk);
+	Compiler compiler;
+	initCompiler(vm, chunk, &compiler);
 
 	TokenList tokenList = solisScanSource(source);
 
@@ -525,7 +603,7 @@ bool solisCompile(VM* vm, const char* source, Chunk* chunk)
 	}
 
 
-	endCompiler();
+	endCompiler(&compiler);
 	solisFreeTokenList(&tokenList);
 	return !parser.hadError;
 }

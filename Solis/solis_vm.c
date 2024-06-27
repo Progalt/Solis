@@ -14,7 +14,8 @@ void solisInitVM(VM* vm)
 	vm->objects = NULL;
 
 	solisInitHashTable(&vm->strings);
-	solisInitHashTable(&vm->globals);
+	solisInitHashTable(&vm->globalMap);
+	solisValueBufferInit(&vm->globals);
 }
 
 
@@ -32,7 +33,8 @@ static void freeObjects(VM* vm)
 void solisFreeVM(VM* vm)
 {
 	solisFreeHashTable(&vm->strings);
-	solisFreeHashTable(&vm->globals);
+	solisFreeHashTable(&vm->globalMap);
+	solisValueBufferClear(&vm->globals);
 	freeObjects(vm);
 	
 }
@@ -231,34 +233,29 @@ do {																		\
 	CASE_CODE(DEFINE_GLOBAL) :
 	{
 		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
-		solisHashTableInsert(&vm->globals, name, PEEK());
+
+		int idx = vm->globals.count;
+		solisHashTableInsert(&vm->globalMap, name, SOLIS_NUMERIC_VALUE((double)idx));
+
+		solisValueBufferWrite(&vm->globals, PEEK());
 		POP();
 
 		DISPATCH();
 	}
 	CASE_CODE(SET_GLOBAL) :
 	{
-		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
-		if (solisHashTableInsert(&vm->globals, name, PEEK()))
-		{
-			solisHashTableDelete(&vm->globals, name);
-
-			return INTERPRET_RUNTIME_ERROR;
-		}
-		
+		// Get index
+		uint16_t idx = READ_SHORT();
+		vm->globals.data[idx] = PEEK();
 
 		DISPATCH();
 	}
 	CASE_CODE(GET_GLOBAL) :
 	{
-		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+		uint16_t idx = READ_SHORT();
 
-		Value value;
-		if (!solisHashTableGet(&vm->globals, name, &value)) {
-			
-			return INTERPRET_RUNTIME_ERROR;
-		}
-		PUSH(value);
+		PUSH(vm->globals.data[idx]);
+
 
 		DISPATCH();
 	}
