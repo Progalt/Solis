@@ -555,6 +555,8 @@ InterpretResult solisInterpret(VM* vm, const char* source)
 	{
 		return INTERPRET_COMPILE_ERROR;
 	}
+
+	// solisDisassembleChunk(&function->chunk, "Script");
 	
 	solisPush(vm, SOLIS_OBJECT_VALUE(function));
 

@@ -1,2 +1,3 @@
 
-printNative();
+
+println("Hello World");
