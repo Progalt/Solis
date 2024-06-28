@@ -64,13 +64,19 @@ static void statement();
 static void expressionStatement();
 static void variableDeclaration();
 static void constDeclaration();
+static void functionDeclaration();
 
 static void ifStatement();
 static void whileStatement();
 static void breakStatement();
+static void returnStatement();
+
+static void function(FunctionType type);
 
 static void and_(bool canAssign);
 static void or_(bool canAssign);
+
+static void call(bool canAssign);
 
 static void variable(bool canAssign);
 
@@ -80,7 +86,7 @@ static void parsePrecedence(Precedence precedence);
 static ParseRule* getRule(TokenType type);
 
 ParseRule rules[] = {
-  [TOKEN_LEFT_PAREN] = {grouping, NULL,   PREC_NONE},
+  [TOKEN_LEFT_PAREN] = {grouping, call,   PREC_CALL},
   [TOKEN_RIGHT_PAREN] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_LEFT_BRACE] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_RIGHT_BRACE] = {NULL,     NULL,   PREC_NONE},
@@ -278,6 +284,7 @@ static void emitShort(uint16_t s)
 }
 
 static void emitReturn() {
+	emitByte(OP_NIL);
 	emitByte(OP_RETURN);
 }
 
@@ -287,11 +294,14 @@ static void initCompiler(VM* vm, Compiler* compiler, FunctionType type)
 	compiler->type = type;
 	compiler->scopeDepth = 0;
 	compiler->localCount = 0;
+	compiler->parent = NULL;
 	
 
 	compiler->vm = vm;
 	compiler->globalCount = 0;
 	compiler->withinLoop = false;
+
+	compiler->parent = current;
 
 	compiler->function = solisNewFunction(vm);
 
@@ -300,6 +310,12 @@ static void initCompiler(VM* vm, Compiler* compiler, FunctionType type)
 	solisInitHashTable(&compiler->globalTable);
 
 	current = compiler;
+
+	if (type != TYPE_SCRIPT) 
+	{
+		current->function->name = solisCopyString(vm, parser.previous.start,
+			parser.previous.length);
+	}
 
 	Local* local = &current->locals[current->localCount++];
 	local->depth = 0;
@@ -317,6 +333,7 @@ static ObjFunction* endCompiler(Compiler* compiler)
 
 	ObjFunction* function = current->function;
 
+	current = compiler->parent;
 	return function;
 }
 
@@ -444,7 +461,11 @@ static void string(bool canAssign) {
 
 static void declaration()
 {
-	if (match(TOKEN_VAR))
+	if (match(TOKEN_FUNCTION))
+	{
+		functionDeclaration();
+	}
+	else if (match(TOKEN_VAR))
 	{
 		variableDeclaration();
 	}
@@ -476,6 +497,10 @@ static void statement()
 	else if (match(TOKEN_BREAK))
 	{
 		breakStatement();
+	}
+	else if (match(TOKEN_RETURN))
+	{
+		returnStatement();
 	}
 	else if (match(TOKEN_END))
 	{
@@ -556,12 +581,17 @@ static uint16_t parseVariable(const char* errorMessage) {
 
 static void markInitialized()
 {
+	if (current->scopeDepth == 0) 
+		return;
+
 	current->locals[current->localCount - 1].depth =
 		current->scopeDepth;
 }
 
 static void defineVariable(uint16_t global) 
 {
+
+
 	// If we are in a local scope return 
 	if (current->scopeDepth > 0) {
 		markInitialized();
@@ -621,11 +651,27 @@ static int resolveGlobalVariable(Compiler* compiler, Token name)
 	ObjString* nameStr = solisCopyString(compiler->vm, name.start, name.length);
 
 	Value val;
-	if (!solisHashTableGet(&compiler->globalTable, nameStr, &val))
+	bool found = false;
+	Compiler* globalCompiler = compiler;
+
+	// NOTE: Keep an eye on this
+
+	// Loop and find the compiler compiling the script
+	// This compiler won't have a parent 
+	while (true)
 	{
-		// Not found so return -1
+		if (globalCompiler->parent == NULL)
+			break;
+
+		globalCompiler = compiler->parent;
+	}
+
+
+	if (!solisHashTableGet(&globalCompiler->globalTable, nameStr, &val))
+	{
 		return -1;
 	}
+	
 
 	// We should have an index here
 
@@ -840,6 +886,63 @@ static void breakStatement()
 	solisIntBufferWrite(&current->breakStatements, exitJump);
 }
 
+static void functionDeclaration()
+{
+	uint16_t global = parseVariable("Expect function name.");
+	markInitialized();
+	function(TYPE_FUNCTION);
+	defineVariable(global);
+}
+
+static void function(FunctionType type)
+{
+	Compiler compiler;
+	initCompiler(current->vm, &compiler, type);
+
+	beginScope();
+
+	consume(TOKEN_LEFT_PAREN, "Expected '(' after function name.");
+	if (!check(TOKEN_RIGHT_PAREN)) 
+	{
+		do 
+		{
+			current->function->arity++;
+			if (current->function->arity > 255) 
+			{
+				errorAtCurrent("Can't have more than 255 parameters.");
+			}
+			uint16_t constant = parseVariable("Expect parameter name.");
+			defineVariable(constant);
+		} while (match(TOKEN_COMMA));
+	}
+	consume(TOKEN_RIGHT_PAREN, "Expected ')'  after function parameters.");
+
+	block();
+
+	ObjFunction* function = endCompiler(&compiler);
+
+	emitConstant(SOLIS_OBJECT_VALUE(function));
+}
+
+static void returnStatement()
+{
+	if (current->type == TYPE_SCRIPT) 
+	{
+		error("Can't return from top-level code.");
+	}
+
+	if (match(TOKEN_SEMICOLON)) 
+	{
+		emitReturn();
+	}
+	else 
+	{
+		expression();
+		consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
+		emitByte(OP_RETURN);
+	}
+}
+
 static void and_(bool canAssign)
 {
 	int endJump = emitJump(OP_JUMP_IF_FALSE);
@@ -860,6 +963,33 @@ static void or_(bool canAssign)
 
 	parsePrecedence(PREC_OR);
 	patchJump(endJump);
+}
+
+static uint8_t argumentList() 
+{
+	uint8_t argCount = 0;
+	if (!check(TOKEN_RIGHT_PAREN)) 
+	{
+		do 
+		{
+			expression();
+
+			if (argCount == 255) 
+			{
+				error("Can't have more than 255 arguments.");
+			}
+
+			argCount++;
+		} while (match(TOKEN_COMMA));
+	}
+	consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+	return argCount;
+}
+
+static void call(bool canAssign)
+{
+	uint8_t argCount = argumentList();
+	emitBytes(OP_CALL, argCount);
 }
 
 static void expression()

@@ -53,7 +53,7 @@ static Keyword keywords[] =
 
 	{ "return", 6, TOKEN_FALSE },
 
-	{ "fn", 2, TOKEN_FUNCTION }, 
+	{ "function", 8, TOKEN_FUNCTION }, 
 
 	{ NULL, 0, TOKEN_EOF }
 };

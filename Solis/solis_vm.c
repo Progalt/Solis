@@ -9,6 +9,8 @@
 
 #define SOLIS_DEBUG_TRACE_EXECUTION
 
+static bool callValue(VM* vm, Value callee, int argCount);
+
 void solisInitVM(VM* vm)
 {
 	vm->sp = vm->stack;
@@ -50,16 +52,17 @@ static InterpretResult run(VM* vm)
 
 	// store the ip here
 	// This helps with pointer indirection
-	uint8_t* ip = NULL;
-	ObjFunction* function = NULL;
+	uint8_t* ip = frame->ip;
+	ObjFunction* function = frame->function;
 
 
 #define STORE_FRAME() frame->ip = ip
 
 #define LOAD_FRAME()			\
+	STORE_FRAME();				\
+	frame = &vm->frames[vm->frameCount - 1]; \
 	ip = frame->ip;				\
 	function = frame->function;	\
-	frame = &vm->frames[vm->frameCount - 1];
 
 	LOAD_FRAME();
 
@@ -301,11 +304,41 @@ do {																		\
 
 		DISPATCH();
 	}
-	CASE_CODE(RETURN) :
+	CASE_CODE(CALL) :
+	{
 
+		int argCount = READ_BYTE();
+		
+		STORE_FRAME();
+
+		if (!callValue(vm, *(vm->sp - 1 - argCount), argCount))
+		{
+			return INTERPRET_RUNTIME_ERROR;
+		}
+
+		LOAD_FRAME();
+
+		DISPATCH();
+	}
+	CASE_CODE(RETURN) :
+	{
 		Value result = POP();
 
-		return INTERPRET_ALL_GOOD;
+		vm->frameCount--;
+
+		if (vm->frameCount == 0)
+		{
+			POP();
+			return INTERPRET_ALL_GOOD;
+		}
+
+		vm->sp = frame->slots;
+		PUSH(result);
+
+		LOAD_FRAME();
+
+		DISPATCH();
+	}
 	}
 
 
@@ -321,6 +354,38 @@ do {																		\
 #undef READ_CONSTANT_LONG
 }
 
+static bool call(VM* vm, ObjFunction* function, int argCount) 
+{
+	if (argCount != function->arity)
+	{
+		// TODO: Better errors
+		return false;
+	}
+
+	if (vm->frameCount == FRAMES_MAX)
+	{
+		// TODO: Same better errors
+		return false;
+	}
+
+	CallFrame* frame = &vm->frames[vm->frameCount++];
+	frame->function = function;
+	frame->ip = function->chunk.code;
+	frame->slots = vm->sp - argCount - 1;
+	return true;
+}
+
+static bool callValue(VM* vm, Value callee, int argCount) {
+	if (SOLIS_AS_OBJECT(callee)) {
+		switch (SOLIS_AS_OBJECT(callee)->type) {
+		case OBJ_FUNCTION:
+			return call(vm, SOLIS_AS_FUNCTION(callee), argCount);
+		default:
+			break; // Non-callable object type.
+		}
+	}
+	return false;
+}
 
 InterpretResult solisInterpret(VM* vm, const char* source)
 {
