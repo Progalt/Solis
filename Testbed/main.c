@@ -51,7 +51,7 @@ char* readFileIntoString(const char* filename) {
 int main(void) {
 
 
-    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/test.sol");
+    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/test.solis");
     if (fileContent == NULL) {
         printf("Failed to read file\n");
         return EXIT_FAILURE;

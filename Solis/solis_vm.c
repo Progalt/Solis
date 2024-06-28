@@ -137,8 +137,24 @@ do {																		\
 #define STACK_TRACE()
 #endif
 
-
+#define COMPUTED_GOTO
 #ifdef COMPUTED_GOTO
+
+	static void* dispatchTable[] = {
+#define OPCODE(name) &&code_##name,
+#include "solis_opcode.h"
+#undef OPCODE
+	};
+
+#define INTERPRET_LOOP DISPATCH();
+#define CASE_CODE(name) code_##name
+
+#define DISPATCH()                                                           \
+      do                                                                       \
+      {                                                                        \
+        STACK_TRACE();															\
+        goto *dispatchTable[instruction = READ_BYTE()];                  \
+      } while (false)
 
 #else 
 
