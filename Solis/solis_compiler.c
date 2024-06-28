@@ -14,6 +14,13 @@
 #include "solis_chunk.h"
 
 
+typedef struct Upvalue
+{
+	uint8_t index;
+	bool isLocal;
+} Upvalue;
+
+
 // Forward declare some functions
 
 SOLIS_DECLARE_BUFFER(Int, int);
@@ -21,6 +28,11 @@ SOLIS_DECLARE_BUFFER(Int, int);
 
 SOLIS_DEFINE_BUFFER(Int, int);
 
+
+
+SOLIS_DECLARE_BUFFER(Upvalue, Upvalue);
+
+SOLIS_DEFINE_BUFFER(Upvalue, Upvalue);
 
 
 typedef enum {
@@ -228,6 +240,7 @@ typedef struct
 {
 	Token name;
 	int depth;
+	bool isCaptured;
 } Local;
 
 
@@ -257,6 +270,8 @@ struct sCompiler
 
 	ObjFunction* function;
 	FunctionType type;
+
+	UpvalueBuffer upvalues;
 };
 
 Compiler* current = NULL;
@@ -309,6 +324,8 @@ static void initCompiler(VM* vm, Compiler* compiler, FunctionType type)
 
 	solisInitHashTable(&compiler->globalTable);
 
+	solisUpvalueBufferInit(&compiler->upvalues);
+
 	current = compiler;
 
 	if (type != TYPE_SCRIPT) 
@@ -321,6 +338,7 @@ static void initCompiler(VM* vm, Compiler* compiler, FunctionType type)
 	local->depth = 0;
 	local->name.start = "";
 	local->name.length = 0;
+	local->isCaptured = false; 
 
 }
 
@@ -329,6 +347,7 @@ static ObjFunction* endCompiler(Compiler* compiler)
 	emitReturn();
 
 	solisFreeHashTable(&compiler->globalTable);
+	// solisUpvalueBufferClear(&compiler->upvalues);
 	solisIntBufferClear(&compiler->breakStatements);
 
 	ObjFunction* function = current->function;
@@ -392,7 +411,13 @@ static void endScope()
 
 	while (current->localCount > 0 && current->locals[current->localCount - 1].depth > current->scopeDepth) 
 	{
-		emitByte(OP_POP);
+		if (current->locals[current->localCount - 1].isCaptured) 
+		{
+			emitByte(OP_CLOSE_UPVALUE);
+		}
+		else {
+			emitByte(OP_POP);
+		}
 		current->localCount--;
 	}
 }
@@ -480,12 +505,16 @@ static void declaration()
 
 static void statement()
 {
-	if (match(TOKEN_DO))
+	if (match(TOKEN_RETURN))
+	{
+		returnStatement();
+	}
+	else if (match(TOKEN_DO))
 	{
 		beginScope();
 		block();
 		endScope();
-		}
+	}
 	else if (match(TOKEN_IF))
 	{
 		ifStatement();
@@ -497,10 +526,6 @@ static void statement()
 	else if (match(TOKEN_BREAK))
 	{
 		breakStatement();
-	}
-	else if (match(TOKEN_RETURN))
-	{
-		returnStatement();
 	}
 	else if (match(TOKEN_END))
 	{
@@ -540,6 +565,7 @@ static void addLocal(Token name)
 	Local* local = &current->locals[current->localCount++];
 	local->name = name;
 	local->depth = -1;
+	local->isCaptured = false; 
 }
 
 static bool identifiersEqual(Token* a, Token* b) 
@@ -658,12 +684,9 @@ static int resolveGlobalVariable(Compiler* compiler, Token name)
 
 	// Loop and find the compiler compiling the script
 	// This compiler won't have a parent 
-	while (true)
+	while (globalCompiler->parent != NULL)
 	{
-		if (globalCompiler->parent == NULL)
-			break;
-
-		globalCompiler = compiler->parent;
+		globalCompiler = globalCompiler->parent;
 	}
 
 
@@ -699,6 +722,46 @@ static int resolveLocalVariable(Compiler* compiler, Token* name)
 	return -1;
 }
 
+static int addUpvalue(Compiler* compiler, uint8_t index, bool isLocal) 
+{
+	int upvalueCount = compiler->function->upvalueCount;
+	for (int i = 0; i < upvalueCount; i++)
+	{
+		Upvalue* upvalue = &compiler->upvalues.data[i];
+		if (upvalue->index == index && upvalue->isLocal == isLocal) 
+			return i;
+	}
+
+	Upvalue upvalue;
+	upvalue.index = index;
+	upvalue.isLocal = isLocal;
+
+	solisUpvalueBufferWrite(&compiler->upvalues, upvalue);
+
+	return compiler->function->upvalueCount++;
+}
+
+static int resolveUpvalue(Compiler* compiler, Token* name) 
+{
+	if (compiler->parent == NULL) return -1;
+
+	int local = resolveLocalVariable(compiler->parent, name);
+	if (local != -1) 
+	{
+		compiler->parent->locals[local].isCaptured = true;
+		return addUpvalue(compiler, (uint8_t)local, true);
+	}
+
+	int upvalue = resolveUpvalue(compiler->parent, name);
+	if (upvalue != -1) 
+	{
+		return addUpvalue(compiler, (uint8_t)upvalue, false);
+	}
+
+
+	return -1;
+}
+
 static void namedVariable(Token name, bool canAssign)
 {
 	uint8_t getOp, setOp;
@@ -707,6 +770,11 @@ static void namedVariable(Token name, bool canAssign)
 	{
 		getOp = OP_GET_LOCAL;
 		setOp = OP_SET_LOCAL;
+	}
+	else if ((arg = resolveUpvalue(current, &name)) != -1)
+	{
+		getOp = OP_GET_UPVALUE;
+		setOp = OP_SET_UPVALUE;
 	}
 	else
 	{
@@ -921,7 +989,23 @@ static void function(FunctionType type)
 
 	ObjFunction* function = endCompiler(&compiler);
 
-	emitConstant(SOLIS_OBJECT_VALUE(function));
+	// emitConstant(SOLIS_OBJECT_VALUE(function));
+
+	// TODO: Only emit a closure when its not in global scope 
+
+	emitByte(OP_CLOSURE);
+	emitShort(makeConstant(SOLIS_OBJECT_VALUE(function)));
+
+	// Handle the upvalues
+
+	for (int i = 0; i < function->upvalueCount; i++)
+	{
+		emitByte(compiler.upvalues.data[i].isLocal ? 1 : 0);
+		emitByte(compiler.upvalues.data[i].index);
+	}
+
+	// Free the upvalue memory 
+	solisUpvalueBufferClear(&compiler.upvalues);
 }
 
 static void returnStatement()

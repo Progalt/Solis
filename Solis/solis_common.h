@@ -17,6 +17,7 @@ typedef struct Object Object;
 typedef struct ObjFiber ObjFiber;
 typedef struct ObjFunction ObjFunction;
 typedef struct ObjString ObjString;
+typedef struct ObjClosure ObjClosure;
 
 typedef enum
 {
@@ -30,7 +31,9 @@ typedef enum
 typedef enum
 {
     OBJ_FUNCTION,
-    OBJ_STRING
+    OBJ_STRING,
+    OBJ_CLOSURE,
+    OBJ_UPVALUE
 } ObjectType;
 
 

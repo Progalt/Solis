@@ -43,12 +43,39 @@ struct ObjFunction
 	Object obj;
 
 	int arity;
+	int upvalueCount;
 	Chunk chunk;
 	ObjString* name;
 };
 
+typedef struct ObjUpvalue {
+
+	Object obj;
+	Value* location;
+
+	Value closed;
+	struct ObjUpvalue* next;
+
+
+} ObjUpvalue;
+
 #define SOLIS_IS_FUNCTION(value) solisIsObjType(value, OBJ_FUNCTION)
 #define SOLIS_AS_FUNCTION(value) ((ObjFunction*)SOLIS_AS_OBJECT(value))
+
+struct ObjClosure
+{
+	Object obj;
+
+	ObjFunction* function;
+
+	ObjUpvalue** upvalues;
+	int upvalueCount;
+};
+
+#define SOLIS_IS_CLOSURE(value) solisIsObjType(value, OBJ_CLOSURE)
+#define SOLIS_AS_CLOSURE(value) ((ObjClosure*)SOLIS_AS_OBJECT(value))
+
+
 
 /*
 	Returns the specified value is equal to the type
@@ -77,5 +104,9 @@ ObjString* solisConcatenateStrings(VM* vm, ObjString* a, ObjString* b);
 
 
 ObjFunction* solisNewFunction(VM* vm);
+
+ObjClosure* solisNewClosure(VM* vm, ObjFunction* function);
+
+ObjUpvalue* solisNewUpvalue(VM* vm, Value* slot);
 
 #endif // SOLIS_OBJECT_H

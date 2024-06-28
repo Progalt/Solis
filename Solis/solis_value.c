@@ -40,6 +40,12 @@ void solisPrintValueType(Value value)
 		case OBJ_FUNCTION:
 			printf("Function");
 			break;
+		case OBJ_CLOSURE:
+			printf("Closure");
+			break;
+		case OBJ_UPVALUE:
+			printf("Upvalue");
+			break;
 		default:
 			printf("Unknown Object type");
 			break;
@@ -86,6 +92,19 @@ void solisPrintValue(Value value)
 			{
 				printf("<fn %s>", SOLIS_AS_FUNCTION(value)->name->chars);
 			}
+			break;
+		case OBJ_CLOSURE:
+			if (SOLIS_AS_CLOSURE(value)->function->name)
+			{
+				printf("<cl %s>", SOLIS_AS_CLOSURE(value)->function->name->chars);
+			}
+			else
+			{
+				printf("<script>");
+			}
+			break;
+		case OBJ_UPVALUE:
+			printf("upvalue");
 			break;
 		default:
 			printf("Unknown Object type");

@@ -33,6 +33,19 @@ void solisFreeObject(VM* vm, Object* object)
 		SOLIS_FREE(ObjFunction, object);
 		break;
 	}
+	case OBJ_CLOSURE:
+	{
+		ObjClosure* closure = (ObjClosure*)object;
+		
+		SOLIS_FREE_ARRAY(ObjUpvalue*, closure->upvalues, closure->upvalueCount);
+		SOLIS_FREE(ObjClosure, object);
+		break;
+	}
+	case OBJ_UPVALUE: 
+	{
+		SOLIS_FREE(ObjUpvalue, object);
+		break;
+	}
 	}
 }
 
@@ -102,7 +115,39 @@ ObjFunction* solisNewFunction(VM* vm)
 {
 	ObjFunction* function = ALLOCATE_OBJ(vm, ObjFunction, OBJ_FUNCTION);
 	function->arity = 0;
+	function->upvalueCount = 0;
 	function->name = NULL;
 	solisInitChunk(&function->chunk);
 	return function;
+}
+
+
+ObjClosure* solisNewClosure(VM* vm, ObjFunction* function)
+{
+	ObjClosure* closure = ALLOCATE_OBJ(vm, ObjClosure, OBJ_CLOSURE);
+	closure->function = function;
+
+	ObjUpvalue** upvalues = SOLIS_ALLOCATE(ObjUpvalue*,
+		function->upvalueCount);
+
+	for (int i = 0; i < function->upvalueCount; i++) 
+	{
+		upvalues[i] = NULL;
+	}
+
+	closure->upvalues = upvalues;
+	closure->upvalueCount = function->upvalueCount;
+
+	return closure;
+}
+
+ObjUpvalue* solisNewUpvalue(VM* vm, Value* slot)
+{
+	ObjUpvalue* upvalue = ALLOCATE_OBJ(vm, ObjUpvalue, OBJ_UPVALUE);
+
+	upvalue->location = slot;
+	upvalue->next = NULL;
+	upvalue->closed = SOLIS_NULL_VALUE();
+
+	return upvalue;
 }

@@ -2,6 +2,9 @@
 #include "solis_chunk.h"
 
 #include <stdio.h>
+#include "solis_object.h"
+
+
 
 
 SOLIS_DEFINE_BUFFER(Value, Value);
@@ -178,6 +181,31 @@ int solisDisassembleInstruction(Chunk* chunk, int offset)
 		return jumpInstruction("OP_LOOP", -1, chunk, offset);
 	case OP_CALL:
 		return byteInstruction("OP_CALL", chunk, offset);
+	case OP_CLOSURE: {
+		offset++;
+		uint16_t constant = chunk->code[offset++] & 0xFF;
+		constant |= chunk->code[offset++] & 0xFF;
+		printf("%-16s %4d ", "OP_CLOSURE", constant);
+		solisPrintValue(chunk->constants.data[constant]);
+		printf("\n");
+
+		ObjFunction* function = SOLIS_AS_FUNCTION(
+			chunk->constants.data[constant]);
+		for (int j = 0; j < function->upvalueCount; j++) {
+			int isLocal = chunk->code[offset++];
+			int index = chunk->code[offset++];
+			printf("%04d      |                     %s %d\n",
+				offset - 2, isLocal ? "local" : "upvalue", index);
+		}
+
+		return offset;
+	}
+	case OP_GET_UPVALUE:
+		return byteInstruction("OP_GET_UPVALUE", chunk, offset);
+	case OP_SET_UPVALUE:
+		return byteInstruction("OP_SET_UPVALUE", chunk, offset);
+	case OP_CLOSE_UPVALUE:
+		return simpleInstruction("OP_CLOSE_UPVALUE", offset);
 	default:
 		printf("Unknown opcode %d\n", instruction);
 		return offset + 1;

@@ -2,8 +2,17 @@
 var x = 0;
 
 function helloWorld()
-	var y = 10; 
-	x = y; 
+	var y = "Hello World"; 
+	
+	function inner() 
+		x = y;
+	end
+
+	return inner;
 end
 
-helloWorld();
+var f = helloWorld();
+
+f();
+
+

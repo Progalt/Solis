@@ -16,6 +16,7 @@ void solisInitVM(VM* vm)
 	vm->sp = vm->stack;
 	vm->objects = NULL;
 
+	vm->openUpvalues = NULL;
 	vm->frameCount = 0;
 
 	solisInitHashTable(&vm->strings);
@@ -44,6 +45,46 @@ void solisFreeVM(VM* vm)
 	
 }
 
+static ObjUpvalue* captureUpvalue(VM* vm, Value* local) 
+{
+	ObjUpvalue* prevUpvalue = NULL;
+	ObjUpvalue* upvalue = vm->openUpvalues;
+	while (upvalue != NULL && upvalue->location > local) 
+	{
+		prevUpvalue = upvalue;
+		upvalue = upvalue->next;
+	}
+
+	if (upvalue != NULL && upvalue->location == local) 
+	{
+		return upvalue;
+	}
+
+	ObjUpvalue* createdUpvalue = solisNewUpvalue(vm, local);
+
+	createdUpvalue->next = upvalue;
+
+	if (prevUpvalue == NULL) 
+	{
+		vm->openUpvalues = createdUpvalue;
+	}
+	else {
+		prevUpvalue->next = createdUpvalue;
+	}
+
+	return createdUpvalue;
+}
+
+static void closeUpvalues(VM* vm, Value* last) 
+{
+	while (vm->openUpvalues != NULL &&
+		vm->openUpvalues->location >= last) {
+		ObjUpvalue* upvalue = vm->openUpvalues;
+		upvalue->closed = *upvalue->location;
+		upvalue->location = &upvalue->closed;
+		vm->openUpvalues = upvalue->next;
+	}
+}
 
 static InterpretResult run(VM* vm)
 {
@@ -53,7 +94,7 @@ static InterpretResult run(VM* vm)
 	// store the ip here
 	// This helps with pointer indirection
 	uint8_t* ip = frame->ip;
-	ObjFunction* function = frame->function;
+	ObjClosure* closure = frame->closure;
 
 
 #define STORE_FRAME() frame->ip = ip
@@ -62,7 +103,7 @@ static InterpretResult run(VM* vm)
 	STORE_FRAME();				\
 	frame = &vm->frames[vm->frameCount - 1]; \
 	ip = frame->ip;				\
-	function = frame->function;	\
+	closure = frame->closure;	\
 
 	LOAD_FRAME();
 
@@ -71,8 +112,8 @@ static InterpretResult run(VM* vm)
 	// Helper macros to read instructions or constants
 #define READ_BYTE() (*ip++)
 #define READ_SHORT() (ip+=2, (uint16_t)((ip[-2] << 8) | ip[-1]))
-#define READ_CONSTANT() (function->chunk.constants.data[READ_BYTE()])
-#define READ_CONSTANT_LONG() (function->chunk.constants.data[READ_SHORT()])
+#define READ_CONSTANT() (closure->function->chunk.constants.data[READ_BYTE()])
+#define READ_CONSTANT_LONG() (closure->function->chunk.constants.data[READ_SHORT()])
 
 #define PUSH(val) (*vm->sp++ = val)
 #define POP() (*(--vm->sp))
@@ -89,7 +130,7 @@ do {																		\
 		printf(" ]");														\
 	}																		\
 	printf("\n");															\
-	solisDisassembleInstruction(&function->chunk, (int)(ip - function->chunk.code));	\
+	solisDisassembleInstruction(&closure->function->chunk, (int)(ip - closure->function->chunk.code));	\
 } while (false)
 
 #else 
@@ -282,6 +323,29 @@ do {																		\
 		PUSH(frame->slots[READ_SHORT()]);
 		DISPATCH();
 	}
+	CASE_CODE(GET_UPVALUE) :
+	{
+		uint16_t slot = READ_SHORT();
+
+		PUSH(*frame->closure->upvalues[slot]->location);
+
+		DISPATCH();
+	}
+	CASE_CODE(SET_UPVALUE) :
+	{
+		uint16_t slot = READ_SHORT();
+		*frame->closure->upvalues[slot]->location = PEEK();
+
+		DISPATCH();
+	}
+	CASE_CODE(CLOSE_UPVALUE) :
+	{
+
+		closeUpvalues(vm, vm->sp - 1);
+		POP();
+
+		DISPATCH();
+	}
 	CASE_CODE(JUMP_IF_FALSE) :
 	{
 		uint16_t offset = READ_SHORT();
@@ -304,6 +368,32 @@ do {																		\
 
 		DISPATCH();
 	}
+	CASE_CODE(CLOSURE) :
+	{
+		Value obj = READ_CONSTANT_LONG();
+		ObjFunction* function = SOLIS_AS_FUNCTION(obj);
+		ObjClosure* closure = solisNewClosure(vm, function);
+
+		PUSH(SOLIS_OBJECT_VALUE(closure));
+
+		for (int i = 0; i < closure->upvalueCount; i++)
+		{
+			uint8_t isLocal = READ_BYTE();
+			uint8_t index = READ_BYTE();
+
+			if (isLocal) 
+			{
+				closure->upvalues[i] =
+					captureUpvalue(vm, frame->slots + index);
+			}
+			else 
+			{
+				closure->upvalues[i] = frame->closure->upvalues[index];
+			}
+		}
+
+		DISPATCH();
+	}
 	CASE_CODE(CALL) :
 	{
 
@@ -323,7 +413,7 @@ do {																		\
 	CASE_CODE(RETURN) :
 	{
 		Value result = POP();
-
+		closeUpvalues(vm, frame->slots);
 		vm->frameCount--;
 
 		if (vm->frameCount == 0)
@@ -356,7 +446,30 @@ do {																		\
 
 static bool call(VM* vm, ObjFunction* function, int argCount) 
 {
-	if (argCount != function->arity)
+
+	assert(false);
+	//if (argCount != function->arity)
+	//{
+	//	// TODO: Better errors
+	//	return false;
+	//}
+
+	//if (vm->frameCount == FRAMES_MAX)
+	//{
+	//	// TODO: Same better errors
+	//	return false;
+	//}
+
+	//CallFrame* frame = &vm->frames[vm->frameCount++];
+	//frame->function = function;
+	//frame->ip = function->chunk.code;
+	//frame->slots = vm->sp - argCount - 1;
+	//return true;
+}
+
+static bool callClosure(VM* vm, ObjClosure* closure, int argCount)
+{
+	if (argCount != closure->function->arity)
 	{
 		// TODO: Better errors
 		return false;
@@ -369,8 +482,8 @@ static bool call(VM* vm, ObjFunction* function, int argCount)
 	}
 
 	CallFrame* frame = &vm->frames[vm->frameCount++];
-	frame->function = function;
-	frame->ip = function->chunk.code;
+	frame->closure = closure;
+	frame->ip = closure->function->chunk.code;
 	frame->slots = vm->sp - argCount - 1;
 	return true;
 }
@@ -380,6 +493,8 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 		switch (SOLIS_AS_OBJECT(callee)->type) {
 		case OBJ_FUNCTION:
 			return call(vm, SOLIS_AS_FUNCTION(callee), argCount);
+		case OBJ_CLOSURE:
+			return callClosure(vm, SOLIS_AS_CLOSURE(callee), argCount);
 		default:
 			break; // Non-callable object type.
 		}
@@ -400,10 +515,10 @@ InterpretResult solisInterpret(VM* vm, const char* source)
 	
 	solisPush(vm, SOLIS_OBJECT_VALUE(function));
 
-	CallFrame* frame = &vm->frames[vm->frameCount++];
-	frame->function = function;
-	frame->ip = function->chunk.code;
-	frame->slots = vm->stack;
+	ObjClosure* closure = solisNewClosure(vm, function);
+	solisPop(vm);
+	solisPush(vm, SOLIS_OBJECT_VALUE(closure));
+	callClosure(vm, closure, 0);
 	
 	InterpretResult result = run(vm);
 

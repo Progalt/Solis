@@ -19,7 +19,10 @@ typedef enum
 } InterpretResult;
 
 typedef struct {
-	ObjFunction* function;
+
+	//ObjFunction* function;
+	ObjClosure* closure;
+
 	uint8_t* ip;
 	Value* slots;
 } CallFrame;
@@ -45,6 +48,8 @@ struct VM
 	HashTable globalMap;
 
 	ValueBuffer globals;
+
+	ObjUpvalue* openUpvalues;
 };
 
 

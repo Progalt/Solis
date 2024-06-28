@@ -51,7 +51,7 @@ static Keyword keywords[] =
 	{ "true", 4, TOKEN_TRUE }, 
 	{ "false", 5, TOKEN_FALSE },
 
-	{ "return", 6, TOKEN_FALSE },
+	{ "return", 6, TOKEN_RETURN },
 
 	{ "function", 8, TOKEN_FUNCTION }, 
 
