@@ -41,6 +41,11 @@ void solisFreeObject(VM* vm, Object* object)
 		SOLIS_FREE(ObjClosure, object);
 		break;
 	}
+	case OBJ_NATIVE_FUNCTION:
+	{
+		SOLIS_FREE(ObjNative, object);
+		break;
+	}
 	case OBJ_UPVALUE: 
 	{
 		SOLIS_FREE(ObjUpvalue, object);
@@ -150,4 +155,14 @@ ObjUpvalue* solisNewUpvalue(VM* vm, Value* slot)
 	upvalue->closed = SOLIS_NULL_VALUE();
 
 	return upvalue;
+}
+
+ObjNative* solisNewNativeFunction(VM* vm, SolisNativeSignature nativeFunc)
+{
+	ObjNative* native = ALLOCATE_OBJ(vm, ObjNative, OBJ_NATIVE_FUNCTION);
+
+	native->nativeFunction = nativeFunc;
+	native->arity = 0;
+
+	return native;
 }

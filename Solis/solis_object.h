@@ -6,6 +6,8 @@
 
 #include "solis_chunk.h"
 
+#include "solis_interface.h"
+
 struct Object
 {
 	ObjectType type;
@@ -75,7 +77,15 @@ struct ObjClosure
 #define SOLIS_IS_CLOSURE(value) solisIsObjType(value, OBJ_CLOSURE)
 #define SOLIS_AS_CLOSURE(value) ((ObjClosure*)SOLIS_AS_OBJECT(value))
 
+struct ObjNative
+{
+	Object obj;
+	SolisNativeSignature nativeFunction;
+	int arity;
+};
 
+#define SOLIS_IS_NATIVE(value) solisIsObjType(value, OBJ_NATIVE_FUNCTION)
+#define SOLIS_AS_NATIVE(value) ((ObjNative*)SOLIS_AS_OBJECT(value))
 
 /*
 	Returns the specified value is equal to the type
@@ -108,5 +118,7 @@ ObjFunction* solisNewFunction(VM* vm);
 ObjClosure* solisNewClosure(VM* vm, ObjFunction* function);
 
 ObjUpvalue* solisNewUpvalue(VM* vm, Value* slot);
+
+ObjNative* solisNewNativeFunction(VM* vm, SolisNativeSignature nativeFunc);
 
 #endif // SOLIS_OBJECT_H

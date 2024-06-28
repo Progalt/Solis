@@ -9,6 +9,12 @@
 
 #define UINT8_COUNT (UINT8_MAX + 1)
 
+#if defined(_MSC_VER) && !defined(__clang__)
+#define SOLIS_COMPUTED_GOTO 0
+#else 
+#define SOLIS_COMPUTED_GOTO 1 
+#endif
+
 // Some forward declares
 typedef struct VM VM;
 typedef struct Chunk Chunk;
@@ -18,6 +24,7 @@ typedef struct ObjFiber ObjFiber;
 typedef struct ObjFunction ObjFunction;
 typedef struct ObjString ObjString;
 typedef struct ObjClosure ObjClosure;
+typedef struct ObjNative ObjNative;
 
 typedef enum
 {
@@ -33,7 +40,8 @@ typedef enum
     OBJ_FUNCTION,
     OBJ_STRING,
     OBJ_CLOSURE,
-    OBJ_UPVALUE
+    OBJ_UPVALUE,
+    OBJ_NATIVE_FUNCTION, 
 } ObjectType;
 
 

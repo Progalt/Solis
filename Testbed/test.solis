@@ -1,6 +1,2 @@
 
-var val = 10;
-
-val = testValue + testValue2;
-
-val = val ** 2;
+printNative();

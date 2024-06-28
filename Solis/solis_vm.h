@@ -50,6 +50,9 @@ struct VM
 	ValueBuffer globals;
 
 	ObjUpvalue* openUpvalues;
+
+	// This method of function calling is stolen from wren... :) 
+	Value* apiStack;
 };
 
 
@@ -97,6 +100,8 @@ Value solisGetGlobal(VM* vm, const char* name);
 	Checks if a global of name exists 
 */
 bool solisGlobalExists(VM* vm, const char* name);
+
+void solisPushGlobalCFunction(VM* vm, const char* name, SolisNativeSignature func, int arity);
 
 /*
 	Returns if a value is false -> its false if its null or a bool and false.

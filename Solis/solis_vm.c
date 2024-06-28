@@ -20,6 +20,8 @@ void solisInitVM(VM* vm)
 	vm->openUpvalues = NULL;
 	vm->frameCount = 0;
 
+	vm->apiStack = NULL;
+
 	solisInitHashTable(&vm->strings);
 	solisInitHashTable(&vm->globalMap);
 	solisValueBufferInit(&vm->globals);
@@ -138,8 +140,8 @@ do {																		\
 #define STACK_TRACE()
 #endif
 
-#define COMPUTED_GOTO
-#ifdef COMPUTED_GOTO
+
+#if SOLIS_COMPUTED_GOTO
 
 	static void* dispatchTable[] = {
 #define OPCODE(name) &&code_##name,
@@ -505,6 +507,24 @@ static bool callClosure(VM* vm, ObjClosure* closure, int argCount)
 	return true;
 }
 
+static bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs)
+{
+	if (vm->apiStack != NULL)
+	{
+		return false;
+	}
+
+	vm->apiStack = vm->sp - numArgs;
+
+	func(vm);
+
+	vm->sp = vm->apiStack + 1;
+
+	vm->apiStack = NULL;
+
+	return true;
+}
+
 static bool callValue(VM* vm, Value callee, int argCount) {
 	if (SOLIS_AS_OBJECT(callee)) {
 		switch (SOLIS_AS_OBJECT(callee)->type) {
@@ -512,6 +532,12 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 			return call(vm, SOLIS_AS_FUNCTION(callee), argCount);
 		case OBJ_CLOSURE:
 			return callClosure(vm, SOLIS_AS_CLOSURE(callee), argCount);
+		case OBJ_NATIVE_FUNCTION:
+		{
+			ObjNative* native = SOLIS_AS_NATIVE(callee);
+
+			return callNativeFunction(vm, native->nativeFunction, argCount);
+		}
 		default:
 			break; // Non-callable object type.
 		}
@@ -592,4 +618,12 @@ bool solisGlobalExists(VM* vm, const char* name)
 	}
 
 	return false;
+}
+
+void solisPushGlobalCFunction(VM* vm, const char* name, SolisNativeSignature func, int arity)
+{
+	ObjNative* nativeFunc = solisNewNativeFunction(vm, func);
+	nativeFunc->arity = arity;
+
+	solisPushGlobal(vm, name, SOLIS_OBJECT_VALUE(nativeFunc));
 }

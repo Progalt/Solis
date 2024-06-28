@@ -46,6 +46,9 @@ void solisPrintValueType(Value value)
 		case OBJ_UPVALUE:
 			printf("Upvalue");
 			break;
+		case OBJ_NATIVE_FUNCTION:
+			printf("Native Function");
+			break;
 		default:
 			printf("Unknown Object type");
 			break;
@@ -105,6 +108,9 @@ void solisPrintValue(Value value)
 			break;
 		case OBJ_UPVALUE:
 			printf("upvalue");
+			break;
+		case OBJ_NATIVE_FUNCTION:
+			printf("native");
 			break;
 		default:
 			printf("Unknown Object type");

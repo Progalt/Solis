@@ -5,6 +5,27 @@
 #include "solis_common.h"
 #include <stdbool.h>
 
+
+
+
+/*
+	Allocates a new object linked to a VM
+*/
+Object* solisAllocateObject(VM* vm, size_t size, ObjectType type);
+
+void solisFreeObject(VM* vm, Object* object);
+
+#define ALLOCATE_OBJ(vm, type, objectType) \
+    (type*)solisAllocateObject(vm, sizeof(type), objectType)
+
+#ifdef SOLIS_NAN_BOXING
+
+// TODO: Full nan boxing implentation 
+
+typedef uint64_t Value;
+
+#else 
+
 #define SOLIS_NUMERIC_VALUE(value) ((Value){ VALUE_NUMERIC, { .number = value } })
 #define SOLIS_BOOL_VALUE(value) ((Value){ value ? VALUE_TRUE : VALUE_FALSE })
 #define SOLIS_NULL_VALUE() ((Value){ VALUE_NULL })
@@ -21,20 +42,6 @@
 
 
 
-
-
-/*
-	Allocates a new object linked to a VM
-*/
-Object* solisAllocateObject(VM* vm, size_t size, ObjectType type);
-
-void solisFreeObject(VM* vm, Object* object);
-
-#define ALLOCATE_OBJ(vm, type, objectType) \
-    (type*)solisAllocateObject(vm, sizeof(type), objectType)
-
-
-
 typedef struct
 {
 
@@ -48,6 +55,7 @@ typedef struct
 
 } Value;
 
+#endif
 
 /*
 	Checks if the values are strictly the same. Is true if both objects pointers are equal not their contents.

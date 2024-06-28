@@ -48,6 +48,11 @@ char* readFileIntoString(const char* filename) {
     return fileContent;
 }
 
+void printNative(VM* vm)
+{
+    printf("Hello World\n");
+}
+
 int main(void) {
 
 
@@ -62,6 +67,8 @@ int main(void) {
 
     solisPushGlobal(&vm, "testValue", SOLIS_NUMERIC_VALUE(200));
     solisPushGlobal(&vm, "testValue2", SOLIS_NUMERIC_VALUE(400));
+
+    solisPushGlobalCFunction(&vm, "printNative", printNative, 0);
 
 	InterpretResult result = solisInterpret(&vm, fileContent);
 

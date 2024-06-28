@@ -5,7 +5,7 @@
 #include "solis_common.h"
 #include "solis_value.h"
 
-typedef void(NativeSignature(VM*));
+typedef void(*SolisNativeSignature)(VM*);
 
 
 double solisCheckNumber(VM* vm, int argIndex);
