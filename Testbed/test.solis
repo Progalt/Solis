@@ -1,18 +1,6 @@
 
-var x = 0;
+var val = 10;
 
-function helloWorld()
-	var y = "Hello World"; 
-	
-	function inner() 
-		x = y;
-	end
+val = testValue + testValue2;
 
-	return inner;
-end
-
-var f = helloWorld();
-
-f();
-
-
+val = val ** 2;

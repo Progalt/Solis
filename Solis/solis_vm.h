@@ -81,6 +81,22 @@ void solisPush(VM* vm, Value value);
 */
 Value solisPop(VM* vm);
 
+Value solisPeek(VM* vm, int offset);
+
+/*
+	Adds a global to the VM
+*/
+void solisPushGlobal(VM* vm, const char* name, Value value);
+
+/*
+	Returns global as it is currently within the VM 
+*/
+Value solisGetGlobal(VM* vm, const char* name);
+
+/*
+	Checks if a global of name exists 
+*/
+bool solisGlobalExists(VM* vm, const char* name);
 
 /*
 	Returns if a value is false -> its false if its null or a bool and false.

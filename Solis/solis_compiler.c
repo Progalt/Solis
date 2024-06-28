@@ -1108,7 +1108,7 @@ static ParseRule* getRule(TokenType type) {
 	return &rules[type];
 }
 
-ObjFunction* solisCompile(VM* vm, const char* source)
+ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int globalCount)
 {
 	parser.hadError = false;
 	parser.panicMode = false;
@@ -1118,6 +1118,13 @@ ObjFunction* solisCompile(VM* vm, const char* source)
 
 	Compiler compiler;
 	initCompiler(vm, &compiler, TYPE_SCRIPT);
+
+	// Copy our globals into the compiler globals
+	if (globals != NULL)
+	{
+		solisHashTableCopy(globals, &compiler.globalTable);
+		compiler.globalCount = globalCount;
+	}
 
 	TokenList tokenList = solisScanSource(source);
 

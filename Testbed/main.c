@@ -60,7 +60,14 @@ int main(void) {
 	VM vm;
 	solisInitVM(&vm);
 
+    solisPushGlobal(&vm, "testValue", SOLIS_NUMERIC_VALUE(200));
+    solisPushGlobal(&vm, "testValue2", SOLIS_NUMERIC_VALUE(400));
+
 	InterpretResult result = solisInterpret(&vm, fileContent);
+
+    double number = SOLIS_AS_NUMBER(solisGetGlobal(&vm, "val"));
+
+    printf("RETRIEVED FROM VM: %g", number);
 
 	solisFreeVM(&vm);
 

@@ -5,6 +5,7 @@
 #include "solis_compiler.h"
 
 
+#include <string.h>
 #include <math.h>
 
 #define SOLIS_DEBUG_TRACE_EXECUTION
@@ -522,7 +523,7 @@ InterpretResult solisInterpret(VM* vm, const char* source)
 {
 	
 
-	ObjFunction* function = solisCompile(vm, source);
+	ObjFunction* function = solisCompile(vm, source, &vm->globalMap, vm->globals.count);
 
 	if (function == NULL)
 	{
@@ -552,4 +553,43 @@ Value solisPop(VM* vm)
 {
 	vm->sp--;
 	return *vm->sp;
+}
+
+Value solisPeek(VM* vm, int offset)
+{
+	return (*(vm->sp - 1 - offset));
+}
+
+void solisPushGlobal(VM* vm, const char* name, Value value)
+{
+	solisValueBufferWrite(&vm->globals, value);
+
+	int idx = vm->globals.count - 1;
+
+	solisHashTableInsert(&vm->globalMap, solisCopyString(vm, name, strlen(name)), SOLIS_NUMERIC_VALUE((double)idx));
+}
+
+Value solisGetGlobal(VM* vm, const char* name)
+{
+	Value val;
+	if (solisHashTableGet(&vm->globalMap, solisCopyString(vm, name, strlen(name)), &val))
+	{
+		// We have a value
+		int idx = (int)SOLIS_AS_NUMBER(val);
+
+		return vm->globals.data[idx];
+	}
+
+	return SOLIS_NULL_VALUE();
+}
+
+bool solisGlobalExists(VM* vm, const char* name)
+{
+	Value val;
+	if (solisHashTableGet(&vm->globalMap, solisCopyString(vm, name, strlen(name)), &val))
+	{
+		return true;
+	}
+
+	return false;
 }
