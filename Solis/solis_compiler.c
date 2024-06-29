@@ -93,6 +93,8 @@ static void function(FunctionType type);
 static void and_(bool canAssign);
 static void or_(bool canAssign);
 
+static void dot(bool canAssign);
+
 static void call(bool canAssign);
 
 static void variable(bool canAssign);
@@ -108,7 +110,7 @@ ParseRule rules[] = {
   [TOKEN_LEFT_BRACE] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_RIGHT_BRACE] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_COMMA] = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_DOT] = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_DOT] = {NULL,     dot,   PREC_CALL},
   [TOKEN_MINUS] = {unary,    binary, PREC_TERM},
   [TOKEN_PLUS] = {NULL,     binary, PREC_TERM},
   [TOKEN_SEMICOLON] = {NULL,     NULL,   PREC_NONE},
@@ -1047,7 +1049,7 @@ static void enumDeclaration()
 		consume(TOKEN_IDENTIFIER, "Expected an identifier in enum.");
 		// printf("Enum: %.*s", parser.previous.length, parser.previous.start);
 
-		ObjString* iden = solisCopyString(current->vm, parser.previous.start + 1, parser.previous.length - 2);
+		ObjString* iden = solisCopyString(current->vm, parser.previous.start, parser.previous.length);
 
 		solisHashTableInsert(&enumObj->fields, iden, SOLIS_NUMERIC_VALUE((double)idx));
 
@@ -1136,6 +1138,23 @@ static void call(bool canAssign)
 	// emitBytes(OP_CALL, argCount);
 
 	emitByte(OP_CALL_0 + argCount);
+}
+
+static void dot(bool canAssign)
+{
+	consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
+	uint16_t name = identifierConstant(&parser.previous);
+
+	if (canAssign && match(TOKEN_EQ))
+	{
+		emitByte(OP_SET_FIELD);
+		emitShort(name);
+	}
+	else
+	{
+		emitByte(OP_GET_FIELD);
+		emitShort(name);
+	}
 }
 
 static void expression()

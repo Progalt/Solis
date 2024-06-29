@@ -61,6 +61,7 @@ void solisFreeObject(VM* vm, Object* object)
 	case OBJ_ENUM: {
 		solisFreeHashTable(&((ObjEnum*)object)->fields);
 		SOLIS_FREE(vm, ObjEnum, object);
+		break;
 	}
 	case OBJ_UPVALUE: 
 	{

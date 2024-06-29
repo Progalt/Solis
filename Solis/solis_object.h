@@ -95,6 +95,8 @@ struct ObjEnum
 	HashTable fields;
 };
 
+#define SOLIS_AS_ENUM(value) ((ObjEnum*)SOLIS_AS_OBJECT(value))
+
 /*
 	Returns the specified value is equal to the type
 	If the value is not an object it returns false.

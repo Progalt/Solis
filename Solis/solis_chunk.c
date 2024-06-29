@@ -240,6 +240,10 @@ int solisDisassembleInstruction(Chunk* chunk, int offset)
 		return byteInstruction("OP_SET_UPVALUE", chunk, offset);
 	case OP_CLOSE_UPVALUE:
 		return simpleInstruction("OP_CLOSE_UPVALUE", offset);
+	case OP_GET_FIELD:
+		return constantInstructionLong("OP_GET_FIELD", chunk, offset);
+	case OP_SET_FIELD:
+		return constantInstructionLong("OP_SET_FIELD", chunk, offset);
 	default:
 		printf("Unknown opcode %d\n", instruction);
 		return offset + 1;

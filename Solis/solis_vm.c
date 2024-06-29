@@ -7,7 +7,7 @@
 #include <string.h>
 #include <math.h>
 
-// #define SOLIS_DEBUG_TRACE_EXECUTION
+#define SOLIS_DEBUG_TRACE_EXECUTION
 
 static bool callValue(VM* vm, Value callee, int argCount);
 
@@ -458,10 +458,77 @@ do {																		\
 
 		if (!callValue(vm, *(vm->sp - 1 - argCount), argCount))
 		{
+			printf("Failed to call function\n");
 			return INTERPRET_RUNTIME_ERROR;
 		}
 
 		LOAD_FRAME();
+
+		DISPATCH();
+	}
+	CASE_CODE(GET_FIELD) :
+	{
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+
+
+		if (SOLIS_IS_OBJECT(PEEK()))
+		{
+			Object* object = SOLIS_AS_OBJECT(PEEK());
+			switch (object->type)
+			{
+			case OBJ_ENUM:
+			{
+				ObjEnum* enumObj = (ObjEnum*)object;
+				Value val;
+				if (!solisHashTableGet(&enumObj->fields, name, &val))
+				{
+					printf("Failed to get field from enum\n");
+					return INTERPRET_RUNTIME_ERROR;
+				}
+
+				// Pop the enum value off the stack
+				POP();
+				PUSH(val);
+
+				break;
+			}
+			default:
+				// Return an error
+				// We can't access the fields
+				printf("Object does not have fields\n");
+				return INTERPRET_RUNTIME_ERROR;
+				break;
+			}
+		}
+		
+
+		DISPATCH();
+	}
+	CASE_CODE(SET_FIELD) : 
+	{
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+
+
+		if (SOLIS_IS_OBJECT(PEEK()))
+		{
+			Object* object = SOLIS_AS_OBJECT(PEEK());
+			switch (object->type)
+			{
+			case OBJ_ENUM:
+			{
+				// Can't set an enum value
+				printf("Can't set enum value\n");
+				return INTERPRET_RUNTIME_ERROR;
+
+				break;
+			}
+			default:
+				// Return an error
+				// We can't access the fields
+				return INTERPRET_RUNTIME_ERROR;
+				break;
+			}
+		}
 
 		DISPATCH();
 	}

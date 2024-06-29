@@ -1,0 +1,13 @@
+
+
+enum State
+	Running,
+	Paused,
+	Exit
+end
+
+
+var currentState = State.Exit; 
+
+
+println(State.Exit);

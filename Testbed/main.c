@@ -71,7 +71,7 @@ void clockNative(VM* vm)
 int main(void) {
 
 
-    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/test.solis");
+    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/test2.solis");
     if (fileContent == NULL) 
     {
         printf("Failed to read file\n");
@@ -85,6 +85,11 @@ int main(void) {
     solisPushGlobalCFunction(&vm, "clock", clockNative, 0);
 
 	InterpretResult result = solisInterpret(&vm, fileContent);
+
+    if (result == INTERPRET_RUNTIME_ERROR)
+    {
+        printf("Interpreter runtime error. \n");
+    }
 
 	solisFreeVM(&vm);
 
