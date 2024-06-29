@@ -52,7 +52,7 @@ char* readFileIntoString(const char* filename) {
 
 void printNative(VM* vm)
 {
-    Value arg1 = vm->apiStack[1];
+    Value arg1 = solisGetArgument(vm, 0);
 
     solisPrintValue(arg1);
 

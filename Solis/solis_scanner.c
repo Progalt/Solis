@@ -246,7 +246,7 @@ Token solisScanToken()
 		else
 			return makeToken(TOKEN_MINUS);
 	}
-	case '/': return makeToken(TOKEN_SLASH);
+	case '/': return makeToken(match('/') ? TOKEN_SLASH_SLASH : TOKEN_SLASH);
 	case '*': return makeToken(match('*') ? TOKEN_STAR_STAR : TOKEN_STAR);
 	case '.': return makeToken(match('.') ? TOKEN_DOT_DOT : TOKEN_DOT);
 	case ',': return makeToken(TOKEN_COMMA);

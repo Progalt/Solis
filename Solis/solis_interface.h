@@ -12,6 +12,8 @@ double solisCheckNumber(VM* vm, int argIndex);
 
 const char* solisCheckString(VM* vm, int argIndex);
 
+Value solisGetArgument(VM* vm, int argIndex);
+
 void solisSetReturnValue(VM* vm, Value value);
 
 #endif // SOLIS_INTERFACE_H

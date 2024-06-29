@@ -293,6 +293,16 @@ do {																		\
 
 		DISPATCH();
 	}
+	CASE_CODE(FLOOR_DIVIDE) :
+	{
+		Value a = POP();
+		Value* val = PEEK_PTR();
+
+		if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
+			val->as.number = floor(val->as.number / a.as.number);
+
+		DISPATCH();
+	}
 	CASE_CODE(POWER):
 	{
 		Value a = POP();
@@ -530,6 +540,7 @@ static bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs)
 		return false;
 	}
 
+	// we want to add the caller into it as well
 	vm->apiStack = vm->sp - (numArgs + 1);
 
 	func(vm);
@@ -610,7 +621,14 @@ void solisPushGlobal(VM* vm, const char* name, Value value)
 
 	int idx = vm->globals.count - 1;
 
-	solisHashTableInsert(&vm->globalMap, solisCopyString(vm, name, strlen(name)), SOLIS_NUMERIC_VALUE((double)idx));
+	ObjString* str = solisCopyString(vm, name, strlen(name));
+
+	// Do this for gc later on 
+	solisPush(vm, SOLIS_OBJECT_VALUE(str));
+
+	solisHashTableInsert(&vm->globalMap, SOLIS_AS_STRING(solisPeek(vm, 0)), SOLIS_NUMERIC_VALUE((double)idx));
+
+	solisPop(vm);
 }
 
 Value solisGetGlobal(VM* vm, const char* name)

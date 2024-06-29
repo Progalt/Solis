@@ -25,6 +25,7 @@ typedef enum TokenType
 	TOKEN_STAR_STAR,
 
 	TOKEN_SLASH,
+	TOKEN_SLASH_SLASH, 
 
 	TOKEN_DOT,
 	TOKEN_DOT_DOT,

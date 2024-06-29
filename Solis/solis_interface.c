@@ -3,9 +3,14 @@
 
 #include "solis_vm.h"
 
+Value solisGetArgument(VM* vm, int argIndex)
+{
+	return *(vm->apiStack + (argIndex + 1));
+}
+
 double solisCheckNumber(VM* vm, int argIndex)
 {
-	Value v = vm->apiStack[argIndex];
+	Value v = solisGetArgument(vm, argIndex);
 
 	if (SOLIS_IS_NUMERIC(v))
 	{
@@ -20,7 +25,7 @@ double solisCheckNumber(VM* vm, int argIndex)
 
 const char* solisCheckString(VM* vm, int argIndex)
 {
-	Value v = vm->apiStack[argIndex];
+	Value v = solisGetArgument(vm, argIndex);
 
 	if (SOLIS_IS_STRING(v))
 	{
