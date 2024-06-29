@@ -58,6 +58,10 @@ void solisFreeObject(VM* vm, Object* object)
 		SOLIS_FREE(vm, ObjNative, object);
 		break;
 	}
+	case OBJ_ENUM: {
+		solisFreeHashTable(&((ObjEnum*)object)->fields);
+		SOLIS_FREE(vm, ObjEnum, object);
+	}
 	case OBJ_UPVALUE: 
 	{
 		SOLIS_FREE(vm, ObjUpvalue, object);
@@ -179,4 +183,13 @@ ObjNative* solisNewNativeFunction(VM* vm, SolisNativeSignature nativeFunc)
 	native->arity = 0;
 
 	return native;
+}
+
+ObjEnum* solisNewEnum(VM* vm)
+{
+	ObjEnum* objEnum = ALLOCATE_OBJ(vm, ObjEnum, OBJ_ENUM);
+
+	solisInitHashTable(&objEnum->fields, vm);
+
+	return objEnum;
 }

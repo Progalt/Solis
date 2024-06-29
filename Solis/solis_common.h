@@ -31,6 +31,7 @@ typedef struct ObjClosure ObjClosure;
 typedef struct ObjNative ObjNative;
 
 typedef struct ObjClass ObjClass;
+typedef struct ObjEnum ObjEnum;
 
 typedef enum
 {
@@ -48,6 +49,7 @@ typedef enum
     OBJ_CLOSURE,
     OBJ_UPVALUE,
     OBJ_NATIVE_FUNCTION, 
+    OBJ_ENUM,
 } ObjectType;
 
 

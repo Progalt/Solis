@@ -28,6 +28,7 @@ void* solisReallocate(VM* vm, void* ptr, size_t oldSize, size_t newSize)
 
     vm->allocatedBytes += newSize - oldSize;
 
+    // see if we need to run the gc
     if (vm->allocatedBytes > vm->nextGC)
     {
         solisCollectGarbage(vm);

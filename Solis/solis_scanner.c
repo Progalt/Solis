@@ -55,6 +55,8 @@ static Keyword keywords[] =
 
 	{ "function", 8, TOKEN_FUNCTION }, 
 
+	{ "enum", 4, TOKEN_ENUM },
+
 	{ NULL, 0, TOKEN_EOF }
 };
 

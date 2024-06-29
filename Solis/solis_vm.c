@@ -22,11 +22,12 @@ void solisInitVM(VM* vm)
 	vm->apiStack = NULL;
 
 	vm->allocatedBytes = 0;
-	vm->nextGC = 1024;
+	vm->nextGC = 1024 * 1024;
 
 	vm->greyCapacity = 0;
 	vm->greyCount = 0;
 	vm->greyStack = NULL;
+
 
 	solisInitHashTable(&vm->strings, vm);
 	solisInitHashTable(&vm->globalMap, vm);

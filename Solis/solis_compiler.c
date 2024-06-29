@@ -81,6 +81,7 @@ static void expressionStatement();
 static void variableDeclaration();
 static void constDeclaration();
 static void functionDeclaration();
+static void enumDeclaration();
 
 static void ifStatement();
 static void whileStatement();
@@ -499,6 +500,10 @@ static void declaration()
 	else if (match(TOKEN_VAR))
 	{
 		variableDeclaration();
+	}
+	else if (match(TOKEN_ENUM))
+	{
+		enumDeclaration();
 	}
 	else
 	{
@@ -1026,6 +1031,41 @@ static void function(FunctionType type)
 
 	// Free the upvalue memory 
 	solisUpvalueBufferClear(compiler.vm, &compiler.upvalues);
+}
+
+static void enumDeclaration()
+{
+	// We have an enum
+
+	uint16_t global = parseVariable("Expected identifier after enum declaration.");
+
+	ObjEnum* enumObj = solisNewEnum(current->vm);
+
+	int idx = 0;
+	for(;;)
+	{
+		consume(TOKEN_IDENTIFIER, "Expected an identifier in enum.");
+		// printf("Enum: %.*s", parser.previous.length, parser.previous.start);
+
+		ObjString* iden = solisCopyString(current->vm, parser.previous.start + 1, parser.previous.length - 2);
+
+		solisHashTableInsert(&enumObj->fields, iden, SOLIS_NUMERIC_VALUE((double)idx));
+
+		if (match(TOKEN_END))
+		{
+			break;
+		}
+		else
+		{
+			consume(TOKEN_COMMA, "Expected ',' to seperate enum entries");
+		}
+
+		idx++;
+	}
+
+
+	emitConstant(SOLIS_OBJECT_VALUE(enumObj));
+	defineVariable(global, true);
 }
 
 static void returnStatement()

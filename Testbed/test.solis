@@ -1,4 +1,10 @@
 
+enum TestEnum
+	Start,
+	Middle,
+	End
+end
+
 function fib(n)
 
 	if n < 2 then

@@ -65,14 +65,14 @@ static void markRoots(VM* vm)
         markValue(vm, *slot);
     }
 
-    // Mark the two objects associated with globals
-    markTable(vm, &vm->globalMap);
-    markValueBuffer(vm, &vm->globals);
-
     for (int i = 0; i < vm->frameCount; i++)
     {
         markObject(vm, (Object*)vm->frames[i].closure);
     }
+
+    // Mark the two objects associated with globals
+    markTable(vm, &vm->globalMap);
+    markValueBuffer(vm, &vm->globals);
 
     for (ObjUpvalue* upvalue = vm->openUpvalues;
         upvalue != NULL;
@@ -109,6 +109,10 @@ static void blackenObject(VM* vm, Object* object)
         for (int i = 0; i < closure->upvalueCount; i++) {
             markObject(vm, (Object*)closure->upvalues[i]);
         }
+        break;
+    }
+    case OBJ_ENUM: {
+        markTable(vm, &((ObjEnum*)object)->fields);
         break;
     }
     case OBJ_NATIVE_FUNCTION:
@@ -156,7 +160,7 @@ static void sweep(VM* vm) {
 void tableRemoveWhite(VM* vm, HashTable* table)
 {
     // NOTE: There is a bug here in somewhere
-    // It only happens when stressing the GC atm but it should probably be fixed
+    // It only happens when stressing the GC atm but it should probably be fixed 
     for (int i = 0; i < table->capacity; i++) 
     {
         TableEntry* entry = &table->entries[i];

@@ -69,6 +69,8 @@ typedef enum TokenType
 	TOKEN_TRUE,
 	TOKEN_FALSE,
 
+	TOKEN_ENUM, 
+
 	TOKEN_STRING,
 
 	TOKEN_NUMBER,

@@ -7,6 +7,7 @@
 #include "solis_chunk.h"
 
 #include "solis_interface.h"
+#include "solis_hashtable.h"
 
 struct Object
 {
@@ -87,7 +88,12 @@ struct ObjNative
 #define SOLIS_IS_NATIVE(value) solisIsObjType(value, OBJ_NATIVE_FUNCTION)
 #define SOLIS_AS_NATIVE(value) ((ObjNative*)SOLIS_AS_OBJECT(value))
 
+struct ObjEnum
+{
+	Object obj;
 
+	HashTable fields;
+};
 
 /*
 	Returns the specified value is equal to the type
@@ -122,5 +128,7 @@ ObjClosure* solisNewClosure(VM* vm, ObjFunction* function);
 ObjUpvalue* solisNewUpvalue(VM* vm, Value* slot);
 
 ObjNative* solisNewNativeFunction(VM* vm, SolisNativeSignature nativeFunc);
+
+ObjEnum* solisNewEnum(VM* vm);
 
 #endif // SOLIS_OBJECT_H
