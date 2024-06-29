@@ -21,9 +21,16 @@ void solisInitVM(VM* vm)
 
 	vm->apiStack = NULL;
 
-	solisInitHashTable(&vm->strings);
-	solisInitHashTable(&vm->globalMap);
-	solisValueBufferInit(&vm->globals);
+	vm->allocatedBytes = 0;
+	vm->nextGC = 1024;
+
+	vm->greyCapacity = 0;
+	vm->greyCount = 0;
+	vm->greyStack = NULL;
+
+	solisInitHashTable(&vm->strings, vm);
+	solisInitHashTable(&vm->globalMap, vm);
+	solisValueBufferInit(vm, &vm->globals);
 }
 
 
@@ -40,9 +47,11 @@ static void freeObjects(VM* vm)
 
 void solisFreeVM(VM* vm)
 {
+	free(vm->greyStack);
+
 	solisFreeHashTable(&vm->strings);
 	solisFreeHashTable(&vm->globalMap);
-	solisValueBufferClear(&vm->globals);
+	solisValueBufferClear(vm, &vm->globals);
 	freeObjects(vm);
 	
 }
@@ -326,7 +335,7 @@ do {																		\
 		int idx = vm->globals.count;
 		solisHashTableInsert(&vm->globalMap, name, SOLIS_NUMERIC_VALUE((double)idx));
 
-		solisValueBufferWrite(&vm->globals, PEEK());
+		solisValueBufferWrite(vm, &vm->globals, PEEK());
 
 		POP();
 
@@ -617,7 +626,7 @@ Value solisPeek(VM* vm, int offset)
 
 void solisPushGlobal(VM* vm, const char* name, Value value)
 {
-	solisValueBufferWrite(&vm->globals, value);
+	solisValueBufferWrite(vm, &vm->globals, value);
 
 	int idx = vm->globals.count - 1;
 
@@ -661,5 +670,7 @@ void solisPushGlobalCFunction(VM* vm, const char* name, SolisNativeSignature fun
 	ObjNative* nativeFunc = solisNewNativeFunction(vm, func);
 	nativeFunc->arity = arity;
 
-	solisPushGlobal(vm, name, SOLIS_OBJECT_VALUE(nativeFunc));
+	solisPush(vm, SOLIS_OBJECT_VALUE(nativeFunc));
+	solisPushGlobal(vm, name, solisPeek(vm, 0));
+	solisPop(vm);
 }

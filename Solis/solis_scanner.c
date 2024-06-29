@@ -263,7 +263,7 @@ Token solisScanToken()
 }
 
 
-TokenList solisScanSource(const char* source)
+TokenList solisScanSource(VM* vm, const char* source)
 {
 	solisInitScanner(source);
 
@@ -277,7 +277,7 @@ TokenList solisScanSource(const char* source)
 		
 		list.count++;
 
-		list.tokens = (Token*)solisReallocate(list.tokens, sizeof(Token) * list.count - 1, sizeof(Token) * list.count);
+		list.tokens = (Token*)solisReallocate(vm, list.tokens, sizeof(Token) * list.count - 1, sizeof(Token) * list.count);
 
 		// Check if its been allocated 
 		SOLIS_ASSERT(list.tokens);

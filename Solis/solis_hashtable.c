@@ -3,6 +3,7 @@
 #include "solis_common.h"
 #include <string.h>
 #include "solis_object.h"
+#include "solis_vm.h"
 
 static TableEntry* findEntry(TableEntry* entries, int capacity, ObjString* key)
 {
@@ -35,7 +36,7 @@ static TableEntry* findEntry(TableEntry* entries, int capacity, ObjString* key)
 
 
 static void adjustCapacity(HashTable* table, int capacity) {
-	TableEntry* entries = SOLIS_ALLOCATE(TableEntry, capacity);
+	TableEntry* entries = SOLIS_ALLOCATE(table->parent, TableEntry, capacity);
 	for (int i = 0; i < capacity; i++) {
 		entries[i].key = NULL;
 		entries[i].value = SOLIS_NULL_VALUE();
@@ -53,7 +54,7 @@ static void adjustCapacity(HashTable* table, int capacity) {
 	}
 
 	// Free the old memory
-	SOLIS_FREE_ARRAY(TableEntry, table->entries, table->capacity);
+	SOLIS_FREE_ARRAY(table->parent, TableEntry, table->entries, table->capacity);
 
 	// Assign the new values
 	table->entries = entries;
@@ -61,17 +62,18 @@ static void adjustCapacity(HashTable* table, int capacity) {
 }
 
 
-void solisInitHashTable(HashTable* table)
+void solisInitHashTable(HashTable* table, VM* vm)
 {
 	table->capacity = 0;
 	table->count = 0;
 	table->entries = NULL;
+	table->parent = vm;
 }
 
 void solisFreeHashTable(HashTable* table)
 {
-	SOLIS_FREE_ARRAY(TableEntry, table->entries, table->capacity);
-	solisInitHashTable(table);
+	SOLIS_FREE_ARRAY(table->parent, TableEntry, table->entries, table->capacity);
+	solisInitHashTable(table, table->parent);
 }
 
 bool solisHashTableInsert(HashTable* table, ObjString* key, Value value)

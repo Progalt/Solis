@@ -13,6 +13,10 @@
 #include "solis_object.h"
 #include "solis_chunk.h"
 
+#include "solis_gc.h"
+
+#include "solis_vm.h"
+
 
 typedef struct Upvalue
 {
@@ -285,13 +289,13 @@ static Chunk* currentChunk()
 
 static void emitByte(uint8_t byte)
 {
-	solisWriteChunk(currentChunk(), byte);
+	solisWriteChunk(current->vm, currentChunk(), byte);
 }
 
 static void emitBytes(uint8_t byte, uint8_t byte2)
 {
-	solisWriteChunk(currentChunk(), byte);
-	solisWriteChunk(currentChunk(), byte2);
+	solisWriteChunk(current->vm, currentChunk(), byte);
+	solisWriteChunk(current->vm, currentChunk(), byte2);
 }
 
 static void emitShort(uint16_t s)
@@ -321,11 +325,11 @@ static void initCompiler(VM* vm, Compiler* compiler, FunctionType type)
 
 	compiler->function = solisNewFunction(vm);
 
-	solisIntBufferInit(&compiler->breakStatements);
+	solisIntBufferInit(vm, &compiler->breakStatements);
 
-	solisInitHashTable(&compiler->globalTable);
+	solisInitHashTable(&compiler->globalTable, vm);
 
-	solisUpvalueBufferInit(&compiler->upvalues);
+	solisUpvalueBufferInit(vm, &compiler->upvalues);
 
 	current = compiler;
 
@@ -349,7 +353,7 @@ static ObjFunction* endCompiler(Compiler* compiler)
 
 	solisFreeHashTable(&compiler->globalTable);
 	// solisUpvalueBufferClear(&compiler->upvalues);
-	solisIntBufferClear(&compiler->breakStatements);
+	solisIntBufferClear(compiler->vm, &compiler->breakStatements);
 
 	ObjFunction* function = current->function;
 
@@ -383,7 +387,7 @@ static void synchronize() {
 
 // Constant functions
 static uint16_t makeConstant(Value value) {
-	int constant = solisAddConstant(currentChunk(), value);
+	int constant = solisAddConstant(current->vm, currentChunk(), value);
 
 	return (uint16_t)constant;
 }
@@ -630,7 +634,10 @@ static void defineVariable(uint16_t global, bool addToGlobals)
 	{
 		// Add the global to the hash table of globals
 		double index = (double)current->globalCount;
-		solisHashTableInsert(&current->globalTable, SOLIS_AS_STRING(current->function->chunk.constants.data[global]), SOLIS_NUMERIC_VALUE(index));
+		ObjString* str = SOLIS_AS_STRING(current->function->chunk.constants.data[global]);
+
+		solisHashTableInsert(&current->globalTable, str, SOLIS_NUMERIC_VALUE(index));
+
 		current->globalCount++;
 	}
 
@@ -742,7 +749,7 @@ static int addUpvalue(Compiler* compiler, uint8_t index, bool isLocal)
 	upvalue.index = index;
 	upvalue.isLocal = isLocal;
 
-	solisUpvalueBufferWrite(&compiler->upvalues, upvalue);
+	solisUpvalueBufferWrite(compiler->vm, &compiler->upvalues, upvalue);
 
 	return compiler->function->upvalueCount++;
 }
@@ -938,7 +945,7 @@ static void whileStatement()
 	}
 
 	// Clear the buffer for the next loop
-	solisIntBufferClear(&current->breakStatements);
+	solisIntBufferClear(current->vm, &current->breakStatements);
 
 	
 	current->withinLoop = false;
@@ -957,7 +964,7 @@ static void breakStatement()
 	int exitJump = emitJump(OP_JUMP);
 
 	// Write it into the int buffer
-	solisIntBufferWrite(&current->breakStatements, exitJump);
+	solisIntBufferWrite(current->vm, &current->breakStatements, exitJump);
 }
 
 static void functionDeclaration()
@@ -1018,7 +1025,7 @@ static void function(FunctionType type)
 	}
 
 	// Free the upvalue memory 
-	solisUpvalueBufferClear(&compiler.upvalues);
+	solisUpvalueBufferClear(compiler.vm, &compiler.upvalues);
 }
 
 static void returnStatement()
@@ -1141,7 +1148,7 @@ ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int gl
 		compiler.globalCount = globalCount;
 	}
 
-	TokenList tokenList = solisScanSource(source);
+	TokenList tokenList = solisScanSource(vm, source);
 
 	parser.tokenList = tokenList;
 
@@ -1156,4 +1163,21 @@ ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int gl
 	ObjFunction* function = endCompiler(&compiler);
 	solisFreeTokenList(&tokenList);
 	return parser.hadError ? NULL : function;
+}
+
+
+
+void solisMarkCompilerRoots(VM* vm)
+{
+	Compiler* compiler = current;
+	while (compiler != NULL) {
+		markObject(vm, (Object*)compiler->function);
+
+		markTable(vm, &compiler->globalTable);
+	
+		
+
+		compiler = compiler->parent;
+	}
+	
 }

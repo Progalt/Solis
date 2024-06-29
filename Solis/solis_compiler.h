@@ -18,4 +18,6 @@ typedef enum
 
 ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int globalCount);
 
+void solisMarkCompilerRoots(VM* vm);
+
 #endif // SOLIS_COMPILER_H

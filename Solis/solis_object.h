@@ -87,6 +87,8 @@ struct ObjNative
 #define SOLIS_IS_NATIVE(value) solisIsObjType(value, OBJ_NATIVE_FUNCTION)
 #define SOLIS_AS_NATIVE(value) ((ObjNative*)SOLIS_AS_OBJECT(value))
 
+
+
 /*
 	Returns the specified value is equal to the type
 	If the value is not an object it returns false.

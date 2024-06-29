@@ -53,6 +53,14 @@ struct VM
 
 	// This method of function calling is stolen from wren... :) 
 	Value* apiStack;
+
+	uint64_t allocatedBytes;
+	uint64_t nextGC;
+
+
+	int greyCount;
+	int greyCapacity;
+	Object** greyStack;
 };
 
 
@@ -84,6 +92,9 @@ void solisPush(VM* vm, Value value);
 */
 Value solisPop(VM* vm);
 
+/*
+	Peek a value on the stack 
+*/
 Value solisPeek(VM* vm, int offset);
 
 /*
@@ -101,6 +112,9 @@ Value solisGetGlobal(VM* vm, const char* name);
 */
 bool solisGlobalExists(VM* vm, const char* name);
 
+/*
+	Pushes a global C function to the global list
+*/
 void solisPushGlobalCFunction(VM* vm, const char* name, SolisNativeSignature func, int arity);
 
 /*

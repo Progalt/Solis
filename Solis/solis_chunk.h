@@ -27,13 +27,13 @@ struct Chunk
 	ValueBuffer constants;
 };
 
-void solisInitChunk(Chunk* chunk);
+void solisInitChunk(VM* vm, Chunk* chunk);
 
-void solisFreeChunk(Chunk* chunk);
+void solisFreeChunk(VM* vm, Chunk* chunk);
 
-void solisWriteChunk(Chunk* chunk, uint8_t byte);
+void solisWriteChunk(VM* vm, Chunk* chunk, uint8_t byte);
 
-int solisAddConstant(Chunk* chunk, Value value);
+int solisAddConstant(VM* vm, Chunk* chunk, Value value);
 
 
 void solisDisassembleChunk(Chunk* chunk, const char* name);

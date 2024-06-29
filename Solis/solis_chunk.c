@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include "solis_object.h"
-
+#include "solis_vm.h"
 
 
 
@@ -82,38 +82,38 @@ static int jumpInstruction(const char* name, int sign,
 	return offset + 3;
 }
 
-void solisInitChunk(Chunk* chunk)
+void solisInitChunk(VM* vm, Chunk* chunk)
 {
 	chunk->count = 0;
 	chunk->capacity = 0;
 	chunk->code = NULL;
-	solisValueBufferInit(&chunk->constants);
+	solisValueBufferInit(vm, &chunk->constants);
 }
 
-void solisFreeChunk(Chunk* chunk)
+void solisFreeChunk(VM* vm, Chunk* chunk)
 {
-	solisReallocate(chunk->code, sizeof(uint8_t) * chunk->capacity, 0);
-	solisInitChunk(chunk);
-	solisValueBufferClear(&chunk->constants);
+	solisReallocate(vm, chunk->code, sizeof(uint8_t) * chunk->capacity, 0);
+	solisInitChunk(vm, chunk);
+	solisValueBufferClear(vm, &chunk->constants);
 }
 
 
-void solisWriteChunk(Chunk* chunk, uint8_t byte)
+void solisWriteChunk(VM* vm, Chunk* chunk, uint8_t byte)
 {
 	if(chunk->capacity < chunk->count + 1) {
 		int oldCapacity = chunk->capacity;
 		chunk->capacity = GROW_CAPACITY(oldCapacity);
 		
-		chunk->code = (uint8_t*)solisReallocate(chunk->code, sizeof(uint8_t) * oldCapacity, sizeof(uint8_t) * chunk->capacity);
+		chunk->code = (uint8_t*)solisReallocate(vm, chunk->code, sizeof(uint8_t) * oldCapacity, sizeof(uint8_t) * chunk->capacity);
 	}
 
 	chunk->code[chunk->count] = byte;
 	chunk->count++;
 }
 
-int solisAddConstant(Chunk* chunk, Value value)
+int solisAddConstant(VM* vm, Chunk* chunk, Value value)
 {
-	solisValueBufferWrite(&chunk->constants, value);
+	solisValueBufferWrite(vm, &chunk->constants, value);
 	return chunk->constants.count - 1;
 }
 

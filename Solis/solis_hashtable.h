@@ -47,12 +47,14 @@ typedef struct
 	int count;
 	int capacity;
 	TableEntry* entries;
+
+	VM* parent;
 } HashTable;
 
 /*
 	Initialise a hash table
 */
-void solisInitHashTable(HashTable* table);
+void solisInitHashTable(HashTable* table, VM* vm);
 
 /*
 	Frees all memory associated with a hash table. Does not free memory of objects inserted into the table

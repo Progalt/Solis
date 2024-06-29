@@ -117,7 +117,7 @@ typedef struct
 
 	Must call solisFreeTokenList when done with the token list. 
 */
-TokenList solisScanSource(const char* source);
+TokenList solisScanSource(VM* vm, const char* source);
 
 /*
 	Free a token list allocation

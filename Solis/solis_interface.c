@@ -39,5 +39,6 @@ const char* solisCheckString(VM* vm, int argIndex)
 
 void solisSetReturnValue(VM* vm, Value value)
 {
+	// the return is the root of the api stack 
 	*vm->apiStack = value;
 }

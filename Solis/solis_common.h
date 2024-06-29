@@ -7,6 +7,10 @@
 #include <assert.h>
 #include <stdlib.h>
 
+// #define SOLIS_DEBUG_STRESS_GC
+#define SOLIS_DEBUG_LOG_GC
+
+
 #define UINT8_COUNT (UINT8_MAX + 1)
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -25,6 +29,8 @@ typedef struct ObjFunction ObjFunction;
 typedef struct ObjString ObjString;
 typedef struct ObjClosure ObjClosure;
 typedef struct ObjNative ObjNative;
+
+typedef struct ObjClass ObjClass;
 
 typedef enum
 {
@@ -53,29 +59,19 @@ typedef enum
 #define SOLIS_FREE_FUNC(ptr) free(ptr)
 #endif
 
-static inline void* solisReallocate(void* ptr, size_t oldSize, size_t newSize)
-{
+void* solisReallocate(VM* vm, void* ptr, size_t oldSize, size_t newSize);
 
-    if (newSize == 0) {
-        SOLIS_FREE_FUNC(ptr);
-        return NULL;
-    }
 
-    void* result = SOLIS_REALLOC_FUNC(ptr, newSize);
 
-    if (result == NULL) exit(1);
 
-    return result;
 
-}
+#define SOLIS_ALLOCATE(vm, type, count) \
+    (type*)solisReallocate(vm, NULL, 0, sizeof(type) * (count))
 
-#define SOLIS_ALLOCATE( type, count) \
-    (type*)solisReallocate( NULL, 0, sizeof(type) * (count))
+#define SOLIS_FREE(vm, type, ptr) solisReallocate(vm, ptr, sizeof(type), 0)
 
-#define SOLIS_FREE(type, ptr) solisReallocate(ptr, sizeof(type), 0)
-
-#define SOLIS_FREE_ARRAY(type, pointer, oldCount) \
-    solisReallocate(pointer, sizeof(type) * (oldCount), 0)
+#define SOLIS_FREE_ARRAY(vm, type, pointer, oldCount) \
+    solisReallocate(vm, pointer, sizeof(type) * (oldCount), 0)
 
 #ifndef SOLIS_ASSERT
 #define SOLIS_ASSERT(x) assert(x)
@@ -93,34 +89,34 @@ static inline void* solisReallocate(void* ptr, size_t oldSize, size_t newSize)
       int count;                                                               \
       int capacity;                                                            \
     } name##Buffer;                                                            \
-    void solis##name##BufferInit(name##Buffer* buffer);                         \
-    void solis##name##BufferClear(name##Buffer* buffer);            \
-    void solis##name##BufferFill(name##Buffer* buffer, type data,   \
+    void solis##name##BufferInit(VM* vm, name##Buffer* buffer);                         \
+    void solis##name##BufferClear(VM* vm, name##Buffer* buffer);            \
+    void solis##name##BufferFill(VM* vm, name##Buffer* buffer, type data,   \
                                 int count);                                    \
-    void solis##name##BufferWrite( name##Buffer* buffer, type data)
+    void solis##name##BufferWrite(VM* vm, name##Buffer* buffer, type data)
 
 // This should be used once for each type instantiation, somewhere in a .c file.
 #define SOLIS_DEFINE_BUFFER(name, type)                                              \
-    void solis##name##BufferInit(name##Buffer* buffer)                          \
+    void solis##name##BufferInit(VM* vm, name##Buffer* buffer)                          \
     {                                                                          \
       buffer->data = NULL;                                                     \
       buffer->capacity = 0;                                                    \
       buffer->count = 0;                                                       \
     }                                                                          \
                                                                                \
-    void solis##name##BufferClear(name##Buffer* buffer)             \
+    void solis##name##BufferClear( VM* vm,name##Buffer* buffer)             \
     {                                                                          \
-      solisReallocate(buffer->data, 0, 0);                                  \
-      solis##name##BufferInit(buffer);                                          \
+      solisReallocate(vm, buffer->data, 0, 0);                                  \
+      solis##name##BufferInit(vm, buffer);                                          \
     }                                                                          \
                                                                                \
-    void solis##name##BufferFill(name##Buffer* buffer, type data,   \
+    void solis##name##BufferFill(VM* vm,name##Buffer* buffer, type data,   \
                                 int count)                                     \
     {                                                                          \
       if (buffer->capacity < buffer->count + count)                            \
       {                                                                        \
         int capacity = buffer->count + count;                \
-        buffer->data = (type*)solisReallocate(buffer->data,                 \
+        buffer->data = (type*)solisReallocate(vm, buffer->data,                 \
             buffer->capacity * sizeof(type), capacity * sizeof(type));         \
         buffer->capacity = capacity;                                           \
       }                                                                        \
@@ -131,9 +127,9 @@ static inline void* solisReallocate(void* ptr, size_t oldSize, size_t newSize)
       }                                                                        \
     }                                                                          \
                                                                                \
-    void solis##name##BufferWrite(name##Buffer* buffer, type data)  \
+    void solis##name##BufferWrite(VM* vm,name##Buffer* buffer, type data)  \
     {                                                                          \
-      solis##name##BufferFill(buffer, data, 1);                             \
+      solis##name##BufferFill(vm, buffer, data, 1);                             \
     }
 
 
