@@ -614,7 +614,7 @@ static void markInitialized()
 		current->scopeDepth;
 }
 
-static void defineVariable(uint16_t global) 
+static void defineVariable(uint16_t global, bool addToGlobals) 
 {
 
 
@@ -624,10 +624,13 @@ static void defineVariable(uint16_t global)
 		return;
 	}
 
-	// Add the global to the hash table of globals
-	double index = (double)current->globalCount;
-	solisHashTableInsert(&current->globalTable, SOLIS_AS_STRING(current->function->chunk.constants.data[global]), SOLIS_NUMERIC_VALUE(index));
-	current->globalCount++;
+	if (addToGlobals)
+	{
+		// Add the global to the hash table of globals
+		double index = (double)current->globalCount;
+		solisHashTableInsert(&current->globalTable, SOLIS_AS_STRING(current->function->chunk.constants.data[global]), SOLIS_NUMERIC_VALUE(index));
+		current->globalCount++;
+	}
 
 	emitByte(OP_DEFINE_GLOBAL);
 	emitShort(global);
@@ -646,7 +649,7 @@ static void variableDeclaration()
 
 	consume(TOKEN_SEMICOLON, "Expected ';' after variable declaration.");
 
-	defineVariable(global);
+	defineVariable(global, true);
 }
 
 static void constDeclaration()
@@ -957,9 +960,16 @@ static void breakStatement()
 static void functionDeclaration()
 {
 	uint16_t global = parseVariable("Expect function name.");
+
+	// Add the global to the hash table of globals
+	// We need to do it ahead of time here to allow for recursion
+	double index = (double)current->globalCount;
+	solisHashTableInsert(&current->globalTable, SOLIS_AS_STRING(current->function->chunk.constants.data[global]), SOLIS_NUMERIC_VALUE(index));
+	current->globalCount++;
+	
 	markInitialized();
 	function(TYPE_FUNCTION);
-	defineVariable(global);
+	defineVariable(global, false);
 }
 
 static void function(FunctionType type)
@@ -980,7 +990,7 @@ static void function(FunctionType type)
 				errorAtCurrent("Can't have more than 255 parameters.");
 			}
 			uint16_t constant = parseVariable("Expect parameter name.");
-			defineVariable(constant);
+			defineVariable(constant, true);
 		} while (match(TOKEN_COMMA));
 	}
 	consume(TOKEN_RIGHT_PAREN, "Expected ')'  after function parameters.");

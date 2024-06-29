@@ -3,6 +3,8 @@
 
 #include <solis.h>
 
+#include <time.h>
+
 
 char* readFileIntoString(const char* filename) {
     // Open the file in binary mode
@@ -59,6 +61,13 @@ void printNative(VM* vm)
     solisSetReturnValue(vm, SOLIS_NULL_VALUE());
 }
 
+void clockNative(VM* vm)
+{
+    double time = (double)clock() / CLOCKS_PER_SEC;
+
+    solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(time));
+}
+
 int main(void) {
 
 
@@ -73,6 +82,7 @@ int main(void) {
 	solisInitVM(&vm);
 
     solisPushGlobalCFunction(&vm, "println", printNative, 1);
+    solisPushGlobalCFunction(&vm, "clock", clockNative, 0);
 
 	InterpretResult result = solisInterpret(&vm, fileContent);
 

@@ -1,12 +1,13 @@
 
-var plop = 10;
+function fib(n)
 
-function helloWorld(x) 
+	if n < 2 then
+		return n;
+	end
 
-	var t = x + 10;
+	return fib(n - 2) + fib(n - 1);
 
+end
 
-
-end 
-
-helloWorld(plop);
+var nth = fib(5);
+println(nth);
