@@ -63,7 +63,8 @@ int main(void) {
 
 
     char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/test.solis");
-    if (fileContent == NULL) {
+    if (fileContent == NULL) 
+    {
         printf("Failed to read file\n");
         return EXIT_FAILURE;
     }
@@ -71,16 +72,9 @@ int main(void) {
 	VM vm;
 	solisInitVM(&vm);
 
-    solisPushGlobal(&vm, "testValue", SOLIS_NUMERIC_VALUE(200));
-    solisPushGlobal(&vm, "testValue2", SOLIS_NUMERIC_VALUE(400));
-
     solisPushGlobalCFunction(&vm, "println", printNative, 1);
 
 	InterpretResult result = solisInterpret(&vm, fileContent);
-
-    double number = SOLIS_AS_NUMBER(solisGetGlobal(&vm, "val"));
-
-    printf("RETRIEVED FROM VM: %g", number);
 
 	solisFreeVM(&vm);
 

@@ -1058,9 +1058,9 @@ static uint8_t argumentList()
 		{
 			expression();
 
-			if (argCount == 255) 
+			if (argCount > 16) 
 			{
-				error("Can't have more than 255 arguments.");
+				error("Can't have more than 16 arguments per function call.");
 			}
 
 			argCount++;
@@ -1073,7 +1073,9 @@ static uint8_t argumentList()
 static void call(bool canAssign)
 {
 	uint8_t argCount = argumentList();
-	emitBytes(OP_CALL, argCount);
+	// emitBytes(OP_CALL, argCount);
+
+	emitByte(OP_CALL_0 + argCount);
 }
 
 static void expression()

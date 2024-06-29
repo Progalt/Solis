@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include "solis_compiler.h"
 
-
 #include <string.h>
 #include <math.h>
 
@@ -413,10 +412,26 @@ do {																		\
 
 		DISPATCH();
 	}
-	CASE_CODE(CALL) :
+	CASE_CODE(CALL_0) :
+	CASE_CODE(CALL_1) :
+	CASE_CODE(CALL_2) :
+	CASE_CODE(CALL_3) :
+	CASE_CODE(CALL_4) :
+	CASE_CODE(CALL_5) :
+	CASE_CODE(CALL_6) :
+	CASE_CODE(CALL_7) :
+	CASE_CODE(CALL_8) :
+	CASE_CODE(CALL_9) :
+	CASE_CODE(CALL_10) :
+	CASE_CODE(CALL_11) :
+	CASE_CODE(CALL_12) :
+	CASE_CODE(CALL_13) :
+	CASE_CODE(CALL_14) :
+	CASE_CODE(CALL_15) :
+	CASE_CODE(CALL_16) :
 	{
 
-		int argCount = READ_BYTE();
+		int argCount = instruction - OP_CALL_0;
 		
 		STORE_FRAME();
 

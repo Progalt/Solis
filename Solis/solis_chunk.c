@@ -179,8 +179,40 @@ int solisDisassembleInstruction(Chunk* chunk, int offset)
 		return jumpInstruction("OP_JUMP_IF_FALSE", 1, chunk, offset);
 	case OP_LOOP:
 		return jumpInstruction("OP_LOOP", -1, chunk, offset);
-	case OP_CALL:
-		return byteInstruction("OP_CALL", chunk, offset);
+	case OP_CALL_0:
+		return simpleInstruction("OP_CALL_0", offset);
+	case OP_CALL_1:
+		return simpleInstruction("OP_CALL_1", offset);
+	case OP_CALL_2:
+		return simpleInstruction("OP_CALL_2", offset);
+	case OP_CALL_3:
+		return simpleInstruction("OP_CALL_3", offset);
+	case OP_CALL_4:
+		return simpleInstruction("OP_CALL_4", offset);
+	case OP_CALL_5:
+		return simpleInstruction("OP_CALL_5", offset);
+	case OP_CALL_6:
+		return simpleInstruction("OP_CALL_6", offset);
+	case OP_CALL_7:
+		return simpleInstruction("OP_CALL_7", offset);
+	case OP_CALL_8:
+		return simpleInstruction("OP_CALL_8", offset);
+	case OP_CALL_9:
+		return simpleInstruction("OP_CALL_9", offset);
+	case OP_CALL_10:
+		return simpleInstruction("OP_CALL_10", offset);
+	case OP_CALL_11:
+		return simpleInstruction("OP_CALL_11", offset);
+	case OP_CALL_12:
+		return simpleInstruction("OP_CALL_12", offset);
+	case OP_CALL_13:
+		return simpleInstruction("OP_CALL_13", offset);
+	case OP_CALL_14:
+		return simpleInstruction("OP_CALL_14", offset);
+	case OP_CALL_15:
+		return simpleInstruction("OP_CALL_15", offset);
+	case OP_CALL_16:
+		return simpleInstruction("OP_CALL_16", offset);
 	case OP_CLOSURE: {
 		offset++;
 		uint16_t constant = chunk->code[offset++] & 0xFF;
