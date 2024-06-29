@@ -113,7 +113,9 @@ void solisWriteChunk(VM* vm, Chunk* chunk, uint8_t byte)
 
 int solisAddConstant(VM* vm, Chunk* chunk, Value value)
 {
+	solisPush(vm, value);
 	solisValueBufferWrite(vm, &chunk->constants, value);
+	solisPop(vm);
 	return chunk->constants.count - 1;
 }
 

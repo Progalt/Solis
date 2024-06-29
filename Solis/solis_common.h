@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 // #define SOLIS_DEBUG_STRESS_GC
-#define SOLIS_DEBUG_LOG_GC
+// #define SOLIS_DEBUG_LOG_GC
 
 
 #define UINT8_COUNT (UINT8_MAX + 1)

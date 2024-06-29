@@ -15,12 +15,12 @@ void* solisReallocate(VM* vm, void* ptr, size_t oldSize, size_t newSize)
         return NULL;
     }
 
+#ifdef SOLIS_DEBUG_STRESS_GC
     if (newSize > oldSize)
     {
-#ifdef SOLIS_DEBUG_STRESS_GC
         solisCollectGarbage(vm);
-#endif
     }
+#endif
 
     void* result = SOLIS_REALLOC_FUNC(ptr, newSize);
 

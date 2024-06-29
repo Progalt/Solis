@@ -155,6 +155,8 @@ static void sweep(VM* vm) {
 
 void tableRemoveWhite(VM* vm, HashTable* table)
 {
+    // NOTE: There is a bug here in somewhere
+    // It only happens when stressing the GC atm but it should probably be fixed
     for (int i = 0; i < table->capacity; i++) 
     {
         TableEntry* entry = &table->entries[i];

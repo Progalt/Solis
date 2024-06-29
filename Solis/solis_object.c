@@ -73,7 +73,9 @@ static ObjString* allocateString(VM* vm, char* chars, int length, uint32_t hash)
 	string->hash = hash;
 
 	// Store it in a hash table
+	solisPush(vm, SOLIS_OBJECT_VALUE(string));
 	solisHashTableInsert(&vm->strings, string, SOLIS_NULL_VALUE());
+	solisPop(vm);
 
 	return string;
 }

@@ -9,14 +9,15 @@ function fib(n)
 
 end
 
-var iters = 100;
+var iters = 5;
 var i = 0;
 
 var start = clock();
 
 while i < iters do 
-	var str = "Hello";
-	var str2 = str + " World";
+	var f = fib(28);
+
+	i = i + 1;
 end 
 
 var elapsed = clock() - start;
