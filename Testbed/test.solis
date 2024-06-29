@@ -9,5 +9,20 @@ function fib(n)
 
 end
 
-var nth = fib(5);
-println(nth);
+var iters = 5;
+var i = 0;
+
+var start = clock();
+
+while i < iters do 
+
+	var nth = fib(28);
+	println(nth);
+
+	i = i + 1;
+end 
+
+var elapsed = clock() - start;
+
+println("Elapsed: ");
+println(elapsed);

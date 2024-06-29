@@ -39,7 +39,7 @@ static int constantInstructionLong(const char* name, Chunk* chunk, int offset) {
 	solisPrintValueType(chunk->constants.data[constant]);
 	printf("\n");
 
-	return offset + 2;
+	return offset + 3;
 }
 
 static int byteInstruction(const char* name, Chunk* chunk,
@@ -70,7 +70,7 @@ static int globalInstruction(const char* name, Chunk* chunk, int offset) {
 	printf("%-16s %4d ", name, constant);
 	printf("\n");
 	
-	return offset + 2;
+	return offset + 3;
 }
 
 static int jumpInstruction(const char* name, int sign,

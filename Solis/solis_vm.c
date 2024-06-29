@@ -7,7 +7,7 @@
 #include <string.h>
 #include <math.h>
 
-#define SOLIS_DEBUG_TRACE_EXECUTION
+// #define SOLIS_DEBUG_TRACE_EXECUTION
 
 static bool callValue(VM* vm, Value callee, int argCount);
 
@@ -317,6 +317,7 @@ do {																		\
 		solisHashTableInsert(&vm->globalMap, name, SOLIS_NUMERIC_VALUE((double)idx));
 
 		solisValueBufferWrite(&vm->globals, PEEK());
+
 		POP();
 
 		DISPATCH();
@@ -529,7 +530,7 @@ static bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs)
 		return false;
 	}
 
-	vm->apiStack = vm->sp - numArgs;
+	vm->apiStack = vm->sp - (numArgs + 1);
 
 	func(vm);
 

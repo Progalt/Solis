@@ -650,6 +650,7 @@ static void variableDeclaration()
 	consume(TOKEN_SEMICOLON, "Expected ';' after variable declaration.");
 
 	defineVariable(global, true);
+
 }
 
 static void constDeclaration()
