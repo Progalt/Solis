@@ -1,9 +1,5 @@
 
-enum TestEnum
-	Start,
-	Middle,
-	End
-end
+
 
 function fib(n)
 
@@ -15,7 +11,7 @@ function fib(n)
 
 end
 
-var iters = 5;
+var iters = 1;
 var i = 0;
 
 var start = clock();
@@ -27,9 +23,6 @@ while i < iters do
 end 
 
 var elapsed = clock() - start;
-
-
-
 
 println("Elapsed: ");
 println(elapsed);

@@ -30,8 +30,9 @@ typedef struct {
 struct VM
 {
 
-	CallFrame frames[FRAMES_MAX];
+	CallFrame* frames;
 	int frameCount;
+	int frameCapacity;
 
 	// TODO: Make this dynamic and not a static array
 	Value stack[STACK_MAX];

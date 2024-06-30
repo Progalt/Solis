@@ -7,7 +7,7 @@
 #include <string.h>
 #include <math.h>
 
-#define SOLIS_DEBUG_TRACE_EXECUTION
+// #define SOLIS_DEBUG_TRACE_EXECUTION
 
 static bool callValue(VM* vm, Value callee, int argCount);
 
@@ -49,6 +49,8 @@ static void freeObjects(VM* vm)
 void solisFreeVM(VM* vm)
 {
 	free(vm->greyStack);
+
+	SOLIS_FREE_ARRAY(vm, CallFrame, vm->frames, vm->frameCapacity);
 
 	solisFreeHashTable(&vm->strings);
 	solisFreeHashTable(&vm->globalMap);
@@ -589,6 +591,7 @@ static bool call(VM* vm, ObjFunction* function, int argCount)
 	//return true;
 }
 
+
 static bool callClosure(VM* vm, ObjClosure* closure, int argCount)
 {
 	if (argCount != closure->function->arity)
@@ -601,6 +604,15 @@ static bool callClosure(VM* vm, ObjClosure* closure, int argCount)
 	{
 		// TODO: Same better errors
 		return false;
+	}
+
+	// Grow our frames
+	if (vm->frameCount + 1 >= vm->frameCapacity)
+	{
+		int oldCapacity = vm->frameCapacity * sizeof(CallFrame);
+		vm->frameCapacity = GROW_CAPACITY(vm->frameCapacity);
+
+		vm->frames = (CallFrame*)solisReallocate(vm, vm->frames, oldCapacity, vm->frameCapacity * sizeof(CallFrame));
 	}
 
 	CallFrame* frame = &vm->frames[vm->frameCount++];
