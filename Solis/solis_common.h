@@ -33,6 +33,8 @@ typedef struct ObjNative ObjNative;
 typedef struct ObjClass ObjClass;
 typedef struct ObjEnum ObjEnum;
 
+typedef struct ObjUserdata ObjUserdata;
+
 typedef enum
 {
     VALUE_NULL,
@@ -50,6 +52,7 @@ typedef enum
     OBJ_UPVALUE,
     OBJ_NATIVE_FUNCTION, 
     OBJ_ENUM,
+    OBJ_USERDATA
 } ObjectType;
 
 

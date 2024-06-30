@@ -57,6 +57,9 @@ static Keyword keywords[] =
 
 	{ "enum", 4, TOKEN_ENUM },
 
+	{ "class", 5, TOKEN_CLASS },
+	{ "inherits", 8, TOKEN_INHERITS },
+
 	{ NULL, 0, TOKEN_EOF }
 };
 

@@ -97,6 +97,24 @@ struct ObjEnum
 
 #define SOLIS_AS_ENUM(value) ((ObjEnum*)SOLIS_AS_OBJECT(value))
 
+typedef void(*UserdataCleanup)(void*);
+
+/*
+	A Userdata object is an object that has no meaning in the language itself
+	It is a pointer to a C object and can be useful in binding C/C++ classes or objects to the language 
+*/
+struct ObjUserdata
+{
+	Object obj;
+
+	void* userdata;
+
+	UserdataCleanup cleanupFunc;
+};
+
+#define SOLIS_IS_USERDATA(value) solisIsObjType(value, OBJ_USERDATA)
+#define SOLIS_AS_USERDATA(value) ((ObjUserdata*)SOLIS_AS_OBJECT(value))
+
 /*
 	Returns the specified value is equal to the type
 	If the value is not an object it returns false.
@@ -132,5 +150,7 @@ ObjUpvalue* solisNewUpvalue(VM* vm, Value* slot);
 ObjNative* solisNewNativeFunction(VM* vm, SolisNativeSignature nativeFunc);
 
 ObjEnum* solisNewEnum(VM* vm);
+
+ObjUserdata* solisNewUserdata(VM* vm, void* ptr, UserdataCleanup cleanupFunc);
 
 #endif // SOLIS_OBJECT_H

@@ -63,6 +63,17 @@ void solisFreeObject(VM* vm, Object* object)
 		SOLIS_FREE(vm, ObjEnum, object);
 		break;
 	}
+	case OBJ_USERDATA:
+	{
+		ObjUserdata* userdata = (ObjUserdata*)object;
+
+		// Call the cleanup callback if it exists
+		if (userdata->cleanupFunc)
+			userdata->cleanupFunc(userdata->userdata);
+
+		SOLIS_FREE(vm, ObjUserdata, object);
+		break;
+	}
 	case OBJ_UPVALUE: 
 	{
 		SOLIS_FREE(vm, ObjUpvalue, object);
@@ -193,4 +204,14 @@ ObjEnum* solisNewEnum(VM* vm)
 	solisInitHashTable(&objEnum->fields, vm);
 
 	return objEnum;
+}
+
+ObjUserdata* solisNewUserdata(VM* vm, void* ptr, UserdataCleanup cleanupFunc)
+{
+	ObjUserdata* userdata = ALLOCATE_OBJ(vm, ObjUserdata, OBJ_USERDATA);
+
+	userdata->userdata = ptr;
+	userdata->cleanupFunc = cleanupFunc;
+
+	return userdata;
 }

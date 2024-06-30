@@ -82,6 +82,7 @@ static void variableDeclaration();
 static void constDeclaration();
 static void functionDeclaration();
 static void enumDeclaration();
+static void classDeclaration();
 
 static void ifStatement();
 static void whileStatement();
@@ -498,6 +499,10 @@ static void declaration()
 	if (match(TOKEN_FUNCTION))
 	{
 		functionDeclaration();
+	}
+	else if (match(TOKEN_CLASS))
+	{
+		classDeclaration();
 	}
 	else if (match(TOKEN_VAR))
 	{
@@ -1068,6 +1073,16 @@ static void enumDeclaration()
 
 	emitConstant(SOLIS_OBJECT_VALUE(enumObj));
 	defineVariable(global, true);
+}
+
+static void classDeclaration()
+{
+	consume(TOKEN_IDENTIFIER, "Expect class name.");
+	uint16_t nameConstant = identifierConstant(&parser.previous);
+	
+	
+
+	consume(TOKEN_END, "Expected 'end' after class body");
 }
 
 static void returnStatement()

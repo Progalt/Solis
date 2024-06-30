@@ -34,7 +34,6 @@ void solisInitVM(VM* vm)
 	solisValueBufferInit(vm, &vm->globals);
 }
 
-
 static void freeObjects(VM* vm)
 {
 	Object* object = vm->objects;
@@ -163,11 +162,11 @@ do {																		\
 #define INTERPRET_LOOP DISPATCH();
 #define CASE_CODE(name) code_##name
 
-#define DISPATCH()                                                           \
-      do                                                                       \
-      {                                                                        \
-        STACK_TRACE();															\
-        goto *dispatchTable[instruction = READ_BYTE()];                  \
+#define DISPATCH()                                                          \
+      do                                                                    \
+      {																		\
+        STACK_TRACE();														\
+        goto *dispatchTable[instruction = READ_BYTE()];						\
       } while (false)
 
 #else 

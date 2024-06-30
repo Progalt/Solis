@@ -1,9 +1,10 @@
 
 # Solis 
 
-Solis is a simple programming language with a lua-like syntax and an easy to use C API to bind it to whatever you need. Or just use it as a standalone language like you would python. 
+***Small and fast with a lua-like syntax.***
 
-Heres a snippet of what the langauge looks like: 
+Everything you would expect from a programming language. Suited to embedding in your application or to use standalone. 
+
 ```lua
 function main()
 	

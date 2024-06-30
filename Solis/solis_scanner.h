@@ -70,6 +70,8 @@ typedef enum TokenType
 	TOKEN_FALSE,
 
 	TOKEN_ENUM, 
+	TOKEN_CLASS,
+	TOKEN_INHERITS, 
 
 	TOKEN_STRING,
 
