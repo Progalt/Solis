@@ -84,6 +84,11 @@ int main(void) {
     solisPushGlobalCFunction(&vm, "println", printNative, 1);
     solisPushGlobalCFunction(&vm, "clock", clockNative, 0);
 
+    Value stateEnum = solisCreateEnumObject(&vm, "State");
+
+    solisBindEnumEntry(&vm, stateEnum, "Running");
+    solisBindEnumEntry(&vm, stateEnum, "Paused");
+
 	InterpretResult result = solisInterpret(&vm, fileContent);
 
     if (result == INTERPRET_RUNTIME_ERROR)

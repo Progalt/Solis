@@ -32,4 +32,18 @@ Value solisGetArgument(VM* vm, int argIndex);
 */
 void solisSetReturnValue(VM* vm, Value value);
 
+
+
+/*
+	Creates a new enum object in the VM.
+
+	These are created globally and can be accessed anywhere
+*/
+Value solisCreateEnumObject(VM* vm, const char* name);
+
+/*
+	Binds a new value to an enum. These go up in by 1 each time. 
+*/
+void solisBindEnumEntry(VM* vm, Value enumObj, const char* name);
+
 #endif // SOLIS_INTERFACE_H

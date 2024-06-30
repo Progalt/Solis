@@ -92,9 +92,11 @@ struct ObjEnum
 {
 	Object obj;
 
+	int fieldCount;
 	HashTable fields;
 };
 
+#define SOLIS_IS_ENUM(value) solisIsObjType(value, OBJ_ENUM)
 #define SOLIS_AS_ENUM(value) ((ObjEnum*)SOLIS_AS_OBJECT(value))
 
 typedef void(*UserdataCleanup)(void*);

@@ -1,14 +1,10 @@
 
 
-enum State
-	Running,
-	Paused,
-	Exit
-end
 
 
 
-var currentState = State.Exit; 
+
+var currentState = State.Paused; 
 
 
-println(State.Exit);
+println(State.Paused);

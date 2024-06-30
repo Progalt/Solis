@@ -1068,6 +1068,7 @@ static void enumDeclaration()
 		}
 
 		idx++;
+		enumObj->fieldCount++;
 	}
 
 

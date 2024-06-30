@@ -201,6 +201,7 @@ ObjEnum* solisNewEnum(VM* vm)
 {
 	ObjEnum* objEnum = ALLOCATE_OBJ(vm, ObjEnum, OBJ_ENUM);
 
+	objEnum->fieldCount = 0;
 	solisInitHashTable(&objEnum->fields, vm);
 
 	return objEnum;
