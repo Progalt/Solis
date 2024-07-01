@@ -7,7 +7,7 @@
 #include <string.h>
 #include <math.h>
 
- #define SOLIS_DEBUG_TRACE_EXECUTION
+ // #define SOLIS_DEBUG_TRACE_EXECUTION
 
 static bool callValue(VM* vm, Value callee, int argCount);
 
@@ -521,6 +521,18 @@ do {																		\
 		POP();
 		DISPATCH();
 	}
+	CASE_CODE(DEFINE_STATIC) :
+	{
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+
+		Value val = PEEK();
+		ObjClass* klass = SOLIS_AS_CLASS(solisPeek(vm, 1));
+
+		solisHashTableInsert(&klass->statics, name, val);
+
+		POP();
+		DISPATCH();
+	}
 	CASE_CODE(GET_FIELD) :
 	{
 		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
@@ -563,6 +575,23 @@ do {																		\
 
 				break;
 			}
+			case OBJ_CLASS:
+			{
+				ObjClass* klass = (ObjClass*)object;
+
+				Value value;
+				if (!solisHashTableGet(&klass->statics, name, &value))
+				{
+					printf("Can't get static field from class.\n");
+					return INTERPRET_RUNTIME_ERROR;
+				}
+
+				POP();
+				PUSH(value);
+
+
+				break;
+			}
 			default:
 				// Return an error
 				// We can't access the fields
@@ -594,6 +623,24 @@ do {																		\
 					// Delete it from the hash table
 					solisHashTableDelete(&instance->fields, name);
 					printf("Can't set a field that doesn't exist in class\n");
+					return INTERPRET_RUNTIME_ERROR;
+				}
+
+				Value value = POP();
+				POP();
+				PUSH(value);
+
+				break;
+			}
+			case OBJ_CLASS:
+			{
+				ObjClass* klass = (ObjClass*)object;
+
+				if (solisHashTableInsert(&klass->statics, name, PEEK()))
+				{
+					// Delete it from the hash table
+					solisHashTableDelete(&klass->statics, name);
+					printf("Can't set a static field that doesn't exist in class\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 

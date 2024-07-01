@@ -61,6 +61,7 @@ static Keyword keywords[] =
 
 	{ "class", 5, TOKEN_CLASS },
 	{ "inherits", 8, TOKEN_INHERITS },
+	{ "static", 6, TOKEN_STATIC },
 
 	{ NULL, 0, TOKEN_EOF }
 };

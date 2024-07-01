@@ -123,6 +123,9 @@ struct ObjClass
 
 	ObjString* name;
 
+	// This is all the static variables that belong to the class instead 
+	HashTable statics;
+
 	HashTable fields;
 	HashTable methods;
 };

@@ -120,6 +120,7 @@ static void blackenObject(VM* vm, Object* object)
         markObject(vm, (Object*)klass->name);
         markTable(vm, &klass->fields);
         markTable(vm, &klass->methods);
+        markTable(vm, &klass->statics);
 
     }
     case OBJ_INSTANCE: {

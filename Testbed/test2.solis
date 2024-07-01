@@ -2,6 +2,8 @@
 
 class TestClass
 
+	static var num = 256;
+
 	var x = 10 ** 2;
 	var y = 15;
 
@@ -14,6 +16,13 @@ println(test.x);
 println(test.y);
 
 test.x = 50;
-test.z = 100;
 
 println(test.x);
+
+println("Static: ");
+
+println(TestClass.num);
+
+TestClass.num = 512;
+
+println(TestClass.num);

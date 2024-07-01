@@ -79,6 +79,7 @@ void solisFreeObject(VM* vm, Object* object)
 		ObjClass* klass = (ObjClass*)object;
 		solisFreeHashTable(&klass->fields);
 		solisFreeHashTable(&klass->methods);
+		solisFreeHashTable(&klass->statics);
 		SOLIS_FREE(vm, ObjClass, object);
 		break;
 	}
@@ -238,6 +239,7 @@ ObjClass* solisNewClass(VM* vm, ObjString* name)
 
 	solisInitHashTable(&klass->fields, vm);
 	solisInitHashTable(&klass->methods, vm);
+	solisInitHashTable(&klass->statics, vm);
 
 	return klass;
 }

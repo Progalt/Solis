@@ -1094,6 +1094,12 @@ static void classDeclaration()
 	namedVariable(className, false);
 	do
 	{
+		bool isStatic = false;
+
+		if (match(TOKEN_STATIC))
+		{
+			isStatic = true;
+		}
 
 		if (match(TOKEN_VAR))
 		{
@@ -1112,7 +1118,7 @@ static void classDeclaration()
 				emitByte(OP_NIL);
 			}
 
-			emitByte(OP_DEFINE_FIELD);
+			emitByte(isStatic ? OP_DEFINE_STATIC : OP_DEFINE_FIELD);
 			emitShort(varName);
 
 
