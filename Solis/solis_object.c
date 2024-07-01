@@ -89,6 +89,10 @@ void solisFreeObject(VM* vm, Object* object)
 		SOLIS_FREE(vm, ObjInstance, object);
 		break;
 	}
+	case OBJ_BOUND_METHOD: {
+		SOLIS_FREE(vm, ObjBoundMethod, object);
+		break;
+	}
 	case OBJ_UPVALUE: 
 	{
 		SOLIS_FREE(vm, ObjUpvalue, object);
@@ -251,4 +255,12 @@ ObjInstance* solisNewInstance(VM* vm, ObjClass* klass)
 	solisInitHashTable(&instance->fields, vm);
 	solisHashTableCopy(&klass->fields, &instance->fields);
 	return instance;
+}
+
+ObjBoundMethod* solisNewBoundMethod(VM* vm, Value receiver, ObjClosure* closure)
+{
+	ObjBoundMethod* bound = ALLOCATE_OBJ(vm, ObjBoundMethod, OBJ_BOUND_METHOD);
+	bound->receiver = receiver;
+	bound->method = closure;
+	return bound;
 }

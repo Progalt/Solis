@@ -129,6 +129,14 @@ static void blackenObject(VM* vm, Object* object)
         markTable(vm, &instance->fields);
         break;
     }
+    case OBJ_BOUND_METHOD: {
+
+        ObjBoundMethod* bound = (ObjBoundMethod*)object;
+        markValue(vm, bound->receiver);
+        markObject(vm, (Object*)bound->method);
+
+        break;
+    }
     case OBJ_NATIVE_FUNCTION:
     case OBJ_STRING:
         break;

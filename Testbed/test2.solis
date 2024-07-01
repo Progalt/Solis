@@ -11,6 +11,10 @@ class TestClass
 		println("Called from static");
 	end
 
+	function instanceFunc()
+		println("Called from instance");
+	end
+
 end
 
 
@@ -32,3 +36,5 @@ TestClass.num = 512;
 println(TestClass.num);
 
 TestClass.print();
+
+test.instanceFunc();

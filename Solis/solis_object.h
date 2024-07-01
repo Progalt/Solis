@@ -147,6 +147,17 @@ struct ObjInstance
 #define SOLIS_AS_INSTANCE(value) ((ObjInstance*)SOLIS_AS_OBJECT(value))
 
 
+struct ObjBoundMethod
+{
+	Object obj;
+
+	Value receiver;
+	ObjClosure* method;
+};
+
+#define SOLIS_IS_BOUND_METHOD(value) solisIsObjType(value, OBJ_BOUND_METHOD)
+#define SOLIS_AS_BOUND_METHOD(value) ((ObjBoundMethod*)SOLIS_AS_OBJECT(value))
+
 /*
 	Returns the specified value is equal to the type
 	If the value is not an object it returns false.
@@ -188,5 +199,7 @@ ObjUserdata* solisNewUserdata(VM* vm, void* ptr, UserdataCleanup cleanupFunc);
 ObjClass* solisNewClass(VM* vm, ObjString* name);
 
 ObjInstance* solisNewInstance(VM* vm, ObjClass* klass);
+
+ObjBoundMethod* solisNewBoundMethod(VM* vm, Value receiver, ObjClosure* closure);
 
 #endif // SOLIS_OBJECT_H

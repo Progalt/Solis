@@ -33,6 +33,7 @@ typedef struct ObjNative ObjNative;
 typedef struct ObjClass ObjClass;
 typedef struct ObjInstance ObjInstance;
 typedef struct ObjEnum ObjEnum;
+typedef struct ObjBoundMethod ObjBoundMethod;
 
 typedef struct ObjUserdata ObjUserdata;
 
@@ -55,7 +56,8 @@ typedef enum
     OBJ_ENUM,
     OBJ_USERDATA,
     OBJ_CLASS, 
-    OBJ_INSTANCE
+    OBJ_INSTANCE,
+    OBJ_BOUND_METHOD, 
 } ObjectType;
 
 

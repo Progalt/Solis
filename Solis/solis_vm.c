@@ -577,14 +577,25 @@ do {																		\
 				ObjInstance* instance = (ObjInstance*)object;
 
 				Value value;
-				if (!solisHashTableGet(&instance->fields, name, &value))
+				if (solisHashTableGet(&instance->fields, name, &value))
+				{
+					POP();
+					PUSH(value);
+
+					
+				}
+				else if (solisHashTableGet(&instance->klass->methods, name, &value))
+				{
+					ObjBoundMethod* bound = solisNewBoundMethod(vm, SOLIS_OBJECT_VALUE(instance), SOLIS_AS_CLOSURE(value));
+
+					POP();
+					PUSH(SOLIS_OBJECT_VALUE(bound));
+				}
+				else
 				{
 					printf("Can't get field from instance.\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
-
-				POP();
-				PUSH(value);
 
 				break;
 			}
@@ -599,8 +610,18 @@ do {																		\
 					return INTERPRET_RUNTIME_ERROR;
 				}
 
-				POP();
-				PUSH(value);
+				if (SOLIS_IS_CLOSURE(value))
+				{
+					ObjBoundMethod* bound = solisNewBoundMethod(vm, SOLIS_OBJECT_VALUE(klass), SOLIS_AS_CLOSURE(value));
+
+					POP();
+					PUSH(SOLIS_OBJECT_VALUE(bound));
+				}
+				else
+				{
+					POP();
+					PUSH(value);
+				}
 
 
 				break;
@@ -798,6 +819,11 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 			ObjClass* klass = SOLIS_AS_CLASS(callee);
 			vm->sp[-argCount - 1] = SOLIS_OBJECT_VALUE(solisNewInstance(vm, klass));
 			return true;
+		}
+		case OBJ_BOUND_METHOD:
+		{
+			ObjBoundMethod* bound = SOLIS_AS_BOUND_METHOD(callee);
+			return callClosure(vm, bound->method, argCount);
 		}
 		default:
 			break; // Non-callable object type.
