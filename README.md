@@ -5,24 +5,29 @@
 
 Everything you would expect from a programming language. Suited to embedding in your application or to use standalone. 
 
+Here's a snippet: 
 ```lua
-function main()
-	
-	var i = 0; 
-	while i < 10 do
+class CoffeeMaker
 
-		println("Hello");
-		println(i);
+	static var coffeesMade = 0;
 
-		if x == 5 then
-			println("Wow 5!");
-		end 
+	function brew(type)
+		
+		println("Brewing your coffee...");
 
-		i = i + 1;
+		self.coffeesMade = self.coffeesMade + 1;
+
+		println("Made your coffee: " + type);
 	end
+
 end
 
-main();
+var coffeeMaker = CoffeeMaker(); 
+
+coffeeMaker.brew("Latte");
+coffeeMaker.brew("Americano");
+
+println(CoffeeMaker.coffeesMade);
 ```
 
 The language was designed with game scripting in mind but is suited for a variety of uses much like Lua. Unlike lua, it has more object oriented style objects meaning not everything is a table, and there 

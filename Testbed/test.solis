@@ -11,7 +11,7 @@ function fib(n)
 
 end
 
-var iters = 1;
+var iters = 5;
 var i = 0;
 
 var start = clock();

@@ -1,42 +1,23 @@
 
 
-class TestClass
+class CoffeeMaker
 
-	static var num = 256;
+	static var coffeesMade = 0;
 
-	var x = 10 ** 2;
-	var y = 15;
+	function brew(type)
+		
+		println("Brewing your coffee...");
 
-	static function print() 
-		println("Called from static");
-	end
+		self.coffeesMade = self.coffeesMade + 1;
 
-	function instanceFunc()
-		println("Called from instance");
-
-		println(self.y);
+		println("Made your coffee: " + type);
 	end
 
 end
 
+var coffeeMaker = CoffeeMaker(); 
 
-var test = TestClass();
+coffeeMaker.brew("Latte");
+coffeeMaker.brew("Americano");
 
-println(test.x);
-println(test.y);
-
-test.x = 50;
-
-println(test.x);
-
-println("Static: ");
-
-println(TestClass.num);
-
-TestClass.num = 512;
-
-println(TestClass.num);
-
-TestClass.print();
-
-test.instanceFunc();
+println(CoffeeMaker.coffeesMade);

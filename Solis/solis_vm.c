@@ -591,6 +591,11 @@ do {																		\
 					POP();
 					PUSH(SOLIS_OBJECT_VALUE(bound));
 				}
+				else if (solisHashTableGet(&instance->klass->statics, name, &value))
+				{
+					POP();
+					PUSH(value);
+				}
 				else
 				{
 					printf("Can't get field from instance.\n");
@@ -652,11 +657,25 @@ do {																		\
 			{
 				ObjInstance* instance = (ObjInstance*)object;
 
+				// This is a really bad way of doing it... lol 
+				int error = 0;
 				if (solisHashTableInsert(&instance->fields, name, PEEK()))
 				{
 					// Delete it from the hash table
 					solisHashTableDelete(&instance->fields, name);
-					printf("Can't set a field that doesn't exist in class\n");
+					error++;
+				}
+
+				if (solisHashTableInsert(&instance->klass->statics, name, PEEK()))
+				{
+					solisHashTableDelete(&instance->klass->statics, name);
+					error++;
+				}
+				
+
+				if (error == 2)
+				{
+					printf("Cannot set field that does not exist in class\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 
