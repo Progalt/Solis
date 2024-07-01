@@ -10,10 +10,8 @@
 void* solisReallocate(VM* vm, void* ptr, size_t oldSize, size_t newSize)
 {
 
-    if (newSize == 0) {
-        SOLIS_FREE_FUNC(ptr);
-        return NULL;
-    }
+    vm->allocatedBytes += newSize - oldSize;
+
 
 #ifdef SOLIS_DEBUG_STRESS_GC
     if (newSize > oldSize)
@@ -22,17 +20,21 @@ void* solisReallocate(VM* vm, void* ptr, size_t oldSize, size_t newSize)
     }
 #endif
 
-    void* result = SOLIS_REALLOC_FUNC(ptr, newSize);
-
-    if (result == NULL) exit(1);
-
-    vm->allocatedBytes += newSize - oldSize;
-
     // see if we need to run the gc
     if (vm->allocatedBytes > vm->nextGC)
     {
         solisCollectGarbage(vm);
     }
+
+    if (newSize == 0) {
+        SOLIS_FREE_FUNC(ptr);
+        return NULL;
+    }
+
+    void* result = SOLIS_REALLOC_FUNC(ptr, newSize);
+
+    if (result == NULL) exit(1);
+
 
     // printf("Allocated bytes: %d\n", vm->allocatedBytes);
 

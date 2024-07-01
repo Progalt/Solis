@@ -115,6 +115,19 @@ static void blackenObject(VM* vm, Object* object)
         markTable(vm, &((ObjEnum*)object)->fields);
         break;
     }
+    case OBJ_CLASS: {
+        ObjClass* klass = (ObjClass*)object;
+        markObject(vm, (Object*)klass->name);
+        markTable(vm, &klass->fields);
+        markTable(vm, &klass->methods);
+
+    }
+    case OBJ_INSTANCE: {
+        ObjInstance* instance = (ObjInstance*)object;
+        markObject(vm, (Object*)instance->klass);
+        markTable(vm, &instance->fields);
+        break;
+    }
     case OBJ_NATIVE_FUNCTION:
     case OBJ_STRING:
         break;

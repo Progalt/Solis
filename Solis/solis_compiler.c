@@ -1082,11 +1082,47 @@ static void enumDeclaration()
 static void classDeclaration()
 {
 	consume(TOKEN_IDENTIFIER, "Expect class name.");
+	Token className = parser.previous;
 	uint16_t nameConstant = identifierConstant(&parser.previous);
 	
-	
+	declareVariable();
+
+	emitByte(OP_CLASS);
+	emitShort(nameConstant);
+	defineVariable(nameConstant, true);
+
+	namedVariable(className, false);
+	do
+	{
+
+		if (match(TOKEN_VAR))
+		{
+
+			consume(TOKEN_IDENTIFIER, "Expect class name.");
+			uint16_t varName = identifierConstant(&parser.previous);
+
+			if (match(TOKEN_EQ))
+			{
+				expression();
+				consume(TOKEN_SEMICOLON, "Expected ';' after class field declaration");
+			}
+			else
+			{
+				// Just push a nil for the undefined value
+				emitByte(OP_NIL);
+			}
+
+			emitByte(OP_DEFINE_FIELD);
+			emitShort(varName);
+
+
+		}
+
+	} while (!check(TOKEN_END) && !check(TOKEN_EOF));
 
 	consume(TOKEN_END, "Expected 'end' after class body");
+
+	emitByte(OP_POP);
 }
 
 static void returnStatement()
@@ -1206,6 +1242,7 @@ static void dot(bool canAssign)
 
 	if (canAssign && match(TOKEN_EQ))
 	{
+		expression();
 		emitByte(OP_SET_FIELD);
 		emitShort(name);
 	}

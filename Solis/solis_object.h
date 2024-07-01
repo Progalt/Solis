@@ -117,6 +117,33 @@ struct ObjUserdata
 #define SOLIS_IS_USERDATA(value) solisIsObjType(value, OBJ_USERDATA)
 #define SOLIS_AS_USERDATA(value) ((ObjUserdata*)SOLIS_AS_OBJECT(value))
 
+struct ObjClass
+{
+	Object obj;
+
+	ObjString* name;
+
+	HashTable fields;
+	HashTable methods;
+};
+
+#define SOLIS_IS_CLASS(value) solisIsObjType(value, OBJ_CLASS)
+#define SOLIS_AS_CLASS(value) ((ObjClass*)SOLIS_AS_OBJECT(value))
+
+struct ObjInstance
+{
+	Object obj;
+
+	ObjClass* klass;
+
+	// These fields are initialised with the fields from the klass object
+	HashTable fields;
+};
+
+#define SOLIS_IS_INSTANCE(value) solisIsObjType(value, OBJ_INSTANCE)
+#define SOLIS_AS_INSTANCE(value) ((ObjInstance*)SOLIS_AS_OBJECT(value))
+
+
 /*
 	Returns the specified value is equal to the type
 	If the value is not an object it returns false.
@@ -154,5 +181,9 @@ ObjNative* solisNewNativeFunction(VM* vm, SolisNativeSignature nativeFunc);
 ObjEnum* solisNewEnum(VM* vm);
 
 ObjUserdata* solisNewUserdata(VM* vm, void* ptr, UserdataCleanup cleanupFunc);
+
+ObjClass* solisNewClass(VM* vm, ObjString* name);
+
+ObjInstance* solisNewInstance(VM* vm, ObjClass* klass);
 
 #endif // SOLIS_OBJECT_H

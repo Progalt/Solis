@@ -1,4 +1,19 @@
 
-var a = null;
 
-println(a is null);
+class TestClass
+
+	var x = 10 ** 2;
+	var y = 15;
+
+end
+
+
+var test = TestClass();
+
+println(test.x);
+println(test.y);
+
+test.x = 50;
+test.z = 100;
+
+println(test.x);

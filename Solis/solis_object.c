@@ -74,6 +74,20 @@ void solisFreeObject(VM* vm, Object* object)
 		SOLIS_FREE(vm, ObjUserdata, object);
 		break;
 	}
+	case OBJ_CLASS:
+	{
+		ObjClass* klass = (ObjClass*)object;
+		solisFreeHashTable(&klass->fields);
+		solisFreeHashTable(&klass->methods);
+		SOLIS_FREE(vm, ObjClass, object);
+		break;
+	}
+	case OBJ_INSTANCE: {
+		ObjInstance* instance = (ObjInstance*)object;
+		solisFreeHashTable(&instance->fields);
+		SOLIS_FREE(vm, ObjInstance, object);
+		break;
+	}
 	case OBJ_UPVALUE: 
 	{
 		SOLIS_FREE(vm, ObjUpvalue, object);
@@ -215,4 +229,24 @@ ObjUserdata* solisNewUserdata(VM* vm, void* ptr, UserdataCleanup cleanupFunc)
 	userdata->cleanupFunc = cleanupFunc;
 
 	return userdata;
+}
+
+ObjClass* solisNewClass(VM* vm, ObjString* name)
+{
+	ObjClass* klass = ALLOCATE_OBJ(vm, ObjClass, OBJ_CLASS);
+	klass->name = name;
+
+	solisInitHashTable(&klass->fields, vm);
+	solisInitHashTable(&klass->methods, vm);
+
+	return klass;
+}
+
+ObjInstance* solisNewInstance(VM* vm, ObjClass* klass)
+{
+	ObjInstance* instance = ALLOCATE_OBJ(vm, ObjInstance, OBJ_INSTANCE);
+	instance->klass = klass;
+	solisInitHashTable(&instance->fields, vm);
+	solisHashTableCopy(&klass->fields, &instance->fields);
+	return instance;
 }

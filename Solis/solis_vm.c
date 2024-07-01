@@ -7,7 +7,7 @@
 #include <string.h>
 #include <math.h>
 
-// #define SOLIS_DEBUG_TRACE_EXECUTION
+ #define SOLIS_DEBUG_TRACE_EXECUTION
 
 static bool callValue(VM* vm, Value callee, int argCount);
 
@@ -199,7 +199,7 @@ do {																		\
 	CASE_CODE(FALSE) :
 		PUSH(SOLIS_BOOL_VALUE(false));
 		DISPATCH();
-	CASE_CODE(NEGATE):
+	CASE_CODE(NEGATE) :
 	{
 		// Just negate the value on the stack
 		// No need to pop and push 
@@ -212,7 +212,7 @@ do {																		\
 		}
 		DISPATCH();
 	}
-	CASE_CODE(NOT):
+	CASE_CODE(NOT) :
 	{
 		Value* ptr = PEEK_PTR();
 		*ptr = SOLIS_BOOL_VALUE(solisIsFalsy(*ptr));
@@ -252,7 +252,7 @@ do {																		\
 
 		DISPATCH();
 	}
-	CASE_CODE(ADD):
+	CASE_CODE(ADD) :
 	{
 		// Instead of popping the value lower on the stack we can just assign it to the new value avoiding unneeded operations
 		Value a = POP();
@@ -271,7 +271,7 @@ do {																		\
 
 		DISPATCH();
 	}
-	CASE_CODE(SUBTRACT):
+	CASE_CODE(SUBTRACT) :
 	{
 		Value a = POP();
 		Value* val = PEEK_PTR();
@@ -314,7 +314,7 @@ do {																		\
 
 		DISPATCH();
 	}
-	CASE_CODE(POWER):
+	CASE_CODE(POWER) :
 	{
 		Value a = POP();
 		Value* val = PEEK_PTR();
@@ -421,12 +421,12 @@ do {																		\
 			uint8_t isLocal = READ_BYTE();
 			uint8_t index = READ_BYTE();
 
-			if (isLocal) 
+			if (isLocal)
 			{
 				closure->upvalues[i] =
 					captureUpvalue(vm, frame->slots + index);
 			}
-			else 
+			else
 			{
 				closure->upvalues[i] = frame->closure->upvalues[index];
 			}
@@ -454,7 +454,7 @@ do {																		\
 	{
 
 		int argCount = instruction - OP_CALL_0;
-		
+
 		STORE_FRAME();
 
 		if (!callValue(vm, *(vm->sp - 1 - argCount), argCount))
@@ -464,44 +464,6 @@ do {																		\
 		}
 
 		LOAD_FRAME();
-
-		DISPATCH();
-	}
-	CASE_CODE(GET_FIELD) :
-	{
-		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
-
-
-		if (SOLIS_IS_OBJECT(PEEK()))
-		{
-			Object* object = SOLIS_AS_OBJECT(PEEK());
-			switch (object->type)
-			{
-			case OBJ_ENUM:
-			{
-				ObjEnum* enumObj = (ObjEnum*)object;
-				Value val;
-				if (!solisHashTableGet(&enumObj->fields, name, &val))
-				{
-					printf("Failed to get field from enum\n");
-					return INTERPRET_RUNTIME_ERROR;
-				}
-
-				// Pop the enum value off the stack
-				POP();
-				PUSH(val);
-
-				break;
-			}
-			default:
-				// Return an error
-				// We can't access the fields
-				printf("Object does not have fields\n");
-				return INTERPRET_RUNTIME_ERROR;
-				break;
-			}
-		}
-		
 
 		DISPATCH();
 	}
@@ -532,14 +494,34 @@ do {																		\
 				*obj = SOLIS_BOOL_VALUE(false);
 			}
 		}
-		else 
-		{ 
+		else
+		{
 			*obj = SOLIS_BOOL_VALUE(false);
 		}
-		
+
 		DISPATCH();
 	}
-	CASE_CODE(SET_FIELD) : 
+	CASE_CODE(CLASS) :
+	{
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+
+		PUSH(SOLIS_OBJECT_VALUE(solisNewClass(vm, name)));
+
+		DISPATCH();
+	}
+	CASE_CODE(DEFINE_FIELD) :
+	{
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+
+		Value val = PEEK();
+		ObjClass* klass = SOLIS_AS_CLASS(solisPeek(vm, 1));
+
+		solisHashTableInsert(&klass->fields, name, val);
+
+		POP();
+		DISPATCH();
+	}
+	CASE_CODE(GET_FIELD) :
 	{
 		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
 
@@ -551,9 +533,73 @@ do {																		\
 			{
 			case OBJ_ENUM:
 			{
-				// Can't set an enum value
-				printf("Can't set enum value\n");
+				ObjEnum* enumObj = (ObjEnum*)object;
+				Value val;
+				if (!solisHashTableGet(&enumObj->fields, name, &val))
+				{
+					printf("Failed to get field from enum\n");
+					return INTERPRET_RUNTIME_ERROR;
+				}
+
+				// Pop the enum value off the stack
+				POP();
+				PUSH(val);
+
+				break;
+			}
+			case OBJ_INSTANCE:
+			{
+				ObjInstance* instance = (ObjInstance*)object;
+
+				Value value;
+				if (!solisHashTableGet(&instance->fields, name, &value))
+				{
+					printf("Can't get field from instance.\n");
+					return INTERPRET_RUNTIME_ERROR;
+				}
+
+				POP();
+				PUSH(value);
+
+				break;
+			}
+			default:
+				// Return an error
+				// We can't access the fields
+				printf("Object does not have fields\n");
 				return INTERPRET_RUNTIME_ERROR;
+				break;
+			}
+		}
+
+
+		DISPATCH();
+	}
+	CASE_CODE(SET_FIELD) : 
+	{
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+
+
+		if (SOLIS_IS_OBJECT(solisPeek(vm, 1)))
+		{
+			Object* object = SOLIS_AS_OBJECT(solisPeek(vm, 1));
+			switch (object->type)
+			{
+			case OBJ_INSTANCE:
+			{
+				ObjInstance* instance = (ObjInstance*)object;
+
+				if (solisHashTableInsert(&instance->fields, name, PEEK()))
+				{
+					// Delete it from the hash table
+					solisHashTableDelete(&instance->fields, name);
+					printf("Can't set a field that doesn't exist in class\n");
+					return INTERPRET_RUNTIME_ERROR;
+				}
+
+				Value value = POP();
+				POP();
+				PUSH(value);
 
 				break;
 			}
@@ -686,6 +732,12 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 			ObjNative* native = SOLIS_AS_NATIVE(callee);
 
 			return callNativeFunction(vm, native->nativeFunction, argCount);
+		}
+		case OBJ_CLASS:
+		{
+			ObjClass* klass = SOLIS_AS_CLASS(callee);
+			vm->sp[-argCount - 1] = SOLIS_OBJECT_VALUE(solisNewInstance(vm, klass));
+			return true;
 		}
 		default:
 			break; // Non-callable object type.
