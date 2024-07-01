@@ -1132,7 +1132,11 @@ static void or_(bool canAssign)
 
 static void is_(bool canAssign)
 {
-	consume(TOKEN_IDENTIFIER, "Expected type name after 'is'.");
+	// Null is a keyword but could also be used here
+	if (check(TOKEN_NULL))
+		consume(TOKEN_NULL, "Expected type name after 'is'.");
+	else 
+		consume(TOKEN_IDENTIFIER, "Expected type name after 'is'.");
 
 	// This might not be the best but we always
 	// emit a constant 
@@ -1145,13 +1149,16 @@ static void is_(bool canAssign)
 
 	uint8_t type = 0;
 
-	if (strcmp(str->chars, "Number") == 0)
+	// There isn't much we can do ahead of time here 
+	// Other than make it so we don't have to do string comparisons at runtime 
+
+	if (strcmp(str->chars, "number") == 0)
 		type = VALUE_NUMERIC;
-	else if (strcmp(str->chars, "Bool") == 0)
+	else if (strcmp(str->chars, "bool") == 0)
 		type = VALUE_TRUE;		// Just emit a true for bool 
-	else if (strcmp(str->chars, "Null") == 0)
+	else if (strcmp(str->chars, "null") == 0)
 		type = VALUE_NULL;
-	else if (strcmp(str->chars, "String") == 0)
+	else if (strcmp(str->chars, "string") == 0)
 		type = VALUE_OBJECT + OBJ_STRING;
 	else
 		error("Unknown right hand type in 'is' expression.");

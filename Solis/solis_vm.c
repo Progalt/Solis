@@ -512,7 +512,12 @@ do {																		\
 
 		Value* obj = PEEK_PTR();
 
-		if (solisIsValueType(*obj, (ValueType)type) && !solisIsValueType(*obj, VALUE_OBJECT))
+		// we need a special check for bool
+		if (type == VALUE_TRUE && (solisIsValueType(*obj, VALUE_TRUE) || solisIsValueType(*obj, VALUE_FALSE)))
+		{
+			*obj = SOLIS_BOOL_VALUE(true);
+		}
+		else if (solisIsValueType(*obj, (ValueType)type) && !solisIsValueType(*obj, VALUE_OBJECT))
 		{
 			*obj = SOLIS_BOOL_VALUE(true);
 		}

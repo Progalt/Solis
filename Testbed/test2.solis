@@ -1,13 +1,4 @@
 
+var a = null;
 
-
-var i = "Hello";
-
-
-println(i is String);
-println(i is Number);
-
-var currentState = State.Paused; 
-
-
-println(State.Paused);
+println(a is null);
