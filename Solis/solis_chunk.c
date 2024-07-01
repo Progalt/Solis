@@ -246,8 +246,12 @@ int solisDisassembleInstruction(Chunk* chunk, int offset)
 		return constantInstructionLong("OP_SET_FIELD", chunk, offset);
 	case OP_CLASS:
 		return constantInstructionLong("OP_CLASS", chunk, offset);
+	case OP_DEFINE_STATIC:
+		return constantInstructionLong("OP_DEFINE_STATIC", chunk, offset);
 	case OP_DEFINE_FIELD:
 		return constantInstructionLong("OP_DEFINE_FIELD", chunk, offset);
+	case OP_DEFINE_METHOD:
+		return constantInstructionLong("OP_DEFINE_METHOD", chunk, offset);
 	default:
 		printf("Unknown opcode %d\n", instruction);
 		return offset + 1;

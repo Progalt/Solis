@@ -533,6 +533,19 @@ do {																		\
 		POP();
 		DISPATCH();
 	}
+	CASE_CODE(DEFINE_METHOD) :
+	{
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+
+		Value val = PEEK();
+		ObjClass* klass = SOLIS_AS_CLASS(solisPeek(vm, 1));
+
+		solisHashTableInsert(&klass->methods, name, val);
+
+		POP();
+
+		DISPATCH();
+	}
 	CASE_CODE(GET_FIELD) :
 	{
 		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());

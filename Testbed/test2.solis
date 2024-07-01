@@ -7,6 +7,10 @@ class TestClass
 	var x = 10 ** 2;
 	var y = 15;
 
+	static function print() 
+		println("Called from static");
+	end
+
 end
 
 
@@ -26,3 +30,5 @@ println(TestClass.num);
 TestClass.num = 512;
 
 println(TestClass.num);
+
+TestClass.print();

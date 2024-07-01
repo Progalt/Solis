@@ -1079,6 +1079,18 @@ static void enumDeclaration()
 	defineVariable(global, true);
 }
 
+static void method(bool isStatic)
+{
+	consume(TOKEN_IDENTIFIER, "Expect method name.");
+	uint8_t constant = identifierConstant(&parser.previous);
+
+	FunctionType type = TYPE_FUNCTION;
+	function(type);
+
+	emitByte(isStatic ? OP_DEFINE_STATIC : OP_DEFINE_METHOD);
+	emitShort(constant);
+}
+
 static void classDeclaration()
 {
 	consume(TOKEN_IDENTIFIER, "Expect class name.");
@@ -1122,6 +1134,10 @@ static void classDeclaration()
 			emitShort(varName);
 
 
+		}
+		else if (match(TOKEN_FUNCTION))
+		{
+			method(isStatic);
 		}
 
 	} while (!check(TOKEN_END) && !check(TOKEN_EOF));
