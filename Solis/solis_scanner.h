@@ -75,6 +75,7 @@ typedef enum TokenType
 	TOKEN_CLASS,
 	TOKEN_INHERITS, 
 	TOKEN_STATIC, 
+	TOKEN_SELF,
 
 	TOKEN_STRING,
 

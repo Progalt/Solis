@@ -13,6 +13,8 @@ class TestClass
 
 	function instanceFunc()
 		println("Called from instance");
+
+		println(self.y);
 	end
 
 end

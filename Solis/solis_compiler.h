@@ -13,6 +13,7 @@ typedef struct sCompiler Compiler;
 typedef enum
 {
 	TYPE_FUNCTION,
+	TYPE_METHOD, 
 	TYPE_SCRIPT, 
 } FunctionType;
 

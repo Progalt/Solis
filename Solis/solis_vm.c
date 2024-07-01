@@ -823,6 +823,7 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 		case OBJ_BOUND_METHOD:
 		{
 			ObjBoundMethod* bound = SOLIS_AS_BOUND_METHOD(callee);
+			vm->sp[-argCount - 1] = bound->receiver;
 			return callClosure(vm, bound->method, argCount);
 		}
 		default:

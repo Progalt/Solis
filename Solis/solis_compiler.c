@@ -102,6 +102,8 @@ static void call(bool canAssign);
 
 static void variable(bool canAssign);
 
+static void self(bool canAssign);
+
 static void block();
 
 static void parsePrecedence(Precedence precedence);
@@ -151,6 +153,7 @@ ParseRule rules[] = {
   [TOKEN_ERROR] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_BREAK] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_IS] = { NULL, is_, PREC_CALL }, 
+  [TOKEN_SELF] = { self, NULL, PREC_NONE },
   [TOKEN_EOF] = {NULL,     NULL,   PREC_NONE},
 };
 
@@ -351,6 +354,15 @@ static void initCompiler(VM* vm, Compiler* compiler, FunctionType type)
 	local->name.start = "";
 	local->name.length = 0;
 	local->isCaptured = false; 
+
+	if (type != TYPE_FUNCTION) {
+		local->name.start = "self";
+		local->name.length = 4;
+	}
+	else {
+		local->name.start = "";
+		local->name.length = 0;
+	}
 
 }
 
@@ -1084,7 +1096,7 @@ static void method(bool isStatic)
 	consume(TOKEN_IDENTIFIER, "Expect method name.");
 	uint8_t constant = identifierConstant(&parser.previous);
 
-	FunctionType type = TYPE_FUNCTION;
+	FunctionType type = TYPE_METHOD;
 	function(type);
 
 	emitByte(isStatic ? OP_DEFINE_STATIC : OP_DEFINE_METHOD);
@@ -1145,6 +1157,11 @@ static void classDeclaration()
 	consume(TOKEN_END, "Expected 'end' after class body");
 
 	emitByte(OP_POP);
+}
+
+static void self(bool canAssign)
+{
+	variable(false);
 }
 
 static void returnStatement()
