@@ -522,6 +522,10 @@ do {																		\
 			{
 				*obj = SOLIS_BOOL_VALUE(true);
 			}
+			else
+			{
+				*obj = SOLIS_BOOL_VALUE(false);
+			}
 		}
 		else 
 		{ 

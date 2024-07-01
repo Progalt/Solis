@@ -1151,6 +1151,8 @@ static void is_(bool canAssign)
 		type = VALUE_TRUE;		// Just emit a true for bool 
 	else if (strcmp(str->chars, "Null") == 0)
 		type = VALUE_NULL;
+	else if (strcmp(str->chars, "String") == 0)
+		type = VALUE_OBJECT + OBJ_STRING;
 	else
 		error("Unknown right hand type in 'is' expression.");
 

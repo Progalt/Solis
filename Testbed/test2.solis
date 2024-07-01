@@ -1,10 +1,10 @@
 
 
 
-var i = 10;
+var i = "Hello";
 
-var t = i is Number;
 
+println(i is String);
 println(i is Number);
 
 var currentState = State.Paused; 
