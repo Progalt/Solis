@@ -57,6 +57,17 @@ typedef struct
 
 #endif
 
+static inline bool solisIsValueType(Value value, ValueType type)
+{
+#ifdef SOLIS_NAN_BOXING
+
+#else 
+
+	return value.type == type;
+
+#endif
+}
+
 /*
 	Checks if the values are strictly the same. Is true if both objects pointers are equal not their contents.
 */

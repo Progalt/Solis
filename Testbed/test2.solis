@@ -1,8 +1,11 @@
 
 
 
+var i = 10;
 
+var t = i is Number;
 
+println(i is Number);
 
 var currentState = State.Paused; 
 

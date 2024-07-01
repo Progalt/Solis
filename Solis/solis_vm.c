@@ -505,6 +505,31 @@ do {																		\
 
 		DISPATCH();
 	}
+	CASE_CODE(IS) :
+	{
+		uint8_t type = READ_BYTE();
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+
+		Value* obj = PEEK_PTR();
+
+		if (solisIsValueType(*obj, (ValueType)type) && !solisIsValueType(*obj, VALUE_OBJECT))
+		{
+			*obj = SOLIS_BOOL_VALUE(true);
+		}
+		else if (solisIsValueType(*obj, VALUE_OBJECT))
+		{
+			if (solisIsObjType(*obj, (ObjectType)(type - VALUE_OBJECT)))
+			{
+				*obj = SOLIS_BOOL_VALUE(true);
+			}
+		}
+		else 
+		{ 
+			*obj = SOLIS_BOOL_VALUE(false);
+		}
+		
+		DISPATCH();
+	}
 	CASE_CODE(SET_FIELD) : 
 	{
 		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());

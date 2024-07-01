@@ -24,3 +24,9 @@ end
 
 main();
 ```
+
+The language was designed with game scripting in mind but is suited for a variety of uses much like Lua. Unlike lua, it has more object oriented style objects meaning not everything is a table, and there 
+is built in support for more types. 
+
+
+With a fully featured C API for embedding the language easily. 

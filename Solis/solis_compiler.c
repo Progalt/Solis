@@ -94,6 +94,8 @@ static void function(FunctionType type);
 static void and_(bool canAssign);
 static void or_(bool canAssign);
 
+static void is_(bool canAssign);
+
 static void dot(bool canAssign);
 
 static void call(bool canAssign);
@@ -148,6 +150,7 @@ ParseRule rules[] = {
   [TOKEN_WHILE] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ERROR] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_BREAK] = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_IS] = { NULL, is_, PREC_CALL }, 
   [TOKEN_EOF] = {NULL,     NULL,   PREC_NONE},
 };
 
@@ -1125,6 +1128,37 @@ static void or_(bool canAssign)
 
 	parsePrecedence(PREC_OR);
 	patchJump(endJump);
+}
+
+static void is_(bool canAssign)
+{
+	consume(TOKEN_IDENTIFIER, "Expected type name after 'is'.");
+
+	// This might not be the best but we always
+	// emit a constant 
+	uint16_t constant = identifierConstant(&parser.previous);
+
+	// Get the string
+	ObjString* str = SOLIS_AS_STRING(currentChunk()->constants.data[constant]);
+
+	emitByte(OP_IS);
+
+	uint8_t type = 0;
+
+	if (strcmp(str->chars, "Number") == 0)
+		type = VALUE_NUMERIC;
+	else if (strcmp(str->chars, "Bool") == 0)
+		type = VALUE_TRUE;		// Just emit a true for bool 
+	else if (strcmp(str->chars, "Null") == 0)
+		type = VALUE_NULL;
+	else
+		error("Unknown right hand type in 'is' expression.");
+
+	// Emit the type
+	emitByte(type);
+	emitShort(constant);
+
+	
 }
 
 static uint8_t argumentList() 

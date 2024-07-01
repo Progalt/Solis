@@ -45,7 +45,9 @@ static Keyword keywords[] =
 	{ "in", 2, TOKEN_IN },
 	{ "and", 3, TOKEN_AND },
 	{ "or", 2, TOKEN_OR },
+
 	{ "is", 2, TOKEN_IS },
+	{ "as", 2, TOKEN_AS },
 
 	{ "null", 4, TOKEN_NULL },
 	{ "true", 4, TOKEN_TRUE }, 

@@ -63,7 +63,9 @@ typedef enum TokenType
 	TOKEN_IN,
 	TOKEN_AND,
 	TOKEN_OR,
+
 	TOKEN_IS,
+	TOKEN_AS, 
 
 	TOKEN_NULL,
 	TOKEN_TRUE,
