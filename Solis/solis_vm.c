@@ -474,6 +474,8 @@ do {																		\
 
 		Value* obj = PEEK_PTR();
 
+		// This isn't the best
+
 		// we need a special check for bool
 		if (type == VALUE_TRUE && (solisIsValueType(*obj, VALUE_TRUE) || solisIsValueType(*obj, VALUE_FALSE)))
 		{
@@ -485,13 +487,23 @@ do {																		\
 		}
 		else if (solisIsValueType(*obj, VALUE_OBJECT))
 		{
-			if (solisIsObjType(*obj, (ObjectType)(type - VALUE_OBJECT)))
+			if (type == VALUE_OBJECT + OBJ_CLASS)
 			{
-				*obj = SOLIS_BOOL_VALUE(true);
+				if (SOLIS_IS_INSTANCE(*obj))
+					*obj = SOLIS_BOOL_VALUE(strcmp(SOLIS_AS_INSTANCE(*obj)->klass->name->chars, name->chars) == 0);
+				else
+					*obj = SOLIS_BOOL_VALUE(strcmp(SOLIS_AS_CLASS(*obj)->name->chars, name->chars) == 0);
 			}
 			else
 			{
-				*obj = SOLIS_BOOL_VALUE(false);
+				if (solisIsObjType(*obj, (ObjectType)(type - VALUE_OBJECT)))
+				{
+					*obj = SOLIS_BOOL_VALUE(true);
+				}
+				else
+				{
+					*obj = SOLIS_BOOL_VALUE(false);
+				}
 			}
 		}
 		else

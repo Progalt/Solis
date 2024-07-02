@@ -1293,7 +1293,11 @@ static void is_(bool canAssign)
 	else if (strcmp(str->chars, "string") == 0)
 		type = VALUE_OBJECT + OBJ_STRING;
 	else
-		error("Unknown right hand type in 'is' expression.");
+	{
+		// Its either a class or instance
+
+		type = VALUE_OBJECT + OBJ_CLASS;
+	}
 
 	// Emit the type
 	emitByte(type);
