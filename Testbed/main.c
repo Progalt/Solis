@@ -71,7 +71,7 @@ void clockNative(VM* vm)
 int main(void) {
 
 
-    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/test.solis");
+    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/inheritance.solis");
     if (fileContent == NULL) 
     {
         printf("Failed to read file\n");

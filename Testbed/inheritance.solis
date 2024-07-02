@@ -1,0 +1,54 @@
+class Coffee
+
+	function brew()
+		println("Oops")
+	end
+
+end
+
+class Latte inherits Coffee
+
+	function brew()
+		println("Brewing Latte")
+	end 
+
+end
+
+class Cortado inherits Coffee
+
+	function brew()
+		println("Brewing Cortado")
+	end 
+
+end
+
+class CoffeeMaker 
+
+	function brewCoffee(type)
+		
+		var coffee = null 
+
+		if type == "Latte" then
+			coffee = Latte()
+		end 
+		if type == "Cortado" then
+			coffee = Cortado()
+		end
+
+		if coffee is null then
+			println("That's not on the menu!")
+			return null 
+		end
+
+
+		coffee.brew()
+
+	end
+
+end
+
+var coffeeMaker = CoffeeMaker()
+
+coffeeMaker.brewCoffee("Latte")
+coffeeMaker.brewCoffee("Cortado")
+coffeeMaker.brewCoffee("Flat White")

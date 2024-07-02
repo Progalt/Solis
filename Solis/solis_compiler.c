@@ -1156,6 +1156,20 @@ static void classDeclaration()
 	emitShort(nameConstant);
 	defineVariable(nameConstant, true);
 
+	if (match(TOKEN_INHERITS))
+	{
+		consume(TOKEN_IDENTIFIER, "Expected base class name.");
+		variable(false);
+
+		if (identifiersEqual(&className, &parser.previous)) 
+		{
+			error("A class can't inherit from itself.");
+		}
+
+		namedVariable(className, false);
+		emitByte(OP_INHERIT);
+	}
+
 	namedVariable(className, false);
 	do
 	{

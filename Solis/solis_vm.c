@@ -509,6 +509,19 @@ do {																		\
 
 		DISPATCH();
 	}
+	CASE_CODE(INHERIT) :
+	{
+
+		Value superclass = solisPeek(vm, 1);
+
+		ObjClass* subclass = SOLIS_AS_CLASS(PEEK());
+
+		solisHashTableCopy(&SOLIS_AS_CLASS(superclass)->methods, &subclass->methods);
+		solisHashTableCopy(&SOLIS_AS_CLASS(superclass)->fields, &subclass->fields);
+
+		POP();
+		DISPATCH();
+	}
 	CASE_CODE(DEFINE_FIELD) :
 	{
 		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
