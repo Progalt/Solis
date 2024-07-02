@@ -83,6 +83,7 @@ typedef enum TokenType
 
 	TOKEN_RETURN,
 
+	TOKEN_LINE, 
 	TOKEN_EOF,
 
 	TOKEN_ERROR, 

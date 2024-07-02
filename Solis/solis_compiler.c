@@ -251,6 +251,31 @@ static bool match(TokenType type)
 	return true;
 }
 
+static bool matchLine()
+{
+	if (!match(TOKEN_LINE)) return false;
+
+	while (match(TOKEN_LINE));
+
+	return true;
+}
+
+static void ignoreNewlines()
+{
+	matchLine();
+}
+
+static void consumeLine(const char* msg)
+{
+	if (check(TOKEN_EOF))
+	{
+		return;
+	}
+
+	consume(TOKEN_LINE, msg);
+	ignoreNewlines();
+}
+
 typedef struct
 {
 	Token name;
@@ -384,7 +409,7 @@ static void synchronize() {
 	parser.panicMode = false;
 
 	while (parser.current.type != TOKEN_EOF) {
-		if (parser.previous.type == TOKEN_SEMICOLON) return;
+		if (parser.previous.type == TOKEN_LINE) return;
 		switch (parser.current.type) {
 		//case TOKEN_CLASS:
 		case TOKEN_FUNCTION:
@@ -511,6 +536,8 @@ static void string(bool canAssign) {
 
 static void declaration()
 {
+	ignoreNewlines();
+
 	if (match(TOKEN_FUNCTION))
 	{
 		functionDeclaration();
@@ -532,12 +559,15 @@ static void declaration()
 		statement();
 	}
 
+	// consumeLine("Expected new line after statement.");
+
 	// If we have an error ignore this statement to avoid unnecessary errors being printed
 	if (parser.panicMode) synchronize();
 }
 
 static void statement()
 {
+
 	if (match(TOKEN_RETURN))
 	{
 		returnStatement();
@@ -573,12 +603,15 @@ static void statement()
 	{
 		expressionStatement();
 	}
+
+	consumeLine("Expected new line after expression");
+
 }
 
 static void expressionStatement()
 {
 	expression();
-	consume(TOKEN_SEMICOLON, "Expected ';' after expression.");
+	// consume(TOKEN_SEMICOLON, "Expected ';' after expression.");
 	emitByte(OP_POP);
 }
 
@@ -683,7 +716,7 @@ static void variableDeclaration()
 		emitByte(OP_NIL);
 	}
 
-	consume(TOKEN_SEMICOLON, "Expected ';' after variable declaration.");
+	consumeLine( "Expected new line after variable declaration.");
 
 	defineVariable(global, true);
 
@@ -706,7 +739,7 @@ static void constDeclaration()
 	// Just do this for now so we can still parse the rest 
 	expression();
 
-	consume(TOKEN_SEMICOLON, "Expected ';' at the end of constant variable declaration.");
+	consumeLine("Expected new line at the end of constant variable declaration.");
 
 }
 
@@ -1021,6 +1054,8 @@ static void function(FunctionType type)
 	{
 		do 
 		{
+			ignoreNewlines();
+
 			current->function->arity++;
 			if (current->function->arity > 255) 
 			{
@@ -1120,6 +1155,8 @@ static void classDeclaration()
 	{
 		bool isStatic = false;
 
+		ignoreNewlines();
+
 		if (match(TOKEN_STATIC))
 		{
 			isStatic = true;
@@ -1134,7 +1171,6 @@ static void classDeclaration()
 			if (match(TOKEN_EQ))
 			{
 				expression();
-				consume(TOKEN_SEMICOLON, "Expected ';' after class field declaration");
 			}
 			else
 			{
@@ -1145,12 +1181,13 @@ static void classDeclaration()
 			emitByte(isStatic ? OP_DEFINE_STATIC : OP_DEFINE_FIELD);
 			emitShort(varName);
 
-
+			consumeLine("Expected new line after class field declaration");
 		}
 		else if (match(TOKEN_FUNCTION))
 		{
 			method(isStatic);
 		}
+
 
 	} while (!check(TOKEN_END) && !check(TOKEN_EOF));
 
@@ -1171,14 +1208,15 @@ static void returnStatement()
 		error("Can't return from top-level code.");
 	}
 
-	if (match(TOKEN_SEMICOLON)) 
+	if (matchLine()) 
 	{
 		emitReturn();
 	}
 	else 
 	{
 		expression();
-		consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
+		// consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
+		consumeLine("Expected new line after return value.");
 		emitByte(OP_RETURN);
 	}
 }
@@ -1343,6 +1381,8 @@ ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int gl
 	}
 
 	TokenList tokenList = solisScanSource(vm, source);
+
+	solisPrintTokenList(&tokenList);
 
 	parser.tokenList = tokenList;
 

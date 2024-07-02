@@ -184,7 +184,7 @@ void solisSetInstanceField(VM* vm, Value instance, const char* name, Value value
 
 	solisPush(vm, SOLIS_OBJECT_VALUE(str));
 
-	if (!solisHashTableInsert(&inst->fields, str, value));
+	if (!solisHashTableInsert(&inst->fields, str, value))
 	{
 		solisHashTableDelete(&inst->fields, str);
 	}

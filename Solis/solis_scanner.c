@@ -143,11 +143,6 @@ static void skipWhitespace() {
 		{
 			advance();
 		}
-		else if (c == '\n')
-		{
-			scanner.line++;
-			advance();
-		}
 		else
 		{
 			return;
@@ -265,6 +260,10 @@ Token solisScanToken()
 	case '<': return makeToken(match('=') ? TOKEN_LTEQ : TOKEN_LT);
 	case '>': return makeToken(match('=') ? TOKEN_GTEQ : TOKEN_GT);
 	case '"': return string();
+	case '\n': {
+		scanner.line++;
+		return makeToken(TOKEN_LINE);
+	}
 	}
 
 	// Unexpected character. Let the compiler handle it

@@ -1,0 +1,7 @@
+
+
+function helloWorld() 
+	println("Hello World")
+end
+
+helloWorld()
