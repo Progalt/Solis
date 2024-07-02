@@ -110,3 +110,109 @@ void solisAddClassField(VM* vm, Value klassValue, const char* name, bool isStati
 	solisPop(vm);
 
 }
+
+void solisSetStaticField(VM* vm, Value klassValue, const char* name, Value value)
+{
+	ObjClass* klass = NULL;
+
+	if (SOLIS_IS_INSTANCE(klassValue))
+		klass = SOLIS_AS_INSTANCE(klassValue)->klass;
+	else if (SOLIS_IS_CLASS(klassValue))
+		klass = SOLIS_AS_CLASS(klassValue);
+	else
+	{
+		// TODO: Raise an error
+		return;
+	}
+
+	ObjString* str = solisCopyString(vm, name, strlen(name));
+
+	solisPush(vm, SOLIS_OBJECT_VALUE(str));
+
+	if (!solisHashTableInsert(&klass->statics, str, value))
+	{
+		// Delete it since we don't want to add on a set call
+		solisHashTableDelete(&klass->statics, str);
+
+		// TODO: We should raise an error here
+	}
+
+	solisPop(vm);
+
+}
+
+Value solisGetStaticField(VM* vm, Value klassValue, const char* name)
+{
+	ObjClass* klass = NULL;
+
+	if (SOLIS_IS_INSTANCE(klassValue))
+		klass = SOLIS_AS_INSTANCE(klassValue)->klass;
+	else if (SOLIS_IS_CLASS(klassValue))
+		klass = SOLIS_AS_CLASS(klassValue);
+	else
+	{
+		// TODO: Raise an error
+		return SOLIS_NULL_VALUE();
+	}
+
+	ObjString* str = solisCopyString(vm, name, strlen(name));
+
+	solisPush(vm, SOLIS_OBJECT_VALUE(str));
+
+	Value val;
+	if (!solisHashTableGet(&klass->statics, str, &val))
+	{
+		return SOLIS_NULL_VALUE();
+	}
+
+	solisPop(vm);
+
+	return val;
+}
+
+void solisSetInstanceField(VM* vm, Value instance, const char* name, Value value)
+{
+	if (!SOLIS_IS_INSTANCE(instance))
+	{
+		// TODO: Error 
+		return;
+	}
+
+	ObjInstance* inst = SOLIS_AS_INSTANCE(instance);
+
+	ObjString* str = solisCopyString(vm, name, strlen(name));
+
+	solisPush(vm, SOLIS_OBJECT_VALUE(str));
+
+	if (!solisHashTableInsert(&inst->fields, str, value));
+	{
+		solisHashTableDelete(&inst->fields, str);
+	}
+
+	solisPop(vm);
+}
+
+Value solisGetInstanceField(VM* vm, Value instance, const char* name)
+{
+	if (!SOLIS_IS_INSTANCE(instance))
+	{
+		// TODO: Error 
+		return SOLIS_NULL_VALUE();
+	}
+
+	ObjInstance* inst = SOLIS_AS_INSTANCE(instance);
+
+	ObjString* str = solisCopyString(vm, name, strlen(name));
+
+	solisPush(vm, SOLIS_OBJECT_VALUE(str));
+
+	Value val;
+	if (!solisHashTableGet(&inst->fields, str, &val))
+	{
+		return SOLIS_NULL_VALUE();
+	}
+
+	solisPop(vm);
+
+	return val;
+}

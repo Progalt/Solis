@@ -58,4 +58,15 @@ Value solisCreateClass(VM* vm, const char* name);
 */
 void solisAddClassField(VM* vm, Value klassValue, const char* name, bool isStatic, Value defaultValue);
 
+/*
+	Sets the static field of a class 
+*/
+void solisSetStaticField(VM* vm, Value klassValue, const char* name, Value value);
+
+Value solisGetStaticField(VM* vm, Value klassValue, const char* name);
+
+void solisSetInstanceField(VM* vm, Value instance, const char* name, Value value);
+
+Value solisGetInstanceField(VM* vm, Value instance, const char* name);
+
 #endif // SOLIS_INTERFACE_H
