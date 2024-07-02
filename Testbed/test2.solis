@@ -1,4 +1,5 @@
 
+
 class CoffeeMaker
 
 	static var coffeesMade = 0

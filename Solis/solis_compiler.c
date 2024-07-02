@@ -1222,7 +1222,7 @@ static void returnStatement()
 	{
 		expression();
 		// consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
-		consumeLine("Expected new line after return value.");
+		// consumeLine("Expected new line after return value.");
 		emitByte(OP_RETURN);
 	}
 }

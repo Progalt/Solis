@@ -4,25 +4,25 @@
 function fib(n)
 
 	if n < 2 then
-		return n;
+		return n
 	end
 
-	return fib(n - 2) + fib(n - 1);
+	return fib(n - 2) + fib(n - 1)
 
 end
 
-var iters = 5;
-var i = 0;
+var iters = 5
+var i = 0
 
-var start = clock();
+var start = clock()
 
 while i < iters do 
-	var f = fib(28);
+	var f = fib(28)
 
-	i = i + 1;
+	i = i + 1
 end 
 
-var elapsed = clock() - start;
+var elapsed = clock() - start
 
-println("Elapsed: ");
-println(elapsed);
+println("Elapsed: ")
+println(elapsed)
