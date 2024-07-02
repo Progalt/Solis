@@ -44,6 +44,11 @@ void solisSetReturnValue(VM* vm, Value value)
 	*vm->apiStack = value;
 }
 
+Value solisGetSelf(VM* vm)
+{
+	return *vm->apiStack;
+}
+
 Value solisCreateEnumObject(VM* vm, const char* name)
 {
 	ObjEnum* _enum = solisNewEnum(vm);
@@ -76,4 +81,32 @@ void solisBindEnumEntry(VM* vm, Value enumObj, const char* name)
 
 	_enum->fieldCount++;
 	
+}
+
+Value solisCreateClass(VM* vm, const char* name)
+{
+	ObjString* str = solisCopyString(vm, name, strlen(name));
+
+	solisPush(vm, SOLIS_OBJECT_VALUE(str));
+	ObjClass* klass = solisNewClass(vm, str);
+	solisPop(vm);
+
+	return SOLIS_OBJECT_VALUE(klass);
+}
+
+void solisAddClassField(VM* vm, Value klassValue, const char* name, bool isStatic, Value defaultValue)
+{
+	ObjClass* klass = SOLIS_AS_CLASS(klassValue);
+
+	ObjString* str = solisCopyString(vm, name, strlen(name));
+
+	HashTable* table = &klass->fields;
+
+	if (isStatic)
+		table = &klass->statics;
+
+	solisPush(vm, SOLIS_OBJECT_VALUE(str));
+	solisHashTableInsert(table, str, defaultValue);
+	solisPop(vm);
+
 }

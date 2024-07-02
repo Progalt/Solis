@@ -32,6 +32,8 @@ Value solisGetArgument(VM* vm, int argIndex);
 */
 void solisSetReturnValue(VM* vm, Value value);
 
+Value solisGetSelf(VM* vm);
+
 
 
 /*
@@ -45,5 +47,15 @@ Value solisCreateEnumObject(VM* vm, const char* name);
 	Binds a new value to an enum. These go up in by 1 each time. 
 */
 void solisBindEnumEntry(VM* vm, Value enumObj, const char* name);
+
+/*
+	Creates a new global class
+*/
+Value solisCreateClass(VM* vm, const char* name);
+
+/*
+	Add a class field to a class. 
+*/
+void solisAddClassField(VM* vm, Value klassValue, const char* name, bool isStatic, Value defaultValue);
 
 #endif // SOLIS_INTERFACE_H
