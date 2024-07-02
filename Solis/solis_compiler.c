@@ -1228,16 +1228,15 @@ static void returnStatement()
 		error("Can't return from top-level code.");
 	}
 
-	if (matchLine()) 
+	if (!check(TOKEN_LINE)) 
 	{
-		emitReturn();
+		expression();
+		emitByte(OP_RETURN);
 	}
 	else 
 	{
-		expression();
-		// consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
-		// consumeLine("Expected new line after return value.");
-		emitByte(OP_RETURN);
+
+		emitReturn();
 	}
 }
 
