@@ -1101,12 +1101,16 @@ static void enumDeclaration()
 	int idx = 0;
 	for(;;)
 	{
+		ignoreNewlines();
+
 		consume(TOKEN_IDENTIFIER, "Expected an identifier in enum.");
 		// printf("Enum: %.*s", parser.previous.length, parser.previous.start);
 
 		ObjString* iden = solisCopyString(current->vm, parser.previous.start, parser.previous.length);
 
 		solisHashTableInsert(&enumObj->fields, iden, SOLIS_NUMERIC_VALUE((double)idx));
+
+		ignoreNewlines();
 
 		if (match(TOKEN_END))
 		{
@@ -1116,6 +1120,8 @@ static void enumDeclaration()
 		{
 			consume(TOKEN_COMMA, "Expected ',' to seperate enum entries");
 		}
+
+		ignoreNewlines();
 
 		idx++;
 		enumObj->fieldCount++;
@@ -1382,7 +1388,7 @@ ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int gl
 
 	TokenList tokenList = solisScanSource(vm, source);
 
-	solisPrintTokenList(&tokenList);
+	// solisPrintTokenList(&tokenList);
 
 	parser.tokenList = tokenList;
 

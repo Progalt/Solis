@@ -1,5 +1,4 @@
 
-
 class CoffeeMaker
 
 	static var coffeesMade = 0
@@ -12,7 +11,6 @@ class CoffeeMaker
 
 		println("Made your coffee: " + type)
 	end
-
 end
 
 var coffeeMaker = CoffeeMaker()
