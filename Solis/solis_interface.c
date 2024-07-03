@@ -91,6 +91,8 @@ Value solisCreateClass(VM* vm, const char* name)
 	ObjClass* klass = solisNewClass(vm, str);
 	solisPop(vm);
 
+	solisPushGlobal(vm, name, SOLIS_OBJECT_VALUE(klass));
+
 	return SOLIS_OBJECT_VALUE(klass);
 }
 
@@ -215,4 +217,21 @@ Value solisGetInstanceField(VM* vm, Value instance, const char* name)
 	solisPop(vm);
 
 	return val;
+}
+
+void solisAddClassNativeMethod(VM* vm, Value klassValue, const char* name, SolisNativeSignature func)
+{
+	ObjClass* klass = SOLIS_AS_CLASS(klassValue);
+	ObjString* str = solisCopyString(vm, name, strlen(name));
+	ObjNative* native = solisNewNativeFunction(vm, func);
+
+
+	solisPush(vm, SOLIS_OBJECT_VALUE(str));
+	solisPush(vm, SOLIS_OBJECT_VALUE(native));
+
+	solisHashTableInsert(&klass->methods, str, SOLIS_OBJECT_VALUE(native));
+
+	solisPop(vm);
+	solisPop(vm);
+
 }

@@ -573,6 +573,20 @@ do {																		\
 
 		DISPATCH();
 	}
+	CASE_CODE(DEFINE_CONSTRUCTOR) :
+	{
+
+		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+
+		Value val = PEEK();
+		ObjClass* klass = SOLIS_AS_CLASS(solisPeek(vm, 1));
+
+		klass->constructor = SOLIS_AS_CLOSURE(val);
+
+		POP();
+
+		DISPATCH();
+	}
 	CASE_CODE(GET_FIELD) :
 	{
 		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
@@ -613,7 +627,12 @@ do {																		\
 				}
 				else if (solisHashTableGet(&instance->klass->methods, name, &value))
 				{
-					ObjBoundMethod* bound = solisNewBoundMethod(vm, SOLIS_OBJECT_VALUE(instance), SOLIS_AS_CLOSURE(value));
+					ObjBoundMethod* bound = NULL;
+					
+					if (SOLIS_IS_CLOSURE(value))
+						bound = solisNewBoundMethod(vm, SOLIS_OBJECT_VALUE(instance), SOLIS_AS_CLOSURE(value));
+					else 
+						bound = solisNewNativeBoundMethod(vm, SOLIS_OBJECT_VALUE(instance), SOLIS_AS_NATIVE(value));
 
 					POP();
 					PUSH(SOLIS_OBJECT_VALUE(bound));
@@ -865,11 +884,10 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 			ObjClass* klass = SOLIS_AS_CLASS(callee);
 			vm->sp[-argCount - 1] = SOLIS_OBJECT_VALUE(solisNewInstance(vm, klass));
 
-			Value init;
 			// Call the constructor if we have one 
-			if (solisHashTableGet(&klass->methods, klass->name, &init))
+			if (klass->constructor)
 			{
-				return callClosure(vm, SOLIS_AS_CLOSURE(init), argCount);
+				return callClosure(vm, klass->constructor, argCount);
 			}
 
 			return true;
@@ -878,7 +896,14 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 		{
 			ObjBoundMethod* bound = SOLIS_AS_BOUND_METHOD(callee);
 			vm->sp[-argCount - 1] = bound->receiver;
-			return callClosure(vm, bound->method, argCount);
+			if (bound->nativeFunction)
+			{
+				return callNativeFunction(vm, bound->native->nativeFunction, argCount);
+			}
+			else
+			{
+				return callClosure(vm, bound->method, argCount);
+			}
 		}
 		default:
 			break; // Non-callable object type.

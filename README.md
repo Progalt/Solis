@@ -6,7 +6,7 @@
 Everything you would expect from a programming language. Suited to embedding in your application or to use standalone. 
 
 Here's a snippet: 
-```lua
+```
 class CoffeeMaker
 
 	static var coffeesMade = 0

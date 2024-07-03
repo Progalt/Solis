@@ -69,4 +69,6 @@ void solisSetInstanceField(VM* vm, Value instance, const char* name, Value value
 
 Value solisGetInstanceField(VM* vm, Value instance, const char* name);
 
+void solisAddClassNativeMethod(VM* vm, Value klassValue, const char* name, SolisNativeSignature func);
+
 #endif // SOLIS_INTERFACE_H

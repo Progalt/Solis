@@ -80,6 +80,7 @@ void solisFreeObject(VM* vm, Object* object)
 		solisFreeHashTable(&klass->fields);
 		solisFreeHashTable(&klass->methods);
 		solisFreeHashTable(&klass->statics);
+		// SOLIS_FREE(vm, ObjClosure, klass->constructor);
 		SOLIS_FREE(vm, ObjClass, object);
 		break;
 	}
@@ -241,6 +242,8 @@ ObjClass* solisNewClass(VM* vm, ObjString* name)
 	ObjClass* klass = ALLOCATE_OBJ(vm, ObjClass, OBJ_CLASS);
 	klass->name = name;
 
+	klass->constructor = NULL;
+
 	solisInitHashTable(&klass->fields, vm);
 	solisInitHashTable(&klass->methods, vm);
 	solisInitHashTable(&klass->statics, vm);
@@ -262,5 +265,15 @@ ObjBoundMethod* solisNewBoundMethod(VM* vm, Value receiver, ObjClosure* closure)
 	ObjBoundMethod* bound = ALLOCATE_OBJ(vm, ObjBoundMethod, OBJ_BOUND_METHOD);
 	bound->receiver = receiver;
 	bound->method = closure;
+	bound->nativeFunction = false;
+	return bound;
+}
+
+ObjBoundMethod* solisNewNativeBoundMethod(VM* vm, Value receiver, ObjNative* closure)
+{
+	ObjBoundMethod* bound = ALLOCATE_OBJ(vm, ObjBoundMethod, OBJ_BOUND_METHOD);
+	bound->receiver = receiver;
+	bound->native = closure;
+	bound->nativeFunction = true;
 	return bound;
 }

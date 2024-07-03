@@ -2,10 +2,15 @@
 
 class Coffee
 
+	static var coffeeCount = 0
+
 	var name
 	var price
 
 	Coffee(name, price)
+
+		self.coffeeCount = self.coffeeCount + 1
+
 		self.name = name
 		self.price = price
 	end
@@ -13,6 +18,13 @@ class Coffee
 end
 
 var latte = Coffee("Latte", 2.99)
+var cortado = Coffee("Cortado", 2.50)
 
 println(latte.name)
 println(latte.price)
+
+println(cortado.name)
+println(cortado.price)
+
+println("Coffees: ")
+println(Coffee.coffeeCount)

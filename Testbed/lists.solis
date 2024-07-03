@@ -1,0 +1,7 @@
+
+
+var l = List()
+
+println(l.test)
+
+l.print()

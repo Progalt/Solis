@@ -68,10 +68,15 @@ void clockNative(VM* vm)
     solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(time));
 }
 
+void printClassMethod(VM* vm)
+{
+    printf("Called from C\n");
+}
+
 int main(void) {
 
 
-    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/classes.solis");
+    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/lists.solis");
     if (fileContent == NULL) 
     {
         printf("Failed to read file\n");
@@ -83,6 +88,10 @@ int main(void) {
     
     solisPushGlobalCFunction(&vm, "println", printNative, 1);
     solisPushGlobalCFunction(&vm, "clock", clockNative, 0);
+
+    Value list = solisCreateClass(&vm, "List");
+    solisAddClassField(&vm, list, "test", false, SOLIS_NUMERIC_VALUE(100));
+    solisAddClassNativeMethod(&vm, list, "print", printClassMethod);
 
 	InterpretResult result = solisInterpret(&vm, fileContent);
 

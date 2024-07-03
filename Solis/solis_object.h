@@ -123,6 +123,8 @@ struct ObjClass
 
 	ObjString* name;
 
+	ObjClosure* constructor;
+
 	// This is all the static variables that belong to the class instead 
 	HashTable statics;
 
@@ -152,7 +154,14 @@ struct ObjBoundMethod
 	Object obj;
 
 	Value receiver;
-	ObjClosure* method;
+
+	bool nativeFunction;
+
+	union
+	{
+		ObjClosure* method;
+		ObjNative* native;
+	};
 };
 
 #define SOLIS_IS_BOUND_METHOD(value) solisIsObjType(value, OBJ_BOUND_METHOD)
@@ -201,5 +210,7 @@ ObjClass* solisNewClass(VM* vm, ObjString* name);
 ObjInstance* solisNewInstance(VM* vm, ObjClass* klass);
 
 ObjBoundMethod* solisNewBoundMethod(VM* vm, Value receiver, ObjClosure* closure);
+
+ObjBoundMethod* solisNewNativeBoundMethod(VM* vm, Value receiver, ObjNative* closure);
 
 #endif // SOLIS_OBJECT_H

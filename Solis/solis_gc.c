@@ -121,6 +121,7 @@ static void blackenObject(VM* vm, Object* object)
         markTable(vm, &klass->fields);
         markTable(vm, &klass->methods);
         markTable(vm, &klass->statics);
+        markObject(vm, (Object*)klass->constructor);
 
     }
     case OBJ_INSTANCE: {
@@ -133,7 +134,10 @@ static void blackenObject(VM* vm, Object* object)
 
         ObjBoundMethod* bound = (ObjBoundMethod*)object;
         markValue(vm, bound->receiver);
-        markObject(vm, (Object*)bound->method);
+        if (bound->nativeFunction)
+            markObject(vm, (Object*)bound->native);
+        else 
+         markObject(vm, (Object*)bound->method);
 
         break;
     }

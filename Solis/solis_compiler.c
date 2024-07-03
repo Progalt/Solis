@@ -628,7 +628,7 @@ static uint16_t identifierConstant(Token* name)
 	return makeConstant(SOLIS_OBJECT_VALUE(solisCopyString(current->vm, name->start, name->length)));
 }
 
-static void addLocal(Token name) 
+static int addLocal(Token name) 
 {
 	if (current->localCount == UINT8_COUNT) 
 	{
@@ -636,10 +636,11 @@ static void addLocal(Token name)
 		return;
 	}
 
-	Local* local = &current->locals[current->localCount++];
+	Local* local = &current->locals[current->localCount];
 	local->name = name;
 	local->depth = -1;
 	local->isCaptured = false; 
+	return current->localCount++;
 }
 
 static bool identifiersEqual(Token* a, Token* b) 
@@ -648,11 +649,10 @@ static bool identifiersEqual(Token* a, Token* b)
 	return memcmp(a->start, b->start, a->length) == 0;
 }
 
-static void declareVariable() 
+static int declareVariable(Token* name) 
 {
-	if (current->scopeDepth == 0) return;
+	if (current->scopeDepth == 0) return -1;
 
-	Token* name = &parser.previous;
 
 	for (int i = current->localCount - 1; i >= 0; i--) 
 	{
@@ -667,13 +667,13 @@ static void declareVariable()
 		}
 	}
 
-	addLocal(*name);
+	return addLocal(*name);
 }
 
 static uint16_t parseVariable(const char* errorMessage) {
 	consume(TOKEN_IDENTIFIER, errorMessage);
 
-	declareVariable();
+	declareVariable(&parser.previous);
 	if (current->scopeDepth > 0) return 0;
 
 	return identifierConstant(&parser.previous);
@@ -1153,7 +1153,11 @@ static void method(bool isStatic, bool constructor)
 		type = TYPE_CONSTRUCTOR;
 	function(type);
 
-	emitByte(isStatic ? OP_DEFINE_STATIC : OP_DEFINE_METHOD);
+	if (!constructor)
+		emitByte(isStatic ? OP_DEFINE_STATIC : OP_DEFINE_METHOD);
+	else
+		emitByte(OP_DEFINE_CONSTRUCTOR);
+
 	emitShort(constant);
 }
 
@@ -1163,7 +1167,7 @@ static void classDeclaration()
 	Token className = parser.previous;
 	uint16_t nameConstant = identifierConstant(&parser.previous);
 	
-	declareVariable();
+	declareVariable(&parser.previous);
 
 	emitByte(OP_CLASS);
 	emitShort(nameConstant);
@@ -1182,6 +1186,8 @@ static void classDeclaration()
 		namedVariable(className, false);
 		emitByte(OP_INHERIT);
 	}
+
+	bool foundConstructor = false;
 
 	namedVariable(className, false);
 	do
@@ -1223,10 +1229,15 @@ static void classDeclaration()
 		// Constructors are declared with the class name 
 		else if (check(TOKEN_IDENTIFIER) && strncmp(parser.current.start, className.start, className.length) == 0)
 		{
+			if (foundConstructor)
+				error("A class cannot contain more than one constructor.");
+
 			if (isStatic)
 				error("Constructors cannot be static.");
 
 			method(false, true);
+
+			foundConstructor = true;
 		}
 
 
