@@ -112,6 +112,12 @@ void solisPrintValue(Value value)
 		case OBJ_NATIVE_FUNCTION:
 			printf("native");
 			break;
+		case OBJ_CLASS:
+			printf("%s", SOLIS_AS_CLASS(value)->name->chars);
+			break;
+		case OBJ_INSTANCE:
+			printf("instance of %s", SOLIS_AS_INSTANCE(value)->klass->name->chars);
+			break;
 		default:
 			printf("Unknown Object type");
 			break;

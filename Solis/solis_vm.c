@@ -7,7 +7,7 @@
 #include <string.h>
 #include <math.h>
 
- // #define SOLIS_DEBUG_TRACE_EXECUTION
+// #define SOLIS_DEBUG_TRACE_EXECUTION
 
 static bool callValue(VM* vm, Value callee, int argCount);
 
@@ -864,6 +864,14 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 		{
 			ObjClass* klass = SOLIS_AS_CLASS(callee);
 			vm->sp[-argCount - 1] = SOLIS_OBJECT_VALUE(solisNewInstance(vm, klass));
+
+			Value init;
+			// Call the constructor if we have one 
+			if (solisHashTableGet(&klass->methods, klass->name, &init))
+			{
+				return callClosure(vm, SOLIS_AS_CLOSURE(init), argCount);
+			}
+
 			return true;
 		}
 		case OBJ_BOUND_METHOD:
@@ -971,4 +979,15 @@ void solisPushGlobalCFunction(VM* vm, const char* name, SolisNativeSignature fun
 	solisPush(vm, SOLIS_OBJECT_VALUE(nativeFunc));
 	solisPushGlobal(vm, name, solisPeek(vm, 0));
 	solisPop(vm);
+}
+
+void solisDumpGlobals(VM* vm)
+{
+	for (int i = 0; i < vm->globals.count; i++)
+	{
+		printf("Global %d: ", i);
+		solisPrintValue(vm->globals.data[i]);
+		printf("\n");
+		
+	}
 }

@@ -71,7 +71,7 @@ void clockNative(VM* vm)
 int main(void) {
 
 
-    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/inheritance.solis");
+    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/classes.solis");
     if (fileContent == NULL) 
     {
         printf("Failed to read file\n");
@@ -84,17 +84,14 @@ int main(void) {
     solisPushGlobalCFunction(&vm, "println", printNative, 1);
     solisPushGlobalCFunction(&vm, "clock", clockNative, 0);
 
-    Value stateEnum = solisCreateEnumObject(&vm, "State");
-
-    solisBindEnumEntry(&vm, stateEnum, "Running");
-    solisBindEnumEntry(&vm, stateEnum, "Paused");
-
 	InterpretResult result = solisInterpret(&vm, fileContent);
 
     if (result == INTERPRET_RUNTIME_ERROR)
     {
         printf("Interpreter runtime error. \n");
     }
+
+    // solisDumpGlobals(&vm);
 
 	solisFreeVM(&vm);
 

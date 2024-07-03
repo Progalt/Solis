@@ -339,7 +339,15 @@ static void emitShort(uint16_t s)
 }
 
 static void emitReturn() {
-	emitByte(OP_NIL);
+
+	if (current->type == TYPE_CONSTRUCTOR)
+	{
+		emitByte(OP_GET_LOCAL);
+		emitShort(0);
+	}
+	else 
+		emitByte(OP_NIL);
+
 	emitByte(OP_RETURN);
 }
 
@@ -624,7 +632,7 @@ static void addLocal(Token name)
 {
 	if (current->localCount == UINT8_COUNT) 
 	{
-		error("Too many local variables in function.");
+		error("Too many local variables in (function).");
 		return;
 	}
 
@@ -1067,6 +1075,8 @@ static void function(FunctionType type)
 	}
 	consume(TOKEN_RIGHT_PAREN, "Expected ')'  after function parameters.");
 
+
+	// TODO: Empty functions don't parse correctly
 	block();
 
 	ObjFunction* function = endCompiler(&compiler);
@@ -1132,12 +1142,15 @@ static void enumDeclaration()
 	defineVariable(global, true);
 }
 
-static void method(bool isStatic)
+static void method(bool isStatic, bool constructor)
 {
 	consume(TOKEN_IDENTIFIER, "Expect method name.");
 	uint8_t constant = identifierConstant(&parser.previous);
 
 	FunctionType type = TYPE_METHOD;
+
+	if (constructor)
+		type = TYPE_CONSTRUCTOR;
 	function(type);
 
 	emitByte(isStatic ? OP_DEFINE_STATIC : OP_DEFINE_METHOD);
@@ -1205,11 +1218,19 @@ static void classDeclaration()
 		}
 		else if (match(TOKEN_FUNCTION))
 		{
-			method(isStatic);
+			method(isStatic, false);
+		}
+		// Constructors are declared with the class name 
+		else if (check(TOKEN_IDENTIFIER) && strncmp(parser.current.start, className.start, className.length) == 0)
+		{
+			if (isStatic)
+				error("Constructors cannot be static.");
+
+			method(false, true);
 		}
 
 
-	} while (!check(TOKEN_END) && !check(TOKEN_EOF));
+	} while (!check(TOKEN_END));
 
 	consume(TOKEN_END, "Expected 'end' after class body");
 
@@ -1226,6 +1247,11 @@ static void returnStatement()
 	if (current->type == TYPE_SCRIPT) 
 	{
 		error("Can't return from top-level code.");
+	}
+
+	if (current->type == TYPE_CONSTRUCTOR)
+	{
+		error("Can't return a value from a constructor");
 	}
 
 	if (!check(TOKEN_LINE)) 

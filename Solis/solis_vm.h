@@ -128,4 +128,6 @@ static inline bool solisIsFalsy(Value value)
 }
 
 
+void solisDumpGlobals(VM* vm);
+
 #endif // SOLIS_VM_H

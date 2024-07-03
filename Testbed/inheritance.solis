@@ -35,7 +35,7 @@ class CoffeeMaker
 			coffee = Cortado()
 		end
 
-		if coffee is null then
+		if coffee == null then
 			println("That's not on the menu!")
 			return
 		end

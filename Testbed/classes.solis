@@ -1,0 +1,18 @@
+
+
+class Coffee
+
+	var name
+	var price
+
+	Coffee(name, price)
+		self.name = name
+		self.price = price
+	end
+
+end
+
+var latte = Coffee("Latte", 2.99)
+
+println(latte.name)
+println(latte.price)
