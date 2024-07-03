@@ -1,0 +1,8 @@
+
+
+var x = -10
+
+var xabs = x.abs()
+
+println(x)
+println(xabs)

@@ -63,6 +63,8 @@ struct VM
 	int greyCapacity;
 	Object** greyStack;
 
+	ObjClass* numberClass;
+
 };
 
 

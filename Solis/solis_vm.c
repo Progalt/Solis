@@ -7,9 +7,21 @@
 #include <string.h>
 #include <math.h>
 
+#include "solis_core.h"
+
 // #define SOLIS_DEBUG_TRACE_EXECUTION
 
 static bool callValue(VM* vm, Value callee, int argCount);
+
+ObjClass* solisGetClassForValue(VM* vm, Value value)
+{
+	if (SOLIS_IS_NUMERIC(value))
+		return vm->numberClass;
+	else if (SOLIS_IS_CLASS(value))
+		return SOLIS_AS_CLASS(value);
+
+	return NULL;
+}
 
 void solisInitVM(VM* vm)
 {
@@ -34,6 +46,8 @@ void solisInitVM(VM* vm)
 	solisInitHashTable(&vm->strings, vm);
 	solisInitHashTable(&vm->globalMap, vm);
 	solisValueBufferInit(vm, &vm->globals);
+
+	solisInitialiseCore(vm);
 }
 
 static void freeObjects(VM* vm)
@@ -683,6 +697,34 @@ do {																		\
 				printf("Object does not have fields\n");
 				return INTERPRET_RUNTIME_ERROR;
 				break;
+			}
+		}
+		else
+		{
+			ObjClass* klass = solisGetClassForValue(vm, PEEK());
+
+			if (klass)
+			{
+				// We have a class
+
+				Value value;
+				if (!solisHashTableGet(&klass->methods, name, &value))
+				{
+					printf("Can't get method from class.\n");
+					return INTERPRET_RUNTIME_ERROR;
+				}
+
+
+				ObjBoundMethod* bound = NULL;
+
+				if (SOLIS_IS_CLOSURE(value))
+					bound = solisNewBoundMethod(vm, PEEK(), SOLIS_AS_CLOSURE(value));
+				else
+					bound = solisNewNativeBoundMethod(vm, PEEK(), SOLIS_AS_NATIVE(value));
+
+
+				POP();
+				PUSH(SOLIS_OBJECT_VALUE(bound));
 			}
 		}
 
