@@ -9,25 +9,24 @@ Here's a snippet:
 ```lua
 class CoffeeMaker
 
-	static var coffeesMade = 0;
+	static var coffeesMade = 0
 
 	function brew(type)
 		
-		println("Brewing your coffee...");
+		println("Brewing your coffee...")
 
-		self.coffeesMade = self.coffeesMade + 1;
+		self.coffeesMade = self.coffeesMade + 1
 
-		println("Made your coffee: " + type);
+		println("Made your coffee: " + type)
 	end
-
 end
 
-var coffeeMaker = CoffeeMaker(); 
+var coffeeMaker = CoffeeMaker()
 
-coffeeMaker.brew("Latte");
-coffeeMaker.brew("Americano");
+coffeeMaker.brew("Latte")
+coffeeMaker.brew("Americano")
 
-println(CoffeeMaker.coffeesMade);
+println(CoffeeMaker.coffeesMade)
 ```
 
 The language was designed with game scripting in mind but is suited for a variety of uses much like Lua. Unlike lua, it has more object oriented style objects meaning not everything is a table, and there 

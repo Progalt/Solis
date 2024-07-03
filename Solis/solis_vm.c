@@ -18,6 +18,8 @@ void solisInitVM(VM* vm)
 
 	vm->openUpvalues = NULL;
 	vm->frameCount = 0;
+	vm->frames = NULL;
+	vm->frameCapacity = 0;
 
 	vm->apiStack = NULL;
 

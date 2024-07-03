@@ -5,7 +5,7 @@ class Coffee
 	end
 
 end
-
+ 
 class Latte inherits Coffee
 
 	function brew()
