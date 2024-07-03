@@ -131,7 +131,7 @@ void solisSetStaticField(VM* vm, Value klassValue, const char* name, Value value
 
 	solisPush(vm, SOLIS_OBJECT_VALUE(str));
 
-	if (!solisHashTableInsert(&klass->statics, str, value))
+	if (solisHashTableInsert(&klass->statics, str, value))
 	{
 		// Delete it since we don't want to add on a set call
 		solisHashTableDelete(&klass->statics, str);
@@ -186,7 +186,7 @@ void solisSetInstanceField(VM* vm, Value instance, const char* name, Value value
 
 	solisPush(vm, SOLIS_OBJECT_VALUE(str));
 
-	if (!solisHashTableInsert(&inst->fields, str, value))
+	if (solisHashTableInsert(&inst->fields, str, value))
 	{
 		solisHashTableDelete(&inst->fields, str);
 	}
@@ -219,11 +219,19 @@ Value solisGetInstanceField(VM* vm, Value instance, const char* name)
 	return val;
 }
 
-void solisAddClassNativeMethod(VM* vm, Value klassValue, const char* name, SolisNativeSignature func)
+void solisAddClassNativeConstructor(VM* vm, Value klassValue, SolisNativeSignature func)
+{
+	ObjClass* klass = SOLIS_AS_CLASS(klassValue);
+	
+	assert(false && "Not implmented");
+}
+
+void solisAddClassNativeMethod(VM* vm, Value klassValue, const char* name, SolisNativeSignature func, int arity)
 {
 	ObjClass* klass = SOLIS_AS_CLASS(klassValue);
 	ObjString* str = solisCopyString(vm, name, strlen(name));
 	ObjNative* native = solisNewNativeFunction(vm, func);
+	native->arity = arity;
 
 
 	solisPush(vm, SOLIS_OBJECT_VALUE(str));

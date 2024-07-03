@@ -68,9 +68,83 @@ void clockNative(VM* vm)
     solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(time));
 }
 
-void printClassMethod(VM* vm)
+
+
+void cleanupList(void* mem)
 {
-    printf("Called from C\n");
+
+}
+
+void list_add(VM* vm)
+{
+    Value self = solisGetSelf(vm);
+    Value field = solisGetInstanceField(vm, self, "_data");
+    Value length = solisGetInstanceField(vm, self, "length");
+    Value capacity = solisGetInstanceField(vm, self, "_capacity");
+
+    ObjUserdata* userdata = NULL;
+
+    if (!SOLIS_IS_USERDATA(field))
+    {
+        int newCapacity = GROW_CAPACITY((int)SOLIS_AS_NUMBER(capacity));
+
+        Value* arr = (Value*)solisReallocate(vm, NULL, 0, sizeof(Value) * newCapacity);
+
+        arr[0] = solisGetArgument(vm, 0);
+
+        userdata = solisNewUserdata(vm, (void*)arr, cleanupList);
+
+        solisSetInstanceField(vm, self, "length", SOLIS_NUMERIC_VALUE(1));
+        solisSetInstanceField(vm, self, "_capacity", SOLIS_NUMERIC_VALUE((double)newCapacity));
+        solisSetInstanceField(vm, self, "_data", SOLIS_OBJECT_VALUE(userdata));
+
+        solisSetReturnValue(vm, SOLIS_NULL_VALUE());
+    }
+    else
+    {
+        userdata = SOLIS_AS_USERDATA(field);
+        int cap = (int)SOLIS_AS_NUMBER(capacity);
+        int len = (int)SOLIS_AS_NUMBER(length);
+
+        Value* arr = (Value*)userdata->userdata;
+
+        if (len + 1 >= cap)
+        {
+            int newCap = GROW_CAPACITY(cap);
+            arr = (Value*)solisReallocate(vm, arr, sizeof(Value) * cap, sizeof(Value) * newCap);
+
+            cap = newCap;
+        }
+
+        arr[len] = solisGetArgument(vm, 0);
+
+        len++;
+
+        solisSetInstanceField(vm, self, "length", SOLIS_NUMERIC_VALUE((double)len));
+        solisSetInstanceField(vm, self, "_capacity", SOLIS_NUMERIC_VALUE((double)cap));
+        solisSetInstanceField(vm, self, "_data", SOLIS_OBJECT_VALUE(userdata));
+
+        solisSetReturnValue(vm, SOLIS_NULL_VALUE());
+    }
+}
+
+void list_get(VM* vm)
+{
+    Value self = solisGetSelf(vm);
+    Value field = solisGetInstanceField(vm, self, "_data");
+    Value length = solisGetInstanceField(vm, self, "length");
+    Value idx = solisGetArgument(vm, 0);
+
+    if (SOLIS_AS_NUMBER(idx) >= SOLIS_AS_NUMBER(length) || !SOLIS_IS_USERDATA(field))
+    {
+        solisSetReturnValue(vm, SOLIS_NULL_VALUE());
+        return;
+    }
+
+    Value* arr = SOLIS_AS_USERDATA(field)->userdata;
+
+    solisSetReturnValue(vm, arr[(int)SOLIS_AS_NUMBER(idx)]);
+   
 }
 
 int main(void) {
@@ -90,8 +164,12 @@ int main(void) {
     solisPushGlobalCFunction(&vm, "clock", clockNative, 0);
 
     Value list = solisCreateClass(&vm, "List");
-    solisAddClassField(&vm, list, "test", false, SOLIS_NUMERIC_VALUE(100));
-    solisAddClassNativeMethod(&vm, list, "print", printClassMethod);
+
+    solisAddClassField(&vm, list, "_data", false, SOLIS_NULL_VALUE());
+    solisAddClassField(&vm, list, "_capacity", false, SOLIS_NUMERIC_VALUE(0));
+    solisAddClassField(&vm, list, "length", false, SOLIS_NUMERIC_VALUE(0));
+    solisAddClassNativeMethod(&vm, list, "add", list_add, 1);
+    solisAddClassNativeMethod(&vm, list, "get", list_get, 1);
 
 	InterpretResult result = solisInterpret(&vm, fileContent);
 

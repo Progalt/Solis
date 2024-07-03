@@ -2,6 +2,10 @@
 
 var l = List()
 
-println(l.test)
+l.add(500)
+l.add(20)
+l.add(3424)
 
-l.print()
+println(l.length)
+
+println(l.get(1))
