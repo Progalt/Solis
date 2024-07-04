@@ -21,6 +21,8 @@ ObjClass* solisGetClassForValue(VM* vm, Value value)
 		return vm->stringClass;
 	else if (SOLIS_IS_BOOL(value))
 		return vm->boolClass;
+	else if (SOLIS_IS_CLASS(value))
+		return SOLIS_AS_CLASS(value);
 
 	return NULL;
 }
@@ -441,8 +443,7 @@ do {																		\
 
 			if (isLocal)
 			{
-				closure->upvalues[i] =
-					captureUpvalue(vm, frame->slots + index);
+				closure->upvalues[i] = captureUpvalue(vm, frame->slots + index);
 			}
 			else
 			{
@@ -495,11 +496,11 @@ do {																		\
 		// This isn't the best
 
 		// we need a special check for bool
-		if (type == VALUE_TRUE && (solisIsValueType(*obj, VALUE_TRUE) || solisIsValueType(*obj, VALUE_FALSE)))
+		if (type == VALUE_TRUE && SOLIS_IS_BOOL(*obj))
 		{
 			*obj = SOLIS_BOOL_VALUE(true);
 		}
-		else if (solisIsValueType(*obj, (ValueType)type) && !solisIsValueType(*obj, VALUE_OBJECT))
+		else if (solisIsValueType(*obj, (ValueType)type) && !SOLIS_IS_OBJECT(*obj))
 		{
 			*obj = SOLIS_BOOL_VALUE(true);
 		}
@@ -565,17 +566,6 @@ do {																		\
 		DISPATCH();
 	}
 	CASE_CODE(DEFINE_STATIC) :
-	{
-		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
-
-		Value val = PEEK();
-		ObjClass* klass = SOLIS_AS_CLASS(solisPeek(vm, 1));
-
-		solisHashTableInsert(&klass->statics, name, val);
-
-		POP();
-		DISPATCH();
-	}
 	CASE_CODE(DEFINE_METHOD) :
 	{
 		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
@@ -583,7 +573,7 @@ do {																		\
 		Value val = PEEK();
 		ObjClass* klass = SOLIS_AS_CLASS(solisPeek(vm, 1));
 
-		solisHashTableInsert(&klass->methods, name, val);
+		solisHashTableInsert(instruction == OP_DEFINE_METHOD ? &klass->methods : &klass->statics, name, val);
 
 		POP();
 
@@ -592,7 +582,8 @@ do {																		\
 	CASE_CODE(DEFINE_CONSTRUCTOR) :
 	{
 
-		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+		// ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+		READ_SHORT();
 
 		Value val = PEEK();
 		ObjClass* klass = SOLIS_AS_CLASS(solisPeek(vm, 1));
@@ -612,8 +603,41 @@ do {																		\
 
 		ObjClass* objectClass = solisGetClassForValue(vm, PEEK());
 
-		if (objectClass == NULL)
+		if (objectClass)
 		{
+			Value value;
+			if (solisHashTableGet(&objectClass->statics, name, &value))
+			{
+				POP();
+				PUSH(value);
+
+				DISPATCH();
+			}
+
+			if (solisHashTableGet(&objectClass->methods, name, &value))
+			{
+				ObjBoundMethod* bound = NULL;
+
+				if (SOLIS_IS_CLOSURE(value))
+					bound = solisNewBoundMethod(vm, PEEK(), SOLIS_AS_CLOSURE(value));
+				else
+					bound = solisNewNativeBoundMethod(vm, PEEK(), SOLIS_AS_NATIVE(value));
+
+
+				POP();
+				PUSH(SOLIS_OBJECT_VALUE(bound));
+
+				DISPATCH();
+
+			}
+
+			printf("Can't get field from class.\n");
+			return INTERPRET_RUNTIME_ERROR;
+			
+		}
+		else 
+		{
+			// TODO: Maybe remake Enum as a class With static fields 
 			Object* object = SOLIS_AS_OBJECT(PEEK());
 			switch (object->type)
 			{
@@ -670,33 +694,6 @@ do {																		\
 
 				break;
 			}
-			case OBJ_CLASS:
-			{
-				ObjClass* klass = (ObjClass*)object;
-
-				Value value;
-				if (!solisHashTableGet(&klass->statics, name, &value))
-				{
-					printf("Can't get static field from class.\n");
-					return INTERPRET_RUNTIME_ERROR;
-				}
-
-				if (SOLIS_IS_CLOSURE(value))
-				{
-					ObjBoundMethod* bound = solisNewBoundMethod(vm, SOLIS_OBJECT_VALUE(klass), SOLIS_AS_CLOSURE(value));
-
-					POP();
-					PUSH(SOLIS_OBJECT_VALUE(bound));
-				}
-				else
-				{
-					POP();
-					PUSH(value);
-				}
-
-
-				break;
-			}
 			default:
 				// Return an error
 				// We can't access the fields
@@ -705,40 +702,7 @@ do {																		\
 				break;
 			}
 		}
-		else
-		{
 
-			if (objectClass)
-			{
-				// We have a class
-
-				Value value;
-				if (solisHashTableGet(&objectClass->statics, name, &value))
-				{
-					POP();
-					PUSH(value);
-				}
-				else if (solisHashTableGet(&objectClass->methods, name, &value))
-				{
-					ObjBoundMethod* bound = NULL;
-
-					if (SOLIS_IS_CLOSURE(value))
-						bound = solisNewBoundMethod(vm, PEEK(), SOLIS_AS_CLOSURE(value));
-					else
-						bound = solisNewNativeBoundMethod(vm, PEEK(), SOLIS_AS_NATIVE(value));
-
-
-					POP();
-					PUSH(SOLIS_OBJECT_VALUE(bound));
-
-				}
-				else
-				{
-					printf("Can't get method from class.\n");
-					return INTERPRET_RUNTIME_ERROR;
-				}
-			}
-		}
 
 
 		DISPATCH();
