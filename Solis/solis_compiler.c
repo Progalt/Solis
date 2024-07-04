@@ -51,6 +51,7 @@ typedef enum {
 	PREC_POWER,		  // ** 
 	PREC_UNARY,       // ! -
 	PREC_CALL,        // . ()
+	PREC_SUBSCRIPT,	  // []
 	PREC_PRIMARY
 } Precedence;
 
@@ -89,6 +90,8 @@ static void whileStatement();
 static void breakStatement();
 static void returnStatement();
 
+static void arrayCreate(bool canAssign);
+
 static void function(FunctionType type);
 
 static void and_(bool canAssign);
@@ -114,6 +117,8 @@ ParseRule rules[] = {
   [TOKEN_RIGHT_PAREN] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_LEFT_BRACE] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_RIGHT_BRACE] = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_LEFT_BRACKET] = {arrayCreate,     NULL,   PREC_SUBSCRIPT},
+  [TOKEN_RIGHT_BRACKET] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_COMMA] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_DOT] = {NULL,     dot,   PREC_CALL},
   [TOKEN_MINUS] = {unary,    binary, PREC_TERM},
@@ -135,7 +140,7 @@ ParseRule rules[] = {
   [TOKEN_STRING] = {string,     NULL,   PREC_NONE},
   [TOKEN_NUMBER] = {number,   NULL,   PREC_NONE},
   [TOKEN_AND] = {NULL,     and_,   PREC_AND},
-  // [TOKEN_CLASS] = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_CLASS] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ELSE] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_FALSE] = {literal,     NULL,   PREC_NONE},
   [TOKEN_FOR] = {NULL,     NULL,   PREC_NONE},
@@ -143,10 +148,8 @@ ParseRule rules[] = {
   [TOKEN_IF] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_NULL] = {literal,     NULL,   PREC_NONE},
   [TOKEN_OR] = {NULL,     or_,   PREC_OR},
-  // [TOKEN_PRINT] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_RETURN] = {NULL,     NULL,   PREC_NONE},
   // [TOKEN_SUPER] = {NULL,     NULL,   PREC_NONE},
-  //[TOKEN_THIS] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_TRUE] = {literal,     NULL,   PREC_NONE},
   [TOKEN_VAR] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_WHILE] = {NULL,     NULL,   PREC_NONE},
@@ -543,6 +546,8 @@ static void declaration()
 {
 	ignoreNewlines();
 
+	// Return here if there is an EOF
+	// Because we don't want to try and parse it
 	if (check(TOKEN_EOF))
 	{
 		return;
@@ -1393,6 +1398,25 @@ static void dot(bool canAssign)
 		emitByte(OP_GET_FIELD);
 		emitShort(name);
 	}
+}
+
+static void arrayCreate(bool canAssign)
+{
+	uint16_t size = 0;
+	// Check if we have any elements
+	if (!check(TOKEN_RIGHT_BRACKET))
+	{
+		do {
+			expression();
+
+			size++;
+		} while (match(TOKEN_COMMA));
+	}
+
+	consume(TOKEN_RIGHT_BRACKET, "Expected ']' at end of list");
+
+	emitByte(OP_CREATE_LIST);
+	emitShort(size);
 }
 
 static void expression()

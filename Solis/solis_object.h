@@ -167,6 +167,17 @@ struct ObjBoundMethod
 #define SOLIS_IS_BOUND_METHOD(value) solisIsObjType(value, OBJ_BOUND_METHOD)
 #define SOLIS_AS_BOUND_METHOD(value) ((ObjBoundMethod*)SOLIS_AS_OBJECT(value))
 
+struct ObjList
+{
+	Object obj;
+
+	ValueBuffer values;
+
+};
+
+#define SOLIS_IS_LIST(value) solisIsObjType(value, OBJ_LIST)
+#define SOLIS_AS_LIST(value) ((ObjList*)SOLIS_AS_OBJECT(value))
+
 /*
 	Returns the specified value is equal to the type
 	If the value is not an object it returns false.
@@ -212,5 +223,7 @@ ObjInstance* solisNewInstance(VM* vm, ObjClass* klass);
 ObjBoundMethod* solisNewBoundMethod(VM* vm, Value receiver, ObjClosure* closure);
 
 ObjBoundMethod* solisNewNativeBoundMethod(VM* vm, Value receiver, ObjNative* closure);
+
+ObjList* solisNewList(VM* vm);
 
 #endif // SOLIS_OBJECT_H

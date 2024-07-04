@@ -34,6 +34,7 @@ typedef struct ObjClass ObjClass;
 typedef struct ObjInstance ObjInstance;
 typedef struct ObjEnum ObjEnum;
 typedef struct ObjBoundMethod ObjBoundMethod;
+typedef struct ObjList ObjList;
 
 typedef struct ObjUserdata ObjUserdata;
 
@@ -58,6 +59,7 @@ typedef enum
     OBJ_CLASS, 
     OBJ_INSTANCE,
     OBJ_BOUND_METHOD, 
+    OBJ_LIST
 } ObjectType;
 
 

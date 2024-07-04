@@ -28,3 +28,14 @@ println(str.length())
 var b = true
 
 println(b)
+
+var list = [ 10, 12, 13 ]
+
+println(list.length())
+
+println(list)
+
+list.append(44)
+
+println(list)
+

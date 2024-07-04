@@ -141,7 +141,7 @@ void list_get(VM* vm)
 int main(void) {
 
 
-    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/fib.solis");
+    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/numbers.solis");
     if (fileContent == NULL) 
     {
         printf("Failed to read file\n");

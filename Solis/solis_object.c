@@ -99,6 +99,13 @@ void solisFreeObject(VM* vm, Object* object)
 		SOLIS_FREE(vm, ObjUpvalue, object);
 		break;
 	}
+	case OBJ_LIST:
+	{
+		ObjList* list = (ObjList*)object;
+		solisValueBufferClear(vm, &list->values);
+		SOLIS_FREE(vm, ObjList, object);
+		break;
+	}
 	}
 }
 
@@ -276,4 +283,13 @@ ObjBoundMethod* solisNewNativeBoundMethod(VM* vm, Value receiver, ObjNative* clo
 	bound->native = closure;
 	bound->nativeFunction = true;
 	return bound;
+}
+
+ObjList* solisNewList(VM* vm)
+{
+	ObjList* list = ALLOCATE_OBJ(vm, ObjList, OBJ_LIST);
+
+	solisValueBufferInit(vm, &list->values);
+
+	return list;
 }

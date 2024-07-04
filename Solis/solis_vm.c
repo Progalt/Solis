@@ -25,6 +25,8 @@ ObjClass* solisGetClassForValue(VM* vm, Value value)
 		return vm->boolClass;
 	else if (SOLIS_IS_CLASS(value))
 		return SOLIS_AS_CLASS(value);
+	else if (SOLIS_IS_LIST(value))
+		return vm->listClass;
 
 	return NULL;
 }
@@ -396,6 +398,29 @@ do {																		\
 	CASE_CODE(POP) :
 	{
 		POP();
+		DISPATCH();
+	}
+	CASE_CODE(CREATE_LIST) :
+	{
+		uint16_t size = READ_SHORT();
+
+		ObjList* list = solisNewList(vm);
+
+		// This is not the best
+		// TODO: FIXME 
+
+		for (uint16_t i = 0; i < size; i++)
+		{
+			solisValueBufferWrite(vm, &list->values, solisPeek(vm, size - i - 1));
+		}
+
+		for (uint16_t i = 0; i < size; i++)
+		{
+			POP();
+		}
+
+		PUSH(SOLIS_OBJECT_VALUE(list));
+
 		DISPATCH();
 	}
 	CASE_CODE(DEFINE_GLOBAL) :

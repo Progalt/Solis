@@ -79,6 +79,31 @@ void string_length(VM* vm)
     solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE((double)(SOLIS_AS_STRING(solisGetSelf(vm))->length)));
 }
 
+void list_at(VM* vm)
+{
+    int idx = (int)SOLIS_AS_NUMBER(solisGetArgument(vm, 0));
+
+    ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
+
+    
+    solisSetReturnValue(vm, list->values.data[idx]);
+}
+
+void list_length(VM* vm)
+{
+    ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
+    solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE((double)list->values.count));
+}
+
+void list_append(VM* vm)
+{
+    ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
+
+    solisValueBufferWrite(vm, &list->values, solisGetArgument(vm, 0));
+
+    solisSetReturnValue(vm, SOLIS_NULL_VALUE());
+}
+
 
 void solisInitialiseCore(VM* vm)
 {
@@ -109,4 +134,12 @@ void solisInitialiseCore(VM* vm)
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->stringClass), "length", string_length, 0);
 
     vm->boolClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "Bool"));
+
+    vm->listClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "List"));
+
+    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "at", list_at, 1);
+    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "length", list_length, 0);
+    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "append", list_append, 1);
+
+
 }

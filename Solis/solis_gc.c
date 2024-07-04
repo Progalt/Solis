@@ -77,6 +77,7 @@ static void markRoots(VM* vm)
     markObject(vm, (Object*)vm->numberClass);
     markObject(vm, (Object*)vm->stringClass);
     markObject(vm, (Object*)vm->boolClass);
+    markObject(vm, (Object*)vm->listClass);
 
     for (ObjUpvalue* upvalue = vm->openUpvalues;
         upvalue != NULL;
@@ -142,6 +143,14 @@ static void blackenObject(VM* vm, Object* object)
             markObject(vm, (Object*)bound->native);
         else 
          markObject(vm, (Object*)bound->method);
+
+        break;
+    }
+    case OBJ_LIST: {
+
+        ObjList* list = (ObjList*)object;
+
+        markValueBuffer(vm, &list->values);
 
         break;
     }
