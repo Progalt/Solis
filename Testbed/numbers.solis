@@ -9,6 +9,22 @@ println(xabs)
 
 println(Number.MAX)
 
+println(Number.PI)
+println(Number.TAU)
+
 var xstr = x.toString()
 
 println(xstr)
+
+
+println("-- Strings --")
+
+var str = "Hello World"
+
+println(str)
+
+println(str.length())
+
+var b = true
+
+println(b)

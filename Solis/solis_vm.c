@@ -19,6 +19,8 @@ ObjClass* solisGetClassForValue(VM* vm, Value value)
 		return vm->numberClass;
 	else if (SOLIS_IS_STRING(value))
 		return vm->stringClass;
+	else if (SOLIS_IS_BOOL(value))
+		return vm->boolClass;
 
 	return NULL;
 }

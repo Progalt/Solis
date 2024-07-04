@@ -76,6 +76,7 @@ static void markRoots(VM* vm)
 
     markObject(vm, (Object*)vm->numberClass);
     markObject(vm, (Object*)vm->stringClass);
+    markObject(vm, (Object*)vm->boolClass);
 
     for (ObjUpvalue* upvalue = vm->openUpvalues;
         upvalue != NULL;

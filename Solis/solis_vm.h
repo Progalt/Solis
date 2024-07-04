@@ -65,6 +65,7 @@ struct VM
 
 	ObjClass* numberClass;
 	ObjClass* stringClass;
+	ObjClass* boolClass;
 
 };
 

@@ -122,6 +122,10 @@ static bool match(char expected) {
 static char peek() {
 	return *scanner.current;
 }
+static char peekNext() {
+	if (isAtEnd()) return '\0';
+	return scanner.current[1];
+}
 
 static void skipWhitespace() {
 	for (;;) {
@@ -150,11 +154,6 @@ static void skipWhitespace() {
 	}
 }
 
-
-static char peekNext() {
-	if (isAtEnd()) return '\0';
-	return scanner.current[1];
-}
 
 static Token string() 
 {
@@ -216,6 +215,9 @@ Token solisScanToken()
 {
 	skipWhitespace();
 
+	// BUG: Comments don't work... 
+	// FIXME 
+
 	scanner.start = scanner.current;
 
 	if (isAtEnd())
@@ -242,13 +244,7 @@ Token solisScanToken()
 	case '+': return makeToken(TOKEN_PLUS);
 	case '-':
 	{
-		// -- is a comment
-		if (peekNext() == '-')
-		{
-			while (peek() != '\n' && !isAtEnd()) advance();
-		}
-		else
-			return makeToken(TOKEN_MINUS);
+		return makeToken(TOKEN_MINUS);
 	}
 	case '/': return makeToken(match('/') ? TOKEN_SLASH_SLASH : TOKEN_SLASH);
 	case '*': return makeToken(match('*') ? TOKEN_STAR_STAR : TOKEN_STAR);

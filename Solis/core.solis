@@ -1,5 +1,4 @@
 
-
 class Number
 
 	function abs()
@@ -14,6 +13,19 @@ class Number
 
 end
 
+class Bool
+
+	function toString()
+		
+		if self then 
+			return "true"
+		end
+
+		return "false"
+	end	
+
+end 
+
 class String
 	
 	function toString()
@@ -22,12 +34,8 @@ class String
 
 end
 
-
-
 function println(val)
 	
-	var asStr = val.toString()
-
-	__c_printf(asStr)
+	__c_printf(val.toString())
 
 end

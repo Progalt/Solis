@@ -74,6 +74,11 @@ void num_toString(VM* vm)
 }
 
 
+void string_length(VM* vm)
+{
+    solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE((double)(SOLIS_AS_STRING(solisGetSelf(vm))->length)));
+}
+
 
 void solisInitialiseCore(VM* vm)
 {
@@ -93,8 +98,14 @@ void solisInitialiseCore(VM* vm)
 
     solisAddClassField(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "MIN", true, SOLIS_NUMERIC_VALUE(DBL_MIN));
     solisAddClassField(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "MAX", true, SOLIS_NUMERIC_VALUE(DBL_MAX));
+    solisAddClassField(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "PI", true, SOLIS_NUMERIC_VALUE(3.14159265358979323846));
+    solisAddClassField(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "TAU", true, SOLIS_NUMERIC_VALUE(6.283185307179586));
 
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "toString", num_toString, 0);
 
     vm->stringClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "String"));
+
+    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->stringClass), "length", string_length, 0);
+
+    vm->boolClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "Bool"));
 }

@@ -899,6 +899,7 @@ static void block()
 	}
 
 	consume(TOKEN_END, "Expected 'end' after block.");
+	matchLine();
 }
 
 static int emitJump(uint8_t instruction) 
@@ -1244,6 +1245,8 @@ static void classDeclaration()
 	} while (!check(TOKEN_END));
 
 	consume(TOKEN_END, "Expected 'end' after class body");
+
+	matchLine();
 
 	emitByte(OP_POP);
 }
