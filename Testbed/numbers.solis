@@ -6,3 +6,9 @@ var xabs = x.abs()
 
 println(x)
 println(xabs)
+
+println(Number.MAX)
+
+var xstr = x.toString()
+
+println(xstr)

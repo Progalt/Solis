@@ -1,0 +1,33 @@
+
+
+class Number
+
+	function abs()
+		
+		if self < 0 then 
+			return -self
+		end 
+
+		return self
+
+	end
+
+end
+
+class String
+	
+	function toString()
+		return self
+	end
+
+end
+
+
+
+function println(val)
+	
+	var asStr = val.toString()
+
+	__c_printf(asStr)
+
+end

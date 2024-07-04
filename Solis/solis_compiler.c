@@ -633,7 +633,7 @@ static int addLocal(Token name)
 	if (current->localCount == UINT8_COUNT) 
 	{
 		error("Too many local variables in (function).");
-		return;
+		return -1;
 	}
 
 	Local* local = &current->locals[current->localCount];

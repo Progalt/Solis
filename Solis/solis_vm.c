@@ -17,8 +17,8 @@ ObjClass* solisGetClassForValue(VM* vm, Value value)
 {
 	if (SOLIS_IS_NUMERIC(value))
 		return vm->numberClass;
-	else if (SOLIS_IS_CLASS(value))
-		return SOLIS_AS_CLASS(value);
+	else if (SOLIS_IS_STRING(value))
+		return vm->stringClass;
 
 	return NULL;
 }
@@ -605,8 +605,12 @@ do {																		\
 	{
 		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
 
+		// TODO: This could be improved
+		// Maybe an invoke? 
 
-		if (SOLIS_IS_OBJECT(PEEK()))
+		ObjClass* objectClass = solisGetClassForValue(vm, PEEK());
+
+		if (objectClass == NULL)
 		{
 			Object* object = SOLIS_AS_OBJECT(PEEK());
 			switch (object->type)
@@ -701,30 +705,36 @@ do {																		\
 		}
 		else
 		{
-			ObjClass* klass = solisGetClassForValue(vm, PEEK());
 
-			if (klass)
+			if (objectClass)
 			{
 				// We have a class
 
 				Value value;
-				if (!solisHashTableGet(&klass->methods, name, &value))
+				if (solisHashTableGet(&objectClass->statics, name, &value))
+				{
+					POP();
+					PUSH(value);
+				}
+				else if (solisHashTableGet(&objectClass->methods, name, &value))
+				{
+					ObjBoundMethod* bound = NULL;
+
+					if (SOLIS_IS_CLOSURE(value))
+						bound = solisNewBoundMethod(vm, PEEK(), SOLIS_AS_CLOSURE(value));
+					else
+						bound = solisNewNativeBoundMethod(vm, PEEK(), SOLIS_AS_NATIVE(value));
+
+
+					POP();
+					PUSH(SOLIS_OBJECT_VALUE(bound));
+
+				}
+				else
 				{
 					printf("Can't get method from class.\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
-
-
-				ObjBoundMethod* bound = NULL;
-
-				if (SOLIS_IS_CLOSURE(value))
-					bound = solisNewBoundMethod(vm, PEEK(), SOLIS_AS_CLOSURE(value));
-				else
-					bound = solisNewNativeBoundMethod(vm, PEEK(), SOLIS_AS_NATIVE(value));
-
-
-				POP();
-				PUSH(SOLIS_OBJECT_VALUE(bound));
 			}
 		}
 

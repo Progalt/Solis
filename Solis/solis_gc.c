@@ -74,6 +74,9 @@ static void markRoots(VM* vm)
     markTable(vm, &vm->globalMap);
     markValueBuffer(vm, &vm->globals);
 
+    markObject(vm, (Object*)vm->numberClass);
+    markObject(vm, (Object*)vm->stringClass);
+
     for (ObjUpvalue* upvalue = vm->openUpvalues;
         upvalue != NULL;
         upvalue = upvalue->next)

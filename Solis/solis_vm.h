@@ -64,6 +64,7 @@ struct VM
 	Object** greyStack;
 
 	ObjClass* numberClass;
+	ObjClass* stringClass;
 
 };
 

@@ -50,16 +50,6 @@ char* readFileIntoString(const char* filename) {
     return fileContent;
 }
 
-void printNative(VM* vm)
-{
-    Value arg1 = solisGetArgument(vm, 0);
-
-    solisPrintValue(arg1);
-
-    printf("\n");
-
-    solisSetReturnValue(vm, SOLIS_NULL_VALUE());
-}
 
 void clockNative(VM* vm)
 {
@@ -161,16 +151,7 @@ int main(void) {
 	VM vm;
 	solisInitVM(&vm);
     
-    solisPushGlobalCFunction(&vm, "println", printNative, 1);
     solisPushGlobalCFunction(&vm, "clock", clockNative, 0);
-
-    Value list = solisCreateClass(&vm, "List");
-
-    solisAddClassField(&vm, list, "_data", false, SOLIS_NULL_VALUE());
-    solisAddClassField(&vm, list, "_capacity", false, SOLIS_NUMERIC_VALUE(0));
-    solisAddClassField(&vm, list, "length", false, SOLIS_NUMERIC_VALUE(0));
-    solisAddClassNativeMethod(&vm, list, "add", list_add, 1);
-    solisAddClassNativeMethod(&vm, list, "get", list_get, 1);
 
 	InterpretResult result = solisInterpret(&vm, fileContent);
 

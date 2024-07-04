@@ -1,18 +1,100 @@
 
 #include "solis_core.h"
 
+#include <float.h>
 
-void num_abs(VM* vm)
+#include <stdio.h>
+#include <stdlib.h>
+
+char* read_file_into_cstring(const char* filename) {
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        perror("Failed to open file");
+        return NULL;
+    }
+
+    // Seek to the end of the file to determine its size
+    fseek(file, 0, SEEK_END);
+    long filesize = ftell(file);
+    fseek(file, 0, SEEK_SET); // Go back to the beginning of the file
+
+    if (filesize < 0) {
+        perror("Failed to determine file size");
+        fclose(file);
+        return NULL;
+    }
+
+    // Allocate memory for the file content plus the null terminator
+    char* buffer = (char*)malloc(filesize + 1);
+    if (!buffer) {
+        perror("Failed to allocate memory");
+        fclose(file);
+        return NULL;
+    }
+
+    // Read the file content into the buffer
+    size_t read_size = fread(buffer, 1, filesize, file);
+    if (read_size != filesize) {
+        perror("Failed to read file");
+        free(buffer);
+        fclose(file);
+        return NULL;
+    }
+
+    // Null-terminate the string
+    buffer[filesize] = '\0';
+
+    // Close the file
+    fclose(file);
+
+    return buffer;
+}
+
+
+void core_printf(VM* vm)
+{
+
+    printf("%s\n", SOLIS_AS_CSTRING(solisGetArgument(vm, 0)));
+
+    solisSetReturnValue(vm, SOLIS_NULL_VALUE());
+}
+
+
+
+void num_toString(VM* vm)
 {
     double num = SOLIS_AS_NUMBER(solisGetSelf(vm));
 
-    num = num < 0 ? -num : num;
+    char buffer[24];
+    int length = sprintf(buffer, "%.14g", num);
 
-    solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(num));
+    Value ret = SOLIS_OBJECT_VALUE(solisCopyString(vm, buffer, length));
+
+    solisSetReturnValue(vm, ret);
 }
+
+
 
 void solisInitialiseCore(VM* vm)
 {
-    vm->numberClass = SOLIS_AS_CLASS(solisCreateClass(vm, "Number"));
-    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "abs", num_abs, 0);
+    const char* str = read_file_into_cstring("F:/Dev/Solis/Solis/core.solis");
+
+    solisPushGlobalCFunction(vm, "__c_printf", core_printf, 1);
+
+
+    InterpretResult result = solisInterpret(vm, str);
+
+    if (result == INTERPRET_RUNTIME_ERROR || result == INTERPRET_COMPILE_ERROR)
+    {
+        printf("Error running core module\n");
+    }
+
+    vm->numberClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "Number"));
+
+    solisAddClassField(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "MIN", true, SOLIS_NUMERIC_VALUE(DBL_MIN));
+    solisAddClassField(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "MAX", true, SOLIS_NUMERIC_VALUE(DBL_MAX));
+
+    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "toString", num_toString, 0);
+
+    vm->stringClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "String"));
 }
