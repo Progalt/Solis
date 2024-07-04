@@ -1386,6 +1386,13 @@ static void dot(bool canAssign)
 		emitByte(OP_SET_FIELD);
 		emitShort(name);
 	}
+	else if (match(TOKEN_LEFT_PAREN))
+	{
+		uint8_t argCount = argumentList();
+		emitByte(OP_INVOKE);
+		emitShort(name);
+		emitByte(argCount);
+	}
 	else
 	{
 		emitByte(OP_GET_FIELD);

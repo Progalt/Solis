@@ -82,6 +82,16 @@ static int jumpInstruction(const char* name, int sign,
 	return offset + 3;
 }
 
+static int invokeInstruction(const char* name, Chunk* chunk,
+	int offset) {
+	uint8_t constant = chunk->code[offset + 1];
+	uint8_t argCount = chunk->code[offset + 2];
+	printf("%-16s (%d args) %4d '", name, argCount, constant);
+	solisPrintValue(chunk->constants.data[constant]);
+	printf("'\n");
+	return offset + 3;
+}
+
 void solisInitChunk(VM* vm, Chunk* chunk)
 {
 	chunk->count = 0;
@@ -254,6 +264,8 @@ int solisDisassembleInstruction(Chunk* chunk, int offset)
 		return constantInstructionLong("OP_DEFINE_METHOD", chunk, offset);
 	case OP_INHERIT:
 		return simpleInstruction("OP_INHERIT", offset);
+	case OP_INVOKE:
+		return invokeInstruction("OP_INVOKE", chunk, offset);
 	default:
 		printf("Unknown opcode %d\n", instruction);
 		return offset + 1;

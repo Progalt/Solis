@@ -12,6 +12,8 @@
 // #define SOLIS_DEBUG_TRACE_EXECUTION
 
 static bool callValue(VM* vm, Value callee, int argCount);
+static bool callClosure(VM* vm, ObjClosure* closure, int argCount);
+static bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs);
 
 ObjClass* solisGetClassForValue(VM* vm, Value value)
 {
@@ -117,6 +119,38 @@ static void closeUpvalues(VM* vm, Value* last)
 		upvalue->location = &upvalue->closed;
 		vm->openUpvalues = upvalue->next;
 	}
+}
+
+static bool invokeFromClass(VM* vm, ObjClass* klass, ObjString* name, int argCount) {
+	Value method;
+	if (!solisHashTableGet(&klass->methods, name, &method)) {
+		printf("Undefined property '%s'.", name->chars);
+		return false;
+	}
+
+	if (SOLIS_IS_CLOSURE(method))
+		return callClosure(vm, SOLIS_AS_CLOSURE(method), argCount);
+	else
+	{
+		if (argCount != SOLIS_AS_NATIVE(method)->arity)
+			return false;
+
+		return callNativeFunction(vm, SOLIS_AS_NATIVE(method)->nativeFunction, argCount);
+	}
+}
+
+static bool invoke(VM* vm, ObjString* name, int argCount) 
+{
+	Value receiver = solisPeek(vm, argCount);
+
+	ObjClass* klass = solisGetClassForValue(vm, receiver);
+
+	if (klass == NULL)
+		klass = SOLIS_AS_INSTANCE(receiver)->klass;
+	
+		
+	return invokeFromClass(vm, klass, name, argCount);
+	
 }
 
 static InterpretResult run(VM* vm)
@@ -228,6 +262,7 @@ do {																		\
 			ptr->as.number = -ptr->as.number;
 		else
 		{
+			printf("Negate error\n");
 			return INTERPRET_RUNTIME_ERROR;
 		}
 		DISPATCH();
@@ -451,6 +486,8 @@ do {																		\
 			}
 		}
 
+		LOAD_FRAME();
+
 		DISPATCH();
 	}
 	CASE_CODE(CALL_0) :
@@ -666,8 +703,6 @@ do {																		\
 				{
 					POP();
 					PUSH(value);
-
-					
 				}
 				else if (solisHashTableGet(&instance->klass->methods, name, &value))
 				{
@@ -770,11 +805,28 @@ do {																		\
 			default:
 				// Return an error
 				// We can't access the fields
+				printf("Can't get field\n");
 				return INTERPRET_RUNTIME_ERROR;
 				break;
 			}
 		}
 
+		DISPATCH();
+	}
+	CASE_CODE(INVOKE) :
+	{
+		STORE_FRAME();
+
+		ObjString* method = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+		int argCount = READ_BYTE();
+
+		if (!invoke(vm, method, argCount))
+		{
+			printf("Can't invoke\n");
+			return INTERPRET_RUNTIME_ERROR;
+		}
+
+		LOAD_FRAME();
 		DISPATCH();
 	}
 	CASE_CODE(RETURN) :
