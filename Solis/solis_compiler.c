@@ -268,7 +268,6 @@ static void ignoreNewlines()
 
 static void consumeLine(const char* msg)
 {
-
 	consume(TOKEN_LINE, msg);
 	ignoreNewlines();
 }
@@ -543,6 +542,11 @@ static void string(bool canAssign) {
 static void declaration()
 {
 	ignoreNewlines();
+
+	if (check(TOKEN_EOF))
+	{
+		return;
+	}
 
 	if (match(TOKEN_FUNCTION))
 	{
@@ -1398,6 +1402,7 @@ static void expression()
 
 static void parsePrecedence(Precedence precedence)
 {
+
 	advance();
 	ParseFn prefixRule = getRule(parser.previous.type)->prefix;
 	if (prefixRule == NULL) {

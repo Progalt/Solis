@@ -92,6 +92,7 @@ void solisInitialiseCore(VM* vm)
     if (result == INTERPRET_RUNTIME_ERROR || result == INTERPRET_COMPILE_ERROR)
     {
         printf("Error running core module\n");
+        return;
     }
 
     vm->numberClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "Number"));
