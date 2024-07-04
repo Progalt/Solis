@@ -20,7 +20,7 @@ while i < iters do
 	var f = fib(28)
 
 	i = i + 1
-end 
+end
 
 var elapsed = clock() - start
 

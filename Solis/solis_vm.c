@@ -121,11 +121,22 @@ static void closeUpvalues(VM* vm, Value* last)
 	}
 }
 
-static bool invokeFromClass(VM* vm, ObjClass* klass, ObjString* name, int argCount) {
+static bool invokeFromClass(VM* vm, ObjClass* klass, ObjString* name, int argCount, bool isStatic) {
 	Value method;
-	if (!solisHashTableGet(&klass->methods, name, &method)) {
-		printf("Undefined property '%s'.", name->chars);
-		return false;
+
+	if (isStatic)
+	{
+		if (!solisHashTableGet(&klass->statics, name, &method)) {
+			printf("Undefined static '%s'.", name->chars);
+			return false;
+		}
+	}
+	else
+	{
+		if (!solisHashTableGet(&klass->methods, name, &method)) {
+			printf("Undefined property '%s'.", name->chars);
+			return false;
+		}
 	}
 
 	if (SOLIS_IS_CLOSURE(method))
@@ -145,11 +156,13 @@ static bool invoke(VM* vm, ObjString* name, int argCount)
 
 	ObjClass* klass = solisGetClassForValue(vm, receiver);
 
+	bool isStatic = SOLIS_IS_CLASS(receiver);
+
 	if (klass == NULL)
 		klass = SOLIS_AS_INSTANCE(receiver)->klass;
 	
 		
-	return invokeFromClass(vm, klass, name, argCount);
+	return invokeFromClass(vm, klass, name, argCount, isStatic);
 	
 }
 

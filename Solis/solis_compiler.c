@@ -215,6 +215,7 @@ static void advance()
 		if (parser.tokenOffset >= parser.tokenList.count)
 		{
 			// We shouldn't reach here
+			return;
 		}
 
 		// Grab the next token
@@ -267,10 +268,6 @@ static void ignoreNewlines()
 
 static void consumeLine(const char* msg)
 {
-	if (check(TOKEN_EOF))
-	{
-		return;
-	}
 
 	consume(TOKEN_LINE, msg);
 	ignoreNewlines();
@@ -417,7 +414,8 @@ static void synchronize() {
 	parser.panicMode = false;
 
 	while (parser.current.type != TOKEN_EOF) {
-		if (parser.previous.type == TOKEN_LINE) return;
+		if (parser.previous.type == TOKEN_LINE) 
+			return;
 		switch (parser.current.type) {
 		//case TOKEN_CLASS:
 		case TOKEN_FUNCTION:
@@ -597,15 +595,6 @@ static void statement()
 	else if (match(TOKEN_BREAK))
 	{
 		breakStatement();
-	}
-	else if (match(TOKEN_END))
-	{
-		if (current->scopeDepth - 1 <= -1)
-		{
-			error("Mismatched 'end' statements.");
-		}
-
-		endScope();
 	}
 	else
 	{
@@ -899,7 +888,6 @@ static void block()
 	}
 
 	consume(TOKEN_END, "Expected 'end' after block.");
-	matchLine();
 }
 
 static int emitJump(uint8_t instruction) 
@@ -939,6 +927,8 @@ static void ifStatement()
 
 	consume(TOKEN_THEN, "Expected 'then' after if condition");
 
+	ignoreNewlines();
+
 	// Begin a scope
 	// Scopes are handled by if statements here 
 	beginScope();
@@ -963,6 +953,8 @@ static void ifStatement()
 	if (match(TOKEN_ELSE))
 	{
 		beginScope();
+
+		ignoreNewlines();
 
 		while (!check(TOKEN_END) && !check(TOKEN_EOF))
 		{
@@ -1245,8 +1237,7 @@ static void classDeclaration()
 	} while (!check(TOKEN_END));
 
 	consume(TOKEN_END, "Expected 'end' after class body");
-
-	matchLine();
+	ignoreNewlines();
 
 	emitByte(OP_POP);
 }
