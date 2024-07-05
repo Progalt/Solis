@@ -61,7 +61,38 @@ class List
 
 end
  
+class Range
 
+	var min = 0
+	var max = 0
+	var step = 1
+
+	function toString()
+
+		var str = self.min.toString()
+		str = str + ".." 
+		str = str + self.max.toString()
+
+		return str
+	end
+
+	function expand()
+		var out = []
+
+		var idx = self.min
+
+		while idx < self.max do
+
+			out.append(idx)
+			
+			idx = idx + self.step
+		end
+
+		return out
+
+	end
+
+end
 
 
 function println(val)

@@ -751,7 +751,7 @@ do {																		\
 
 		ObjClass* objectClass = solisGetClassForValue(vm, PEEK());
 
-		if (objectClass)
+		if (objectClass && !SOLIS_IS_INSTANCE(PEEK()))
 		{
 			Value value;
 			if (solisHashTableGet(&objectClass->statics, name, &value))

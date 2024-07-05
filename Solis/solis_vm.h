@@ -153,6 +153,7 @@ static inline ObjClass* solisGetClassForValue(VM* vm, Value value)
 		{
 		case OBJ_STRING: return vm->stringClass;
 		case OBJ_LIST: return vm->listClass;
+		case OBJ_INSTANCE: return SOLIS_AS_INSTANCE(value)->klass;
 		default:
 			break;
 		}

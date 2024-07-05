@@ -18,3 +18,10 @@ println(x)
 l[2] = 50
 
 println(l[2])
+
+var r = 0..10
+
+
+println(r)
+
+println(r.expand())

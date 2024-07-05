@@ -118,6 +118,22 @@ void num_div(VM* vm)
     }
 }
 
+void num_dotdot(VM* vm)
+{
+    Value obj2 = solisGetArgument(vm, 0);
+
+    if (SOLIS_IS_NUMERIC(obj2))
+    {
+        Value rangeClass = solisGetGlobal(vm, "Range");
+
+        ObjInstance* inst = solisNewInstance(vm, SOLIS_AS_CLASS(rangeClass));
+
+        solisSetInstanceField(vm, SOLIS_OBJECT_VALUE(inst), "min", solisGetSelf(vm));
+        solisSetInstanceField(vm, SOLIS_OBJECT_VALUE(inst), "max", obj2);
+
+        solisSetReturnValue(vm, SOLIS_OBJECT_VALUE(inst));
+    }
+}
 
 void string_length(VM* vm)
 {
@@ -238,6 +254,7 @@ void solisInitialiseCore(VM* vm)
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_MINUS, num_minus);
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_STAR, num_mul);
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_SLASH, num_div);
+    solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_DOTDOT, num_dotdot);
 
     vm->stringClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "String"));
 
