@@ -1,11 +1,12 @@
 
 
-var l = List()
+var l = [ 10, 20, 30, 40, 50, 60 ]
 
-l.add(500)
-l.add(20)
-l.add(3424)
 
-println(l.length)
+println(l.length())
 
-println(l.get(1))
+println(l)
+
+l.insert(1, 25)
+
+println(l)

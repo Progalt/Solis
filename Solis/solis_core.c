@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 char* read_file_into_cstring(const char* filename) {
     FILE* file = fopen(filename, "rb");
@@ -104,6 +105,30 @@ void list_append(VM* vm)
     solisSetReturnValue(vm, SOLIS_NULL_VALUE());
 }
 
+void list_insert(VM* vm)
+{
+    ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
+
+    int idx = (int)SOLIS_AS_NUMBER(solisGetArgument(vm, 0));
+
+    int moveCount = list->values.count - idx;
+
+    // Write a temp value into the end of the buffer 
+    solisValueBufferWrite(vm, &list->values, SOLIS_NUMERIC_VALUE(0));
+
+    // memmove because our data overlaps
+    memmove(&list->values.data[idx + 1], &list->values.data[idx], sizeof(Value) * moveCount);
+
+    list->values.data[idx] = solisGetArgument(vm, 1);
+
+    solisSetReturnValue(vm, SOLIS_NULL_VALUE());
+}
+
+void list_removeAt(VM* vm)
+{
+
+}
+
 
 void solisInitialiseCore(VM* vm)
 {
@@ -140,6 +165,6 @@ void solisInitialiseCore(VM* vm)
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "at", list_at, 1);
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "length", list_length, 0);
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "append", list_append, 1);
-
+    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "insert", list_insert, 2);
 
 }

@@ -271,6 +271,9 @@ static void ignoreNewlines()
 
 static void consumeLine(const char* msg)
 {
+	if (check(TOKEN_EOF))
+		return;
+
 	consume(TOKEN_LINE, msg);
 	ignoreNewlines();
 }
@@ -582,6 +585,11 @@ static void declaration()
 
 static void statement()
 {
+
+	if (check(TOKEN_EOF))
+	{
+		return;
+	}
 
 	if (match(TOKEN_RETURN))
 	{
