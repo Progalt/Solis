@@ -115,6 +115,8 @@ static ObjString* allocateString(VM* vm, char* chars, int length, uint32_t hash)
 	string->chars = chars;
 	string->hash = hash;
 
+	string->obj.classObj = vm->stringClass;
+
 	// Store it in a hash table
 	solisPush(vm, SOLIS_OBJECT_VALUE(string));
 	solisHashTableInsert(&vm->strings, string, SOLIS_NULL_VALUE());
@@ -262,6 +264,9 @@ ObjInstance* solisNewInstance(VM* vm, ObjClass* klass)
 {
 	ObjInstance* instance = ALLOCATE_OBJ(vm, ObjInstance, OBJ_INSTANCE);
 	instance->klass = klass;
+
+	instance->obj.classObj = klass;
+
 	solisInitHashTable(&instance->fields, vm);
 	solisHashTableCopy(&klass->fields, &instance->fields);
 	return instance;
@@ -288,6 +293,8 @@ ObjBoundMethod* solisNewNativeBoundMethod(VM* vm, Value receiver, ObjNative* clo
 ObjList* solisNewList(VM* vm)
 {
 	ObjList* list = ALLOCATE_OBJ(vm, ObjList, OBJ_LIST);
+
+	list->obj.classObj = vm->listClass;
 
 	solisValueBufferInit(vm, &list->values);
 

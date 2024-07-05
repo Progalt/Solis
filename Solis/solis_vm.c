@@ -16,21 +16,7 @@ static bool callClosure(VM* vm, ObjClosure* closure, int argCount);
 static bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs);
 static bool callOperator(VM* vm, int op, int numArgs);
 
-ObjClass* solisGetClassForValue(VM* vm, Value value)
-{
-	if (SOLIS_IS_NUMERIC(value))
-		return vm->numberClass;
-	else if (SOLIS_IS_STRING(value))
-		return vm->stringClass;
-	else if (SOLIS_IS_BOOL(value))
-		return vm->boolClass;
-	else if (SOLIS_IS_CLASS(value))
-		return SOLIS_AS_CLASS(value);
-	else if (SOLIS_IS_LIST(value))
-		return vm->listClass;
 
-	return NULL;
-}
 
 void solisInitVM(VM* vm)
 {
@@ -62,6 +48,7 @@ void solisInitVM(VM* vm)
 	vm->operatorStrings[OPERATOR_MINUS] = solisCopyString(vm, "-", 1);
 	vm->operatorStrings[OPERATOR_STAR] = solisCopyString(vm, "*", 1);
 	vm->operatorStrings[OPERATOR_SLASH] = solisCopyString(vm, "/", 1);
+	vm->operatorStrings[OPERATOR_SLASH_SLASH] = solisCopyString(vm, "//", 2);
 	vm->operatorStrings[OPERATOR_POWER] = solisCopyString(vm, "**", 2);
 	vm->operatorStrings[OPERATOR_SUBSCRIPT_GET] = solisCopyString(vm, "[]", 2);
 	vm->operatorStrings[OPERATOR_SUBSCRIPT_SET] = solisCopyString(vm, "[]=", 3);
@@ -331,79 +318,153 @@ do {																		\
 
 		DISPATCH();
 	}
-	CASE_CODE(ADD) :
+	//CASE_CODE(ADD) :
+	//{
+	//	//// Instead of popping the value lower on the stack we can just assign it to the new value avoiding unneeded operations
+	//	//Value a = POP();
+	//	//Value* val = PEEK_PTR();
+
+	//	//// Check if the values are numeric values
+	//	//if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
+	//	//	val->as.number = val->as.number + a.as.number;
+
+	//	//if (SOLIS_IS_STRING(*val) && SOLIS_IS_STRING(a))
+	//	//{
+	//	//	ObjString* bstr = SOLIS_AS_STRING(*val);
+	//	//	ObjString* astr = SOLIS_AS_STRING(a);
+	//	//	*val = SOLIS_OBJECT_VALUE(solisConcatenateStrings(vm, bstr, astr));
+	//	//}
+
+	//	if (!callOperator(vm, OPERATOR_ADD, 1))
+	//	{
+	//		return INTERPRET_RUNTIME_ERROR;
+	//	}
+
+	//	DISPATCH();
+	//}
+	//CASE_CODE(SUBTRACT) :
+	//{
+	//	//Value a = POP();
+	//	//Value* val = PEEK_PTR();
+
+	//	//// Check if the values are numeric values
+	//	//if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
+	//	//	val->as.number = val->as.number - a.as.number;
+
+	//	if (!callOperator(vm, OPERATOR_MINUS, 1))
+	//	{
+	//		return INTERPRET_RUNTIME_ERROR;
+	//	}
+
+	//	DISPATCH();
+	//}
+	//CASE_CODE(MULTIPLY) :
+	//{
+	//	Value a = POP();
+	//	Value* val = PEEK_PTR();
+
+	//	// Check if the values are numeric values
+	//	if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
+	//		val->as.number = val->as.number * a.as.number;
+
+	//	DISPATCH();
+	//}
+	//CASE_CODE(DIVIDE) :
+	//{
+	//	Value a = POP();
+	//	Value* val = PEEK_PTR();
+
+	//	// Check if the values are numeric values
+	//	if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
+	//		val->as.number = val->as.number / a.as.number;
+
+	//	DISPATCH();
+	//}
+	//CASE_CODE(FLOOR_DIVIDE) :
+	//{
+	//	Value a = POP();
+	//	Value* val = PEEK_PTR();
+
+	//	if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
+	//		val->as.number = floor(val->as.number / a.as.number);
+
+	//	DISPATCH();
+	//}
+	//CASE_CODE(POWER) :
+	//{
+	//	Value a = POP();
+	//	Value* val = PEEK_PTR();
+
+	//	// Check if the values are numeric values
+	//	if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
+	//		val->as.number = pow(val->as.number,  a.as.number);
+
+	//	DISPATCH();
+	//}
+	//CASE_CODE(SUBSCRIPT_GET) :
+	//{
+	//	if (!callOperator(vm, OPERATOR_SUBSCRIPT_GET, 1))
+	//	{
+	//		return INTERPRET_RUNTIME_ERROR;
+	//	}
+
+	//	DISPATCH();
+	//}
+	//CASE_CODE(SUBSCRIPT_SET) :
+	//{
+	//	if (!callOperator(vm, OPERATOR_SUBSCRIPT_SET, 2))
+	//	{
+	//		return INTERPRET_RUNTIME_ERROR;
+	//	}
+	//	DISPATCH();
+	//}
 	{
-		// Instead of popping the value lower on the stack we can just assign it to the new value avoiding unneeded operations
-		Value a = POP();
-		Value* val = PEEK_PTR();
+		int op = 0;
+		int argCount = 0;
 
-		// Check if the values are numeric values
-		if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-			val->as.number = val->as.number + a.as.number;
+	CASE_CODE(ADD) :
+	CASE_CODE(SUBTRACT) :
+	CASE_CODE(MULTIPLY) :
+	CASE_CODE(DIVIDE) :
+	CASE_CODE(FLOOR_DIVIDE) :
+	CASE_CODE(POWER) :
+	CASE_CODE(SUBSCRIPT_GET) :
+		
 
-		if (SOLIS_IS_STRING(*val) && SOLIS_IS_STRING(a))
+		op = instruction - OP_ADD;
+		argCount = 1;
+
+		goto completeOpCall;
+		
+	CASE_CODE(SUBSCRIPT_SET) :
+		
+		op = OPERATOR_SUBSCRIPT_SET;
+		argCount = 2;
+
+		goto completeOpCall;
+		
+
+	completeOpCall:
+
+		ObjClass* klass = solisGetClassForValue(vm, solisPeek(vm, argCount));
+
+		Value val;
+		if (!solisHashTableGet(&klass->methods, vm->operatorStrings[op], &val))
 		{
-			ObjString* bstr = SOLIS_AS_STRING(*val);
-			ObjString* astr = SOLIS_AS_STRING(a);
-			*val = SOLIS_OBJECT_VALUE(solisConcatenateStrings(vm, bstr, astr));
+		}
+
+		if (SOLIS_IS_NATIVE(val))
+		{
+			callNativeFunction(vm, SOLIS_AS_NATIVE(val)->nativeFunction, argCount);
+		}
+		else
+		{
+			callClosure(vm, SOLIS_AS_CLOSURE(val), argCount);
 		}
 
 		DISPATCH();
 	}
-	CASE_CODE(SUBTRACT) :
-	{
-		Value a = POP();
-		Value* val = PEEK_PTR();
 
-		// Check if the values are numeric values
-		if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-			val->as.number = val->as.number - a.as.number;
-
-		DISPATCH();
-	}
-	CASE_CODE(MULTIPLY) :
-	{
-		Value a = POP();
-		Value* val = PEEK_PTR();
-
-		// Check if the values are numeric values
-		if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-			val->as.number = val->as.number * a.as.number;
-
-		DISPATCH();
-	}
-	CASE_CODE(DIVIDE) :
-	{
-		Value a = POP();
-		Value* val = PEEK_PTR();
-
-		// Check if the values are numeric values
-		if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-			val->as.number = val->as.number / a.as.number;
-
-		DISPATCH();
-	}
-	CASE_CODE(FLOOR_DIVIDE) :
-	{
-		Value a = POP();
-		Value* val = PEEK_PTR();
-
-		if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-			val->as.number = floor(val->as.number / a.as.number);
-
-		DISPATCH();
-	}
-	CASE_CODE(POWER) :
-	{
-		Value a = POP();
-		Value* val = PEEK_PTR();
-
-		// Check if the values are numeric values
-		if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-			val->as.number = pow(val->as.number,  a.as.number);
-
-		DISPATCH();
-	}
 	CASE_CODE(POP) :
 	{
 		POP();
@@ -486,23 +547,6 @@ do {																		\
 		closeUpvalues(vm, vm->sp - 1);
 		POP();
 
-		DISPATCH();
-	}
-	CASE_CODE(SUBSCRIPT_GET) :
-	{
-		if (!callOperator(vm, OPERATOR_SUBSCRIPT_GET, 1))
-		{
-			return INTERPRET_RUNTIME_ERROR;
-		}
-
-		DISPATCH();
-	}
-	CASE_CODE(SUBSCRIPT_SET) :
-	{
-		if (!callOperator(vm, OPERATOR_SUBSCRIPT_SET, 2))
-		{
-			return INTERPRET_RUNTIME_ERROR;
-		}
 		DISPATCH();
 	}
 	CASE_CODE(JUMP_IF_FALSE) :
@@ -959,12 +1003,6 @@ static bool callClosure(VM* vm, ObjClosure* closure, int argCount)
 		return false;
 	}
 
-	if (vm->frameCount == FRAMES_MAX)
-	{
-		// TODO: Same better errors
-		return false;
-	}
-
 	// Grow our frames
 	if (vm->frameCount + 1 >= vm->frameCapacity)
 	{
@@ -1001,21 +1039,24 @@ static bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs)
 }
 
 static bool callValue(VM* vm, Value callee, int argCount) {
-	if (SOLIS_AS_OBJECT(callee)) {
-		switch (SOLIS_AS_OBJECT(callee)->type) {
+	if (SOLIS_IS_OBJECT(callee)) {
+
+		Object* obj = SOLIS_AS_OBJECT(callee);
+
+		switch (obj->type) {
 		case OBJ_FUNCTION:
-			return call(vm, SOLIS_AS_FUNCTION(callee), argCount);
+			return call(vm, (ObjFunction*)obj, argCount);
 		case OBJ_CLOSURE:
-			return callClosure(vm, SOLIS_AS_CLOSURE(callee), argCount);
+			return callClosure(vm, (ObjClosure*)obj, argCount);
 		case OBJ_NATIVE_FUNCTION:
 		{
-			ObjNative* native = SOLIS_AS_NATIVE(callee);
+			ObjNative* native = (ObjNative*)obj;
 
 			return callNativeFunction(vm, native->nativeFunction, argCount);
 		}
 		case OBJ_CLASS:
 		{
-			ObjClass* klass = SOLIS_AS_CLASS(callee);
+			ObjClass* klass = (ObjClass*)obj;
 			vm->sp[-argCount - 1] = SOLIS_OBJECT_VALUE(solisNewInstance(vm, klass));
 
 			// Call the constructor if we have one 
@@ -1028,7 +1069,7 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 		}
 		case OBJ_BOUND_METHOD:
 		{
-			ObjBoundMethod* bound = SOLIS_AS_BOUND_METHOD(callee);
+			ObjBoundMethod* bound = (ObjBoundMethod*)obj;
 			vm->sp[-argCount - 1] = bound->receiver;
 			if (bound->nativeFunction)
 			{
@@ -1056,9 +1097,13 @@ static bool callOperator(VM* vm, int op, int numArgs)
 		return false;
 	}
 
-	if (!callValue(vm, val, numArgs))
+	if (SOLIS_IS_NATIVE(val))
 	{
-		return false;
+		callNativeFunction(vm, SOLIS_AS_NATIVE(val)->nativeFunction, numArgs);
+	}
+	else
+	{
+		callClosure(vm, SOLIS_AS_CLOSURE(val), numArgs);
 	}
 
 	return true;

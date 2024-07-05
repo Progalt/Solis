@@ -13,6 +13,8 @@ struct Object
 {
 	ObjectType type;
 
+	ObjClass* classObj;
+
 	// is the object marked by the gc
 	bool isMarked;
 
@@ -124,6 +126,7 @@ struct ObjClass
 	ObjString* name;
 
 	ObjClosure* constructor;
+
 
 	// This is all the static variables that belong to the class instead 
 	HashTable statics;
