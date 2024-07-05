@@ -84,12 +84,16 @@ static int jumpInstruction(const char* name, int sign,
 
 static int invokeInstruction(const char* name, Chunk* chunk,
 	int offset) {
-	uint8_t constant = chunk->code[offset + 1];
-	uint8_t argCount = chunk->code[offset + 2];
+	uint8_t upper = chunk->code[offset + 1];
+	uint8_t lower = chunk->code[offset + 2];
+
+	uint16_t constant = upper << 8;
+	constant |= lower;
+	uint8_t argCount = chunk->code[offset + 3];
 	printf("%-16s (%d args) %4d '", name, argCount, constant);
 	solisPrintValue(chunk->constants.data[constant]);
 	printf("'\n");
-	return offset + 3;
+	return offset + 4;
 }
 
 void solisInitChunk(VM* vm, Chunk* chunk)

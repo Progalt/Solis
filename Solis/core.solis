@@ -78,18 +78,36 @@ class Range
 
 	function expand()
 		var out = []
-
 		var idx = self.min
 
 		while idx < self.max do
 
 			out.append(idx)
-			
 			idx = idx + self.step
 		end
 
 		return out
 
+	end
+
+	function iterate(itr)
+
+		if itr == null then
+			return 0
+		end
+
+		var i = itr
+		if itr >= self.max - self.step then
+			return false
+		end
+
+		return i + self.step
+
+	end
+
+	function iteratorValue(index)
+		
+		return (self.min + (index * self.step))
 	end
 
 end

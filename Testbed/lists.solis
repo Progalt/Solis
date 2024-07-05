@@ -1,27 +1,7 @@
 
 
-var l = [ 10, 20, 30, 40, "blah", 60 ]
 
 
-println(l.length())
-
-println(l)
-
-l.insert(1, 25)
-
-println(l)
-
-var x = l[1]
-
-println(x)
-
-l[2] = 50
-
-println(l[2])
-
-var r = 0..10
-
-
-println(r)
-
-println(r.expand())
+for i in 0..10 do
+	println(i)
+end 

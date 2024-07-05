@@ -126,14 +126,14 @@ static bool invokeFromClass(VM* vm, ObjClass* klass, ObjString* name, int argCou
 	if (isStatic)
 	{
 		if (!solisHashTableGet(&klass->statics, name, &method)) {
-			printf("Undefined static '%s'.", name->chars);
+			printf("Undefined static '%s'.\n", name->chars);
 			return false;
 		}
 	}
 	else
 	{
 		if (!solisHashTableGet(&klass->methods, name, &method)) {
-			printf("Undefined property '%s'.", name->chars);
+			printf("Undefined property '%s'.\n", name->chars);
 			return false;
 		}
 	}
@@ -153,7 +153,9 @@ static bool invoke(VM* vm, ObjString* name, int argCount)
 {
 	Value receiver = solisPeek(vm, argCount);
 
-	ObjClass* klass = solisGetClassForValue(vm, receiver);
+	ObjClass* klass = NULL;
+	if (!SOLIS_IS_INSTANCE(receiver))
+		klass = solisGetClassForValue(vm, receiver);
 
 	bool isStatic = SOLIS_IS_CLASS(receiver);
 

@@ -87,6 +87,7 @@ static void classDeclaration();
 
 static void ifStatement();
 static void whileStatement();
+static void forStatement();
 static void breakStatement();
 static void returnStatement();
 
@@ -614,6 +615,10 @@ static void statement()
 	{
 		whileStatement();
 	}
+	else if (match(TOKEN_FOR))
+	{
+		forStatement();
+	}
 	else if (match(TOKEN_BREAK))
 	{
 		breakStatement();
@@ -1033,6 +1038,105 @@ static void whileStatement()
 	
 	current->withinLoop = false;
 	
+}
+
+static void loadLocal(int slot)
+{
+	
+	emitByte(OP_GET_LOCAL);
+	emitShort(slot);
+}
+
+static void forStatement()
+{
+	beginScope();
+
+	consume(TOKEN_IDENTIFIER, "Expected identifier in for loop.");
+
+	const char* name = parser.previous.start;
+	int length =  parser.previous.length;
+
+	consume(TOKEN_IN, "Expected 'in' in for loop.");
+
+	ignoreNewlines();
+
+	expression();
+
+	Token seqTk = {
+		.start = "seq ",
+		.length = 4
+	};
+
+	int seqSlot = addLocal(seqTk);
+
+	emitByte(OP_NIL);
+
+	Token iterTk = {
+		.start = "iter ",
+		.length = 5
+	};
+	int iterSlot = addLocal(iterTk);
+
+	consume(TOKEN_DO, "Expected 'do' after for expression");
+
+
+	current->withinLoop = true;
+	int loopStart = currentChunk()->count;
+
+	loadLocal(seqSlot);
+	loadLocal(iterSlot);
+
+	ObjString* iterValue = solisCopyString(current->vm, "iterate", 7);
+	solisPush(current->vm, SOLIS_OBJECT_VALUE(iterValue));
+
+	ObjString* iterValueValue = solisCopyString(current->vm, "iteratorValue", 13);
+	solisPush(current->vm, SOLIS_OBJECT_VALUE(iterValueValue));
+
+	uint16_t iterateMethod = makeConstant(SOLIS_OBJECT_VALUE(iterValue));
+	uint16_t iteratorValueMethod = makeConstant(SOLIS_OBJECT_VALUE(iterValueValue));
+
+	solisPop(current->vm);
+	solisPop(current->vm);
+
+	// Call iterate(x)
+	emitByte(OP_INVOKE);
+	emitShort(iterateMethod);
+	emitByte(1);
+
+	emitByte(OP_SET_LOCAL);
+	emitShort(iterSlot);
+
+	emitByte(OP_POP);
+	
+	// test if we should jump if its false
+	int exitJump = emitJump(OP_JUMP_IF_FALSE);
+
+	loadLocal(seqSlot);
+	loadLocal(iterSlot);
+
+	emitByte(OP_INVOKE);
+	emitShort(iteratorValueMethod);
+	emitByte(1);
+
+	beginScope();
+
+	Token localIter = {
+		.start = name,
+		.length = length
+	};
+
+	addLocal(localIter);
+	markInitialized();
+
+	block();
+
+	endScope();
+
+	emitLoop(loopStart);
+
+	patchJump(exitJump);
+
+	endScope();
 }
 
 static void breakStatement()
