@@ -243,3 +243,20 @@ void solisAddClassNativeMethod(VM* vm, Value klassValue, const char* name, Solis
 	solisPop(vm);
 
 }
+
+void solisAddClassNativeOperator(VM* vm, Value klassValue, Operators op, SolisNativeSignature func)
+{
+	ObjClass* klass = SOLIS_AS_CLASS(klassValue);
+	ObjNative* native = solisNewNativeFunction(vm, func);
+	native->arity = 1;
+
+	if (op == OPERATOR_SUBSCRIPT_SET)
+		native->arity = 2;
+
+
+	solisPush(vm, SOLIS_OBJECT_VALUE(native));
+
+	solisHashTableInsert(&klass->methods, vm->operatorStrings[op], SOLIS_OBJECT_VALUE(native));
+
+	solisPop(vm);
+}

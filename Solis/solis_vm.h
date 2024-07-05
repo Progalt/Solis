@@ -138,18 +138,12 @@ void solisDumpGlobals(VM* vm);
 
 static inline ObjClass* solisGetClassForValue(VM* vm, Value value)
 {
-	if (SOLIS_IS_NUMERIC(value))
-		return vm->numberClass;
-
-	if (SOLIS_IS_CLASS(value))
-		return SOLIS_AS_CLASS(value);
-
-
 	switch (value.type)
 	{
 	case VALUE_FALSE: return vm->boolClass;
 	case VALUE_TRUE: return vm->boolClass;
 	case VALUE_NULL: return NULL;
+	case VALUE_NUMERIC: return vm->numberClass;
 	case VALUE_OBJECT: return SOLIS_AS_OBJECT(value)->classObj;
 	default:
 		break;

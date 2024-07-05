@@ -76,48 +76,44 @@ void num_toString(VM* vm)
 
 void num_add(VM* vm)
 {
-    double num1 = SOLIS_AS_NUMBER(vm->apiStack[0]);
     Value obj2 = vm->apiStack[1];
 
     if (SOLIS_IS_NUMERIC(obj2))
     {
         //solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(num1 + SOLIS_AS_NUMBER(obj2)));
-        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(num1 + SOLIS_AS_NUMBER(obj2));
+        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) + SOLIS_AS_NUMBER(obj2));
     }
 }
 
 void num_minus(VM* vm)
 {
-    double num1 = SOLIS_AS_NUMBER(vm->apiStack[0]);
     Value obj2 = vm->apiStack[1];
 
     if (SOLIS_IS_NUMERIC(obj2))
     {
         // solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(num1 - SOLIS_AS_NUMBER(obj2)));
-        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(num1 - SOLIS_AS_NUMBER(obj2));
+        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) - SOLIS_AS_NUMBER(obj2));
     }
 }
 
 void num_mul(VM* vm)
 {
-    double num1 = SOLIS_AS_NUMBER(solisGetSelf(vm));
     Value obj2 = solisGetArgument(vm, 0);
 
     if (SOLIS_IS_NUMERIC(obj2))
     {
-        solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(num1 * SOLIS_AS_NUMBER(obj2)));
+        solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) * SOLIS_AS_NUMBER(obj2)));
         return;
     }
 }
 
 void num_div(VM* vm)
 {
-    double num1 = SOLIS_AS_NUMBER(solisGetSelf(vm));
     Value obj2 = solisGetArgument(vm, 0);
 
     if (SOLIS_IS_NUMERIC(obj2))
     {
-        solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(num1 / SOLIS_AS_NUMBER(obj2)));
+        solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) / SOLIS_AS_NUMBER(obj2)));
         return;
     }
 }
@@ -225,10 +221,10 @@ void solisInitialiseCore(VM* vm)
 
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "toString", num_toString, 0);
 
-    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "+", num_add, 1);
-    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "-", num_minus, 1);
-    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "*", num_mul, 1);
-    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "/", num_div, 1);
+    solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_ADD, num_add);
+    solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_MINUS, num_minus);
+    solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_STAR, num_mul);
+    solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_SLASH, num_div);
 
     vm->stringClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "String"));
 

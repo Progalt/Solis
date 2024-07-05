@@ -42,8 +42,6 @@ void solisInitVM(VM* vm)
 	solisInitHashTable(&vm->globalMap, vm);
 	solisValueBufferInit(vm, &vm->globals);
 
-	solisInitialiseCore(vm);
-
 	vm->operatorStrings[OPERATOR_ADD] = solisCopyString(vm, "+", 1);
 	vm->operatorStrings[OPERATOR_MINUS] = solisCopyString(vm, "-", 1);
 	vm->operatorStrings[OPERATOR_STAR] = solisCopyString(vm, "*", 1);
@@ -52,6 +50,8 @@ void solisInitVM(VM* vm)
 	vm->operatorStrings[OPERATOR_POWER] = solisCopyString(vm, "**", 2);
 	vm->operatorStrings[OPERATOR_SUBSCRIPT_GET] = solisCopyString(vm, "[]", 2);
 	vm->operatorStrings[OPERATOR_SUBSCRIPT_SET] = solisCopyString(vm, "[]=", 3);
+
+	solisInitialiseCore(vm);
 }
 
 static void freeObjects(VM* vm)
@@ -196,6 +196,7 @@ static InterpretResult run(VM* vm)
 #define PUSH(val) (*vm->sp++ = val)
 #define POP() (*(--vm->sp))
 #define PEEK() (*(vm->sp - 1))
+#define PEEK_OFF(offset) (*(vm->sp - 1 - offset))
 #define PEEK_PTR() (vm->sp - 1)
 
 #ifdef SOLIS_DEBUG_TRACE_EXECUTION
@@ -441,12 +442,9 @@ do {																		\
 		op = OPERATOR_SUBSCRIPT_SET;
 		argCount = 2;
 
-		goto completeOpCall;
-		
-
 	completeOpCall:
 
-		ObjClass* klass = solisGetClassForValue(vm, solisPeek(vm, argCount));
+		ObjClass* klass = solisGetClassForValue(vm, PEEK_OFF(argCount));
 
 		Value val;
 		if (!solisHashTableGet(&klass->methods, vm->operatorStrings[op], &val))
@@ -1050,9 +1048,7 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 			return callClosure(vm, (ObjClosure*)obj, argCount);
 		case OBJ_NATIVE_FUNCTION:
 		{
-			ObjNative* native = (ObjNative*)obj;
-
-			return callNativeFunction(vm, native->nativeFunction, argCount);
+			return callNativeFunction(vm, ((ObjNative*)obj)->nativeFunction, argCount);
 		}
 		case OBJ_CLASS:
 		{

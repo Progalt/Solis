@@ -73,4 +73,6 @@ void solisAddClassNativeConstructor(VM* vm, Value klassValue, SolisNativeSignatu
 
 void solisAddClassNativeMethod(VM* vm, Value klassValue, const char* name, SolisNativeSignature func, int arity);
 
+void solisAddClassNativeOperator(VM* vm, Value klassValue, Operators op, SolisNativeSignature func);
+
 #endif // SOLIS_INTERFACE_H
