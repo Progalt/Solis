@@ -79,6 +79,9 @@ static void markRoots(VM* vm)
     markObject(vm, (Object*)vm->boolClass);
     markObject(vm, (Object*)vm->listClass);
 
+    for (int i = 0; i < OPERATOR_COUNT; i++)
+        markObject(vm, (Object*)vm->operatorStrings[i]);
+
     for (ObjUpvalue* upvalue = vm->openUpvalues;
         upvalue != NULL;
         upvalue = upvalue->next)

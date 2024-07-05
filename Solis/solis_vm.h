@@ -68,6 +68,7 @@ struct VM
 	ObjClass* boolClass;
 	ObjClass* listClass;
 
+	ObjString* operatorStrings[OPERATOR_COUNT];
 };
 
 

@@ -129,6 +129,29 @@ void list_removeAt(VM* vm)
 
 }
 
+void list_operator_subscriptGet(VM* vm)
+{
+    ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
+    int idx = (int)SOLIS_AS_NUMBER(solisGetArgument(vm, 0));
+
+    // TODO: Safety checks
+
+    solisSetReturnValue(vm, list->values.data[idx]);
+}
+
+void list_operator_subscriptSet(VM* vm)
+{
+    ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
+    int idx = (int)SOLIS_AS_NUMBER(solisGetArgument(vm, 0));
+    Value val = solisGetArgument(vm, 1);
+
+    // TODO: Safety checks
+
+    list->values.data[idx] = val;
+
+    solisSetReturnValue(vm, SOLIS_NULL_VALUE());
+}
+
 
 void solisInitialiseCore(VM* vm)
 {
@@ -166,5 +189,8 @@ void solisInitialiseCore(VM* vm)
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "length", list_length, 0);
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "append", list_append, 1);
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "insert", list_insert, 2);
+
+    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "[]", list_operator_subscriptGet, 1);
+    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "[]=", list_operator_subscriptSet, 2);
 
 }

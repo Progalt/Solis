@@ -62,6 +62,19 @@ typedef enum
     OBJ_LIST
 } ObjectType;
 
+typedef enum
+{
+    OPERATOR_ADD,
+    OPERATOR_MINUS,
+    OPERATOR_STAR,
+    OPERATOR_SLASH, 
+    OPERATOR_POWER,
+    OPERATOR_SUBSCRIPT_GET,
+    OPERATOR_SUBSCRIPT_SET,
+
+    OPERATOR_COUNT
+} Operators;
+
 
 #ifndef SOLIS_REALLOC_FUNC
 #define SOLIS_REALLOC_FUNC(ptr, newSize) realloc(ptr, newSize)

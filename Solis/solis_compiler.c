@@ -91,6 +91,7 @@ static void breakStatement();
 static void returnStatement();
 
 static void arrayCreate(bool canAssign);
+static void arrayAssign(bool canAssign);
 
 static void function(FunctionType type);
 
@@ -117,7 +118,7 @@ ParseRule rules[] = {
   [TOKEN_RIGHT_PAREN] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_LEFT_BRACE] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_RIGHT_BRACE] = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_LEFT_BRACKET] = {arrayCreate,     NULL,   PREC_SUBSCRIPT},
+  [TOKEN_LEFT_BRACKET] = {arrayCreate,     arrayAssign,   PREC_SUBSCRIPT},
   [TOKEN_RIGHT_BRACKET] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_COMMA] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_DOT] = {NULL,     dot,   PREC_CALL},
@@ -1425,6 +1426,24 @@ static void arrayCreate(bool canAssign)
 
 	emitByte(OP_CREATE_LIST);
 	emitShort(size);
+}
+
+static void arrayAssign(bool canAssign)
+{
+	expression();
+
+	consume(TOKEN_RIGHT_BRACKET, "Expected ']' after subscript.");
+
+	if (canAssign && match(TOKEN_EQ))
+	{
+		expression();
+
+		emitByte(OP_SUBSCRIPT_SET);
+	}
+	else
+	{
+		emitByte(OP_SUBSCRIPT_GET);
+	}
 }
 
 static void expression()

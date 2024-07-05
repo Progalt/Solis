@@ -14,6 +14,7 @@
 static bool callValue(VM* vm, Value callee, int argCount);
 static bool callClosure(VM* vm, ObjClosure* closure, int argCount);
 static bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs);
+static bool callOperator(VM* vm, int op, int numArgs);
 
 ObjClass* solisGetClassForValue(VM* vm, Value value)
 {
@@ -56,6 +57,14 @@ void solisInitVM(VM* vm)
 	solisValueBufferInit(vm, &vm->globals);
 
 	solisInitialiseCore(vm);
+
+	vm->operatorStrings[OPERATOR_ADD] = solisCopyString(vm, "+", 1);
+	vm->operatorStrings[OPERATOR_MINUS] = solisCopyString(vm, "-", 1);
+	vm->operatorStrings[OPERATOR_STAR] = solisCopyString(vm, "*", 1);
+	vm->operatorStrings[OPERATOR_SLASH] = solisCopyString(vm, "/", 1);
+	vm->operatorStrings[OPERATOR_POWER] = solisCopyString(vm, "**", 2);
+	vm->operatorStrings[OPERATOR_SUBSCRIPT_GET] = solisCopyString(vm, "[]", 2);
+	vm->operatorStrings[OPERATOR_SUBSCRIPT_SET] = solisCopyString(vm, "[]=", 3);
 }
 
 static void freeObjects(VM* vm)
@@ -477,6 +486,23 @@ do {																		\
 		closeUpvalues(vm, vm->sp - 1);
 		POP();
 
+		DISPATCH();
+	}
+	CASE_CODE(SUBSCRIPT_GET) :
+	{
+		if (!callOperator(vm, OPERATOR_SUBSCRIPT_GET, 1))
+		{
+			return INTERPRET_RUNTIME_ERROR;
+		}
+
+		DISPATCH();
+	}
+	CASE_CODE(SUBSCRIPT_SET) :
+	{
+		if (!callOperator(vm, OPERATOR_SUBSCRIPT_SET, 2))
+		{
+			return INTERPRET_RUNTIME_ERROR;
+		}
 		DISPATCH();
 	}
 	CASE_CODE(JUMP_IF_FALSE) :
@@ -1018,6 +1044,24 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 		}
 	}
 	return false;
+}
+
+static bool callOperator(VM* vm, int op, int numArgs)
+{
+	ObjClass* klass = solisGetClassForValue(vm, solisPeek(vm, numArgs));
+
+	Value val;
+	if (!solisHashTableGet(&klass->methods, vm->operatorStrings[op], &val))
+	{
+		return false;
+	}
+
+	if (!callValue(vm, val, numArgs))
+	{
+		return false;
+	}
+
+	return true;
 }
 
 InterpretResult solisInterpret(VM* vm, const char* source)
