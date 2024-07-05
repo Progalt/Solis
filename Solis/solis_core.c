@@ -124,6 +124,19 @@ void string_length(VM* vm)
     solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE((double)(SOLIS_AS_STRING(solisGetSelf(vm))->length)));
 }
 
+void string_add(VM* vm)
+{
+    
+    ObjString* bstr = SOLIS_AS_STRING(vm->apiStack[0]);
+    if (SOLIS_IS_STRING(vm->apiStack[1]))
+    {
+        ObjString* astr = SOLIS_AS_STRING(vm->apiStack[1]);
+        vm->apiStack[0] = SOLIS_OBJECT_VALUE(solisConcatenateStrings(vm, bstr, astr));
+    }
+
+
+}
+
 void list_at(VM* vm)
 {
     int idx = (int)SOLIS_AS_NUMBER(solisGetArgument(vm, 0));
@@ -229,6 +242,7 @@ void solisInitialiseCore(VM* vm)
     vm->stringClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "String"));
 
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->stringClass), "length", string_length, 0);
+    solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->stringClass), OPERATOR_ADD, string_add);
 
     vm->boolClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "Bool"));
 
@@ -239,7 +253,7 @@ void solisInitialiseCore(VM* vm)
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "append", list_append, 1);
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "insert", list_insert, 2);
 
-    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "[]", list_operator_subscriptGet, 1);
-    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->listClass), "[]=", list_operator_subscriptSet, 2);
+    solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->listClass), OPERATOR_SUBSCRIPT_GET, list_operator_subscriptGet);
+    solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->listClass), OPERATOR_SUBSCRIPT_SET, list_operator_subscriptSet);
 
 }

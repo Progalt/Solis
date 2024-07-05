@@ -257,6 +257,8 @@ ObjClass* solisNewClass(VM* vm, ObjString* name)
 	solisInitHashTable(&klass->methods, vm);
 	solisInitHashTable(&klass->statics, vm);
 
+	memset(klass->operators, 0, sizeof(Object*) * OPERATOR_COUNT);
+
 	return klass;
 }
 

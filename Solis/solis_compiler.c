@@ -93,6 +93,7 @@ static void returnStatement();
 static void arrayCreate(bool canAssign);
 static void arrayAssign(bool canAssign);
 
+
 static void function(FunctionType type);
 
 static void and_(bool canAssign);
@@ -158,6 +159,7 @@ ParseRule rules[] = {
   [TOKEN_BREAK] = {NULL,     NULL,   PREC_NONE},
   [TOKEN_IS] = { NULL, is_, PREC_CALL }, 
   [TOKEN_SELF] = { self, NULL, PREC_NONE },
+  [TOKEN_DOT_DOT] = { NULL, binary, PREC_CALL },
   [TOKEN_EOF] = {NULL,     NULL,   PREC_NONE},
 };
 
@@ -522,6 +524,8 @@ static void binary(bool canAssign)
 	case TOKEN_SLASH:			emitByte(OP_DIVIDE); break;
 	case TOKEN_STAR_STAR:		emitByte(OP_POWER); break;
 	case TOKEN_SLASH_SLASH:		emitByte(OP_FLOOR_DIVIDE); break;
+
+	case TOKEN_DOT_DOT:			emitByte(OP_DOTDOT); break;
 
 	case TOKEN_EQEQ:			emitByte(OP_EQUAL); break;
 	case TOKEN_BANGEQ:			emitBytes(OP_EQUAL, OP_NOT); break;

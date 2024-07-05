@@ -1,7 +1,7 @@
 
 # Solis 
 
-***Small and fast with a lua-like syntax.***
+***Small and fast with a Lua-like syntax and a dash of Ruby.***
 
 Everything you would expect from a programming language. Suited to embedding in your application or to use standalone. 
 

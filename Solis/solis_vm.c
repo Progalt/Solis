@@ -52,6 +52,7 @@ void solisInitVM(VM* vm)
 	vm->operatorStrings[OPERATOR_SUBSCRIPT_SET] = solisCopyString(vm, "[]=", 3);
 
 	solisInitialiseCore(vm);
+
 }
 
 static void freeObjects(VM* vm)
@@ -430,6 +431,7 @@ do {																		\
 	CASE_CODE(FLOOR_DIVIDE) :
 	CASE_CODE(POWER) :
 	CASE_CODE(SUBSCRIPT_GET) :
+	CASE_CODE(DOTDOT):
 		
 
 		op = instruction - OP_ADD;
@@ -446,18 +448,21 @@ do {																		\
 
 		ObjClass* klass = solisGetClassForValue(vm, PEEK_OFF(argCount));
 
-		Value val = SOLIS_OBJECT_VALUE(klass->operators[op]);
-		/*if (!solisHashTableGet(&klass->methods, vm->operatorStrings[op], &val))
-		{
-		}*/
+		Object* obj = klass->operators[op];
 
-		if (SOLIS_IS_NATIVE(val))
+		if (obj == NULL)
 		{
-			callNativeFunction(vm, SOLIS_AS_NATIVE(val)->nativeFunction, argCount);
+			printf("Object does not contain operator: %s\n", vm->operatorStrings[op]->chars);
+			return INTERPRET_RUNTIME_ERROR;
+		}
+
+		if (obj->type == OBJ_NATIVE_FUNCTION)
+		{
+			callNativeFunction(vm, ((ObjNative*)obj)->nativeFunction, argCount);
 		}
 		else
 		{
-			callClosure(vm, SOLIS_AS_CLOSURE(val), argCount);
+			callClosure(vm, ((ObjClosure*)obj), argCount);
 		}
 
 		DISPATCH();
@@ -474,7 +479,7 @@ do {																		\
 
 		ObjList* list = solisNewList(vm);
 
-		// This is not the best
+		// This is not the fastest method 
 		// TODO: FIXME 
 
 		for (uint16_t i = 0; i < size; i++)
