@@ -256,7 +256,9 @@ void solisAddClassNativeOperator(VM* vm, Value klassValue, Operators op, SolisNa
 
 	solisPush(vm, SOLIS_OBJECT_VALUE(native));
 
-	solisHashTableInsert(&klass->methods, vm->operatorStrings[op], SOLIS_OBJECT_VALUE(native));
+	//solisHashTableInsert(&klass->methods, vm->operatorStrings[op], SOLIS_OBJECT_VALUE(native));
+
+	klass->operators[op] = (Object*)native;
 
 	solisPop(vm);
 }

@@ -446,10 +446,10 @@ do {																		\
 
 		ObjClass* klass = solisGetClassForValue(vm, PEEK_OFF(argCount));
 
-		Value val;
-		if (!solisHashTableGet(&klass->methods, vm->operatorStrings[op], &val))
+		Value val = SOLIS_OBJECT_VALUE(klass->operators[op]);
+		/*if (!solisHashTableGet(&klass->methods, vm->operatorStrings[op], &val))
 		{
-		}
+		}*/
 
 		if (SOLIS_IS_NATIVE(val))
 		{

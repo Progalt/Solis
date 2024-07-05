@@ -9,6 +9,7 @@
 #include "solis_interface.h"
 #include "solis_hashtable.h"
 
+
 struct Object
 {
 	ObjectType type;
@@ -125,8 +126,12 @@ struct ObjClass
 
 	ObjString* name;
 
+	// Constructor is stored here to make it easily accessable without a lookup in a hash table 
 	ObjClosure* constructor;
 
+	// NOTE: Experiment to see if storing operators like this is better 
+	// This makes the class object quite big.. might want to do something slightly different storage wise 
+	Object* operators[OPERATOR_COUNT];
 
 	// This is all the static variables that belong to the class instead 
 	HashTable statics;
