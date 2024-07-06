@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 char* read_file_into_cstring(const char* filename) {
     FILE* file = fopen(filename, "rb");
@@ -99,22 +100,22 @@ void num_minus(VM* vm)
 
 void num_mul(VM* vm)
 {
-    Value obj2 = solisGetArgument(vm, 0);
+    Value obj2 = vm->apiStack[1];
 
     if (SOLIS_IS_NUMERIC(obj2))
     {
-        solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) * SOLIS_AS_NUMBER(obj2)));
+        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) * SOLIS_AS_NUMBER(obj2));
         return;
     }
 }
 
 void num_div(VM* vm)
 {
-    Value obj2 = solisGetArgument(vm, 0);
+    Value obj2 = vm->apiStack[1];
 
     if (SOLIS_IS_NUMERIC(obj2))
     {
-        solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) / SOLIS_AS_NUMBER(obj2)));
+        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) / SOLIS_AS_NUMBER(obj2));
         return;
     }
 }
@@ -134,6 +135,31 @@ void num_dotdot(VM* vm)
 
         solisSetReturnValue(vm, SOLIS_OBJECT_VALUE(inst));
     }
+}
+
+void num_pow(VM* vm)
+{
+    Value obj2 = vm->apiStack[1];
+
+    if (SOLIS_IS_NUMERIC(obj2))
+    {
+        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(pow(SOLIS_AS_NUMBER(vm->apiStack[0]), SOLIS_AS_NUMBER(obj2)));
+    }
+}
+
+void num_int_divide(VM* vm)
+{
+    Value obj2 = vm->apiStack[1];
+
+    if (SOLIS_IS_NUMERIC(obj2))
+    {
+        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(floor(SOLIS_AS_NUMBER(vm->apiStack[0]) / SOLIS_AS_NUMBER(obj2)));
+    }
+}
+
+void num_truncate(VM* vm)
+{
+    vm->apiStack[0] = SOLIS_NUMERIC_VALUE(trunc(SOLIS_AS_NUMBER(vm->apiStack[0])));
 }
 
 void string_length(VM* vm)
@@ -250,11 +276,14 @@ void solisInitialiseCore(VM* vm)
     solisAddClassField(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "TAU", true, SOLIS_NUMERIC_VALUE(6.283185307179586));
 
     solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "toString", num_toString, 0);
+    solisAddClassNativeMethod(vm, SOLIS_OBJECT_VALUE(vm->numberClass), "truncate", num_truncate, 0);
 
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_ADD, num_add);
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_MINUS, num_minus);
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_STAR, num_mul);
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_SLASH, num_div);
+    solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_POWER, num_pow);
+    solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_SLASH_SLASH, num_int_divide);
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->numberClass), OPERATOR_DOTDOT, num_dotdot);
 
     vm->stringClass = SOLIS_AS_CLASS(solisGetGlobal(vm, "String"));
