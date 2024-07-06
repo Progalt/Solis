@@ -37,6 +37,7 @@ void solisInitVM(VM* vm)
 	vm->greyCount = 0;
 	vm->greyStack = NULL;
 
+	vm->doingGC = false;
 
 	solisInitHashTable(&vm->strings, vm);
 	solisInitHashTable(&vm->globalMap, vm);
@@ -49,9 +50,13 @@ void solisInitVM(VM* vm)
 	vm->operatorStrings[OPERATOR_SLASH_SLASH] = solisCopyString(vm, "//", 2);
 	vm->operatorStrings[OPERATOR_POWER] = solisCopyString(vm, "**", 2);
 	vm->operatorStrings[OPERATOR_SUBSCRIPT_GET] = solisCopyString(vm, "[]", 2);
+	vm->operatorStrings[OPERATOR_DOTDOT] = solisCopyString(vm, "..", 2);
 	vm->operatorStrings[OPERATOR_SUBSCRIPT_SET] = solisCopyString(vm, "[]=", 3);
 
+
+
 	solisInitialiseCore(vm);
+
 
 }
 

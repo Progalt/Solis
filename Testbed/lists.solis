@@ -1,17 +1,8 @@
 
 
+
 var r = 0..10
 
-r.step = 2
-
-for i in r do
-	println(i)
-end 
-
-println("List for Loops: ")
-
-var li = [ 10, 203, 4324, 2395, 20 ]
-
-for x in li do
-	println(x)
+while true do
+	println(r.expand())
 end

@@ -80,7 +80,9 @@ static void markRoots(VM* vm)
     markObject(vm, (Object*)vm->listClass);
 
     for (int i = 0; i < OPERATOR_COUNT; i++)
+    {
         markObject(vm, (Object*)vm->operatorStrings[i]);
+    }
 
     for (ObjUpvalue* upvalue = vm->openUpvalues;
         upvalue != NULL;
@@ -130,6 +132,11 @@ static void blackenObject(VM* vm, Object* object)
         markTable(vm, &klass->methods);
         markTable(vm, &klass->statics);
         markObject(vm, (Object*)klass->constructor);
+
+        for (int i = 0; i < OPERATOR_COUNT; i++)
+        {
+            markObject(vm, klass->operators[i]);
+        }
 
     }
     case OBJ_INSTANCE: {
@@ -215,6 +222,12 @@ void tableRemoveWhite(VM* vm, HashTable* table)
 
 void solisCollectGarbage(VM* vm)
 {
+    // If we are under going a gc don't start a new one
+    if (vm->doingGC)
+        return;
+
+    vm->doingGC = true;
+
 #ifdef SOLIS_DEBUG_LOG_GC
     printf("-- gc begin\n");
 #endif
@@ -232,4 +245,6 @@ void solisCollectGarbage(VM* vm)
 #ifdef SOLIS_DEBUG_LOG_GC
     printf("-- gc end\n");
 #endif
+
+    vm->doingGC = false;
 }

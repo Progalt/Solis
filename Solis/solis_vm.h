@@ -62,6 +62,7 @@ struct VM
 	int greyCount;
 	int greyCapacity;
 	Object** greyStack;
+	bool doingGC;
 
 	ObjClass* numberClass;
 	ObjClass* stringClass;

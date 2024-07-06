@@ -1,5 +1,6 @@
 
 #include "solis_core.h"
+#include "core.solis.inc"
 
 #include <float.h>
 
@@ -228,12 +229,12 @@ void list_operator_subscriptSet(VM* vm)
 
 void solisInitialiseCore(VM* vm)
 {
-    const char* str = read_file_into_cstring("F:/Dev/Solis/Solis/core.solis");
+    // const char* str = read_file_into_cstring("F:/Dev/Solis/Solis/core.solis");
 
     solisPushGlobalCFunction(vm, "__c_printf", core_printf, 1);
 
 
-    InterpretResult result = solisInterpret(vm, str);
+    InterpretResult result = solisInterpret(vm, coreModuleSource);
 
     if (result == INTERPRET_RUNTIME_ERROR || result == INTERPRET_COMPILE_ERROR)
     {
