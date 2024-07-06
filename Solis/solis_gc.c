@@ -222,11 +222,7 @@ void tableRemoveWhite(VM* vm, HashTable* table)
 
 void solisCollectGarbage(VM* vm)
 {
-    // If we are under going a gc don't start a new one
-    if (vm->doingGC)
-        return;
 
-    vm->doingGC = true;
 
 #ifdef SOLIS_DEBUG_LOG_GC
     printf("-- gc begin\n");
@@ -246,5 +242,4 @@ void solisCollectGarbage(VM* vm)
     printf("-- gc end\n");
 #endif
 
-    vm->doingGC = false;
 }
