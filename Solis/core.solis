@@ -59,6 +59,25 @@ class List
 
 	end
 
+	function iterate(itr)
+		if itr == null then
+			return 0
+		end
+
+		var i = itr
+		if itr >= self.length() - 1 then
+			return false
+		end
+
+		return i + 1 
+	end 
+
+	function iteratorValue(itr)
+
+		return self[itr]
+
+	end
+
 end
  
 class Range
@@ -97,11 +116,12 @@ class Range
 		end
 
 		var i = itr
-		if itr >= self.max - self.step then
+		var maxVal = ((self.max - self.step) - self.min) / self.step
+		if itr >= maxVal then
 			return false
 		end
 
-		return i + self.step
+		return i + 1
 
 	end
 

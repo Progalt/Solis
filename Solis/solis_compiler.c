@@ -1194,6 +1194,7 @@ static void function(FunctionType type)
 	}
 	consume(TOKEN_RIGHT_PAREN, "Expected ')'  after function parameters.");
 
+	ignoreNewlines();
 
 	// TODO: Empty functions don't parse correctly
 	block();
