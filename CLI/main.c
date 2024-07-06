@@ -5,6 +5,8 @@
 
 #include <solis.h>
 
+#define SOLIS_CLI_VERSION 1
+
 
 char* readFileIntoString(const char* filename) 
 {
@@ -69,12 +71,21 @@ typedef struct Command {
 
 static void help()
 {
-	printf(" -- Help -- \n");
+	printf(" -- Solis CLI Help -- \n\n");
+
+    printf("- help -> prints the help message.\n");
+    printf("- version -> prints the version message.\n\n");
+
+    printf("- repl -> starts the repl for running code.\n");
+    printf("          :help can be typed to get repl help while within the repl.\n\n");
+
+    printf("- solis {filepath} -> executes a file immediately with a clean VM.\n");
+
 }
 
 static void version()
 {
-	printf(" Solis v1.0\n");
+	printf(" Solis v%d.%d %s -- CLI build %d\n", SOLIS_MAJOR_VERSION, SOLIS_MINOR_VERSION, SOLIS_RELEASE_STRING, SOLIS_CLI_VERSION);
 }
 
 static void repl()
@@ -170,6 +181,19 @@ static void repl()
             {
                 printf("Runtime Error\n");
             }
+        }
+        else if (strncmp(":help", line, 5) == 0)
+        {
+            printf("-- Repl Commands --\n\n");
+
+            printf(":load -> Loads and executes a file in the repl.\n");
+            printf(":r -> reloads the previous file and executes it.\n");
+
+            printf(":quit -> quits the repl.\n");
+
+            printf("\n Code can be directly typed into the repl to be executed.\n");
+
+            printf("\n");
         }
         else
         {

@@ -7,6 +7,11 @@
 #include <assert.h>
 #include <stdlib.h>
 
+
+#define SOLIS_MAJOR_VERSION 1
+#define SOLIS_MINOR_VERSION 0
+#define SOLIS_RELEASE_STRING "alpha"
+
 // #define SOLIS_DEBUG_STRESS_GC
 // #define SOLIS_DEBUG_LOG_GC
 
