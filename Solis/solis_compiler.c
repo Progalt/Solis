@@ -256,25 +256,56 @@ static void errorAt(Token* token, const char* message)
 
 	int tokenIndex = (int)(token->start - parser.source);
 
-	terminalPrintf("-->  %d:%d\n", token->line, tokenIndex - lineStart);
+	int off = tokenIndex - lineStart;
+
+	terminalPrintf("-->  %d:%d\n", token->line, off < 0 ? 0 : off);
 
 	terminalPushForeground(TERMINAL_FG_BLUE);
-	terminalPrintf("     |\n");
-	terminalPrintf("%4d | ", token->line);
-	printSourceLine(stderr, parser.source, token->line);
+
+	if (off < 0)
+	{
+		terminalPrintf("     |\n");
+		terminalPrintf("%4d | ", token->line - 1);
+		printSourceLine(stderr, parser.source, token->line - 1);
+	}
+	else
+	{
+		terminalPrintf("     |\n");
+		terminalPrintf("%4d | ", token->line);
+		printSourceLine(stderr, parser.source, token->line);
+	}
 	terminalPrintf("     | ");
 	terminalPopStyle();
 
 	// I want to print a little underline
 
-	for (int i = 0; i < tokenIndex - lineStart; i++)
-		printf(" ");
 
-	terminalPushForeground(TERMINAL_FG_RED);
-	for (int i = 0; i < token->length; i++)
-		terminalPrintf("^");
+	if (off >= 0)
+	{
+		for (int i = 0; i < off; i++)
+			printf(" ");
 
-	terminalPopStyle();
+		terminalPushForeground(TERMINAL_FG_RED);
+		for (int i = 0; i < token->length; i++)
+			terminalPrintf("^");
+
+		terminalPopStyle();
+	}
+	else
+	{
+		findLineIndices(parser.source, token->line - 2, &lineStart, &lineEnd);
+
+		int offset = lineEnd - lineStart;
+		for (int i = 0; i < offset - 1; i++)
+			printf(" ");
+
+		terminalPushForeground(TERMINAL_FG_RED);
+		for (int i = 0; i < 2; i++)
+			terminalPrintf("^");
+
+		terminalPopStyle();
+	}
+
 	printf("\n");
 }
 
