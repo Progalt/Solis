@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include <solis.h>
+#include "terminal.h"
 
 #define SOLIS_CLI_VERSION 1
 
@@ -230,6 +231,14 @@ Command commands[] = {
 
 int main(int argc, char* argv[])
 {
+    terminalInit();
+
+    terminalPushForeground(TERMINAL_FG_CYAN);
+    terminalPrintf("Hello World\n");
+    terminalPushForeground(TERMINAL_FG_RED);
+    terminalPrintf("Hello World\n");
+    terminalPopStyle();
+    terminalPrintf("Hello World\n");
 
 	// No arguments
 	if (argc <= 1)
@@ -297,6 +306,6 @@ int main(int argc, char* argv[])
 
 
 
-
+    terminalShutdown();
 	return 0;
 }

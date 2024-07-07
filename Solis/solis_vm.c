@@ -538,16 +538,13 @@ do {																		\
 	}
 	CASE_CODE(GET_UPVALUE) :
 	{
-		uint16_t slot = READ_SHORT();
-
-		PUSH(*frame->closure->upvalues[slot]->location);
+		PUSH(*frame->closure->upvalues[READ_SHORT()]->location);
 
 		DISPATCH();
 	}
 	CASE_CODE(SET_UPVALUE) :
 	{
-		uint16_t slot = READ_SHORT();
-		*frame->closure->upvalues[slot]->location = PEEK();
+		*frame->closure->upvalues[READ_SHORT()]->location = PEEK();
 
 		DISPATCH();
 	}

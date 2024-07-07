@@ -5,7 +5,7 @@
 
 #include "solis_common.h"
 
-typedef enum TokenType
+typedef enum SolisTokenType
 {
 	TOKEN_IDENTIFIER, 
 
@@ -87,11 +87,11 @@ typedef enum TokenType
 	TOKEN_EOF,
 
 	TOKEN_ERROR, 
-} TokenType;
+} SolisTokenType;
 
 typedef struct Token
 {
-	TokenType type;
+	SolisTokenType type;
 
 	const char* start;
 	int length;

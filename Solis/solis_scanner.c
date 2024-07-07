@@ -22,7 +22,7 @@ typedef struct
 	const char* iden; 
 	size_t length;
 
-	TokenType type;
+	SolisTokenType type;
 
 } Keyword;
 
@@ -83,7 +83,7 @@ static bool isAtEnd()
 	return *scanner.current == '\0';
 }
 
-static Token makeToken(TokenType type)
+static Token makeToken(SolisTokenType type)
 {
 	Token tk;
 	tk.type = type;
@@ -184,7 +184,7 @@ static Token number()
 
 
 
-static TokenType identifierType() {
+static SolisTokenType identifierType() {
 
 	size_t length = scanner.current - scanner.start;
 

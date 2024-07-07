@@ -16,7 +16,7 @@ Object* solisAllocateObject(VM* vm, size_t size, ObjectType type);
 void solisFreeObject(VM* vm, Object* object);
 
 #define ALLOCATE_OBJ(vm, type, objectType) \
-    (type*)solisAllocateObject(vm, sizeof(type), objectType)
+    (type*)solisAllocateObject(vm, sizeof(type), objectType) 
 
 #ifdef SOLIS_NAN_BOXING
 

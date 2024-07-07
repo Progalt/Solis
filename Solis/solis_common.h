@@ -18,6 +18,8 @@
 
 #define UINT8_COUNT (UINT8_MAX + 1)
 
+// MSVC compiler doesn't support computed gotos 
+// So disable it when we are compiling with that
 #if defined(_MSC_VER) && !defined(__clang__)
 #define SOLIS_COMPUTED_GOTO 0
 #else 
@@ -31,7 +33,7 @@ typedef struct Chunk Chunk;
 typedef struct Object Object;
 typedef struct ObjFiber ObjFiber;
 typedef struct ObjFunction ObjFunction;
-typedef struct ObjString ObjString;
+typedef struct ObjString ObjString; 
 typedef struct ObjClosure ObjClosure;
 typedef struct ObjNative ObjNative;
 

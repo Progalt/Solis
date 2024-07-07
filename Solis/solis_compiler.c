@@ -113,7 +113,7 @@ static void self(bool canAssign);
 static void block();
 
 static void parsePrecedence(Precedence precedence);
-static ParseRule* getRule(TokenType type);
+static ParseRule* getRule(SolisTokenType type);
 
 ParseRule rules[] = {
   [TOKEN_LEFT_PAREN] = {grouping, call,   PREC_CALL},
@@ -237,7 +237,7 @@ static void advance()
 	}
 }
 
-static void consume(TokenType type, const char* message) 
+static void consume(SolisTokenType type, const char* message)
 {
 	if (parser.current.type == type) {
 		advance();
@@ -247,12 +247,12 @@ static void consume(TokenType type, const char* message)
 	errorAtCurrent(message);
 }
 
-static bool check(TokenType type)
+static bool check(SolisTokenType type)
 {
 	return parser.current.type == type;
 }
 
-static bool match(TokenType type) 
+static bool match(SolisTokenType type)
 {
 	if (!check(type)) return false;
 	advance();
@@ -497,7 +497,7 @@ static void number(bool canAssign) {
 }
 
 static void unary(bool canAssign) {
-	TokenType operatorType = parser.previous.type;
+	SolisTokenType operatorType = parser.previous.type;
 
 	// Compile the operand.
 	parsePrecedence(PREC_UNARY);
@@ -513,7 +513,7 @@ static void unary(bool canAssign) {
 static void binary(bool canAssign)
 {
 
-	TokenType operatorType = parser.previous.type;
+	SolisTokenType operatorType = parser.previous.type;
 	ParseRule* rule = getRule(operatorType);
 
 	parsePrecedence((Precedence)(rule->precedence + 1));
@@ -1584,7 +1584,7 @@ static void parsePrecedence(Precedence precedence)
 	}
 }
 
-static ParseRule* getRule(TokenType type) {
+static ParseRule* getRule(SolisTokenType type) {
 	return &rules[type];
 }
 
