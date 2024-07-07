@@ -1,8 +1,8 @@
 
 
 
-var r = 0..10
+var x = 10; 
 
-while true do
-	println(r.expand())
-end
+func adwd()
+
+end 

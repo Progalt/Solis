@@ -26,6 +26,7 @@ typedef enum StyleType
 {
 	TERMINAL_FOREGROUND, 
 	TERMINAL_BACKGROUND, 
+	TERMINAL_TEXT_STYLE
 
 } StyleType;
 
@@ -64,6 +65,12 @@ typedef enum Background
 	TERMINAL_BG_DEFAULT = 49,
 } Background;
 
+typedef enum TextStyle
+{
+	TERMINAL_TEXT_BOLD = 1, 
+
+} TextStyle;
+
 /*
 	This struct details an individual styling parameter that can be pushed onto the style stack
 */
@@ -75,6 +82,7 @@ typedef struct TerminalStyle {
 	{
 		Foreground fg;
 		Background bg;
+		TextStyle ts;
 	};
 
 } TerminalStyle;
@@ -137,7 +145,7 @@ static inline void terminalShutdown()
 */
 static inline void terminalPushStyle(TerminalStyle style)
 {
-	assert(__styleStackHead == 255 && "Cannot push anymore styles onto the style stack.");
+	assert(__styleStackHead != 255 && "Cannot push anymore styles onto the style stack.");
 
 	__styleStack[__styleStackHead] = style;
 	__styleStackHead++;
@@ -166,6 +174,16 @@ static inline void terminalPushBackground(Background bg)
 	TerminalStyle style = {
 		.type = TERMINAL_BACKGROUND,
 		.bg = bg
+	};
+
+	terminalPushStyle(style);
+}
+
+static inline void terminalPushTextStyle(TextStyle bg)
+{
+	TerminalStyle style = {
+		.type = TERMINAL_TEXT_STYLE,
+		.ts = bg
 	};
 
 	terminalPushStyle(style);
@@ -203,9 +221,16 @@ static inline void terminalPrintf(const char* fmt, ...)
 			}
 
 			break;
+		case TERMINAL_TEXT_STYLE:
+			if (!((appliedBitmask >> 2) & 1))
+			{
+				printf(ESC "%dm", (int)h->ts);
+				appliedBitmask |= 4;
+			}
+			break;
 		}
 
-		if (appliedBitmask == 3)
+		if (appliedBitmask == 7)
 			break;
 	}
 

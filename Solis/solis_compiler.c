@@ -16,7 +16,7 @@
 #include "solis_gc.h"
 
 #include "solis_vm.h"
-
+#include "terminal.h"
 
 typedef struct Upvalue
 {
@@ -178,9 +178,52 @@ typedef struct
 	bool hadError;
 	bool panicMode;
 
+	const char* source;
+
 } Parser;
 
 Parser parser;
+
+void findLineIndices(const char* str, int lineNumber, int* startIndex, int* endIndex) {
+	int currentLine = 0;
+	int i = 0;
+
+	*startIndex = -1;
+	*endIndex = -1;
+
+	while (str[i] != '\0') {
+		if (currentLine == lineNumber) {
+			if (*startIndex == -1) {
+				*startIndex = i;
+			}
+			if (str[i] == '\n' || str[i + 1] == '\0') {
+				*endIndex = (str[i] == '\n') ? i : i + 1;
+				break;
+			}
+		}
+
+		if (str[i] == '\n') {
+			currentLine++;
+		}
+
+		i++;
+	}
+
+	if (*startIndex == -1 || *endIndex == -1) {
+		printf("Line %d not found.\n", lineNumber);
+	}
+}
+
+
+static void printSourceLine(FILE* const stream, const char* source, int line)
+{
+	int start = 0, end = 0;
+	findLineIndices(source, line - 1, &start, &end);
+
+	fprintf(stream, "%.*s\n", end - start, source + start);
+
+
+}
 
 static void errorAt(Token* token, const char* message) 
 {
@@ -188,20 +231,51 @@ static void errorAt(Token* token, const char* message)
 	if (parser.panicMode) return;
 
 	parser.panicMode = true;
-	fprintf(stderr, "[line %d] Error", token->line);
+	//fprintf(stderr, "[line %d] Error", token->line);
 
-	if (token->type == TOKEN_EOF) {
-		fprintf(stderr, " at end");
-	}
-	else if (token->type == TOKEN_ERROR) {
-		// Nothing.
-	}
-	else {
-		fprintf(stderr, " at '%.*s'", token->length, token->start);
-	}
+	//if (token->type == TOKEN_EOF) {
+	//	fprintf(stderr, " at end");
+	//}
+	//else if (token->type == TOKEN_ERROR) {
+	//	// Nothing.
+	//}
+	//else {
+	//	fprintf(stderr, " at '%.*s'", token->length, token->start);
+	//}
 
-	fprintf(stderr, ": %s\n", message);
+	//fprintf(stderr, ": %s\n", message);
 	parser.hadError = true;
+
+	terminalPushForeground(TERMINAL_FG_RED);
+	terminalPrintf("error");
+	terminalPopStyle();
+	terminalPrintf(": %s\n", message);
+
+	int lineStart, lineEnd;
+	findLineIndices(parser.source, token->line - 1, &lineStart, &lineEnd);
+
+	int tokenIndex = (int)(token->start - parser.source);
+
+	terminalPrintf("-->  %d:%d\n", token->line, tokenIndex - lineStart);
+
+	terminalPushForeground(TERMINAL_FG_BLUE);
+	terminalPrintf("     |\n");
+	terminalPrintf("%4d | ", token->line);
+	printSourceLine(stderr, parser.source, token->line);
+	terminalPrintf("     | ");
+	terminalPopStyle();
+
+	// I want to print a little underline
+
+	for (int i = 0; i < tokenIndex - lineStart; i++)
+		printf(" ");
+
+	terminalPushForeground(TERMINAL_FG_RED);
+	for (int i = 0; i < token->length; i++)
+		terminalPrintf("^");
+
+	terminalPopStyle();
+	printf("\n");
 }
 
 static void errorAtCurrent(const char* message) 
@@ -880,7 +954,7 @@ static void namedVariable(Token name, bool canAssign)
 		if (arg == -1)
 		{
 			// If we reach here its not local or global
-			error("Could not resolve variable.");
+			error("Could not resolve variable or not valid keyword.");
 		}
 
 		getOp = OP_GET_GLOBAL;
@@ -1611,6 +1685,7 @@ ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int gl
 	// solisPrintTokenList(&tokenList);
 
 	parser.tokenList = tokenList;
+	parser.source = source;
 
 	advance();
 	

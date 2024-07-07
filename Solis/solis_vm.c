@@ -9,6 +9,8 @@
 
 #include "solis_core.h"
 
+#include "terminal.h"
+
 // #define SOLIS_DEBUG_TRACE_EXECUTION
 
 static bool callValue(VM* vm, Value callee, int argCount);
@@ -17,9 +19,16 @@ static bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs);
 static bool callOperator(VM* vm, int op, int numArgs);
 
 
+static int __openVMs = 0;
 
 void solisInitVM(VM* vm)
 {
+
+	if (__openVMs == 0)
+		terminalInit();
+
+	__openVMs++;
+
 	vm->sp = vm->stack;
 	vm->objects = NULL;
 
@@ -81,6 +90,12 @@ void solisFreeVM(VM* vm)
 	solisFreeHashTable(&vm->globalMap);
 	solisValueBufferClear(vm, &vm->globals);
 	freeObjects(vm);
+
+	__openVMs--;
+
+	// Shut the terminal down
+	if (__openVMs == 0)
+		terminalShutdown();
 	
 }
 
