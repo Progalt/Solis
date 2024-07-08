@@ -128,6 +128,11 @@ bool solisGlobalExists(VM* vm, const char* name);
 void solisPushGlobalCFunction(VM* vm, const char* name, SolisNativeSignature func, int arity);
 
 /*
+	Raises a VM error at the current line being executed 
+*/
+void solisVMRaiseError(VM* vm, const char* message, ...);
+
+/*
 	Returns if a value is false -> its false if its null or a bool and false.
 */
 static inline bool solisIsFalsy(Value value) 

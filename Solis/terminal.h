@@ -189,12 +189,25 @@ static inline void terminalPushTextStyle(TextStyle bg)
 	terminalPushStyle(style);
 }
 
+static inline void terminal_vPrintf(const char* fmt, va_list args);
 
 /*
 	This is the meaty function really. It applies styles on the stack backwards. If a style has already been applied to that 'area' (idk what to call it) like foreground
 	It skips it and moves on, if its applied the maximum number of styles it just doesn't go any further. So its fairly optimised as long as you don't push loads of unique styles onto the stack. 
 */
 static inline void terminalPrintf(const char* fmt, ...)
+{
+	
+
+	// Print the final string now with the styles applied
+	va_list args;
+	va_start(args, fmt);
+	terminal_vPrintf(fmt, args);
+	va_end(args);
+
+}
+
+static inline void terminal_vPrintf(const char* fmt, va_list args)
 {
 	unsigned char appliedBitmask = 0;
 
@@ -236,10 +249,7 @@ static inline void terminalPrintf(const char* fmt, ...)
 
 
 	// Print the final string now with the styles applied
-	va_list args;
-	va_start(args, fmt);
 	vprintf(fmt, args);
-	va_end(args);
 
 	// Reset the style back to default
 	printf(ESC "0;0m");

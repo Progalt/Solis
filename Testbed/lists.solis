@@ -1,16 +1,6 @@
 
 
 
-var x = 10; 
+var x = 10
 
-func adwd()
-
-end 
-
-while x < 10 
-	println("Hello World")
-end 
-
-for i in 0..10
-	println("Hello World")
-end
+x.blah()

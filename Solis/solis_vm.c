@@ -10,6 +10,7 @@
 #include "solis_core.h"
 
 #include "terminal.h"
+#include <stdarg.h>
 
 // #define SOLIS_DEBUG_TRACE_EXECUTION
 
@@ -20,6 +21,8 @@ static bool callOperator(VM* vm, int op, int numArgs);
 
 
 static int __openVMs = 0;
+
+
 
 void solisInitVM(VM* vm)
 {
@@ -52,6 +55,7 @@ void solisInitVM(VM* vm)
 	solisInitHashTable(&vm->globalMap, vm);
 	solisValueBufferInit(vm, &vm->globals);
 
+	// Initialise the operator strings 
 	vm->operatorStrings[OPERATOR_ADD] = solisCopyString(vm, "+", 1);
 	vm->operatorStrings[OPERATOR_MINUS] = solisCopyString(vm, "-", 1);
 	vm->operatorStrings[OPERATOR_STAR] = solisCopyString(vm, "*", 1);
@@ -131,8 +135,8 @@ static ObjUpvalue* captureUpvalue(VM* vm, Value* local)
 
 static void closeUpvalues(VM* vm, Value* last) 
 {
-	while (vm->openUpvalues != NULL &&
-		vm->openUpvalues->location >= last) {
+	while (vm->openUpvalues != NULL && vm->openUpvalues->location >= last) 
+	{
 		ObjUpvalue* upvalue = vm->openUpvalues;
 		upvalue->closed = *upvalue->location;
 		upvalue->location = &upvalue->closed;
@@ -145,15 +149,17 @@ static bool invokeFromClass(VM* vm, ObjClass* klass, ObjString* name, int argCou
 
 	if (isStatic)
 	{
-		if (!solisHashTableGet(&klass->statics, name, &method)) {
-			printf("Undefined static '%s'.\n", name->chars);
+		if (!solisHashTableGet(&klass->statics, name, &method)) 
+		{
+			solisVMRaiseError(vm, "Undefined static '%s'.\n", name->chars);
 			return false;
 		}
 	}
 	else
 	{
-		if (!solisHashTableGet(&klass->methods, name, &method)) {
-			printf("Undefined property '%s'.\n", name->chars);
+		if (!solisHashTableGet(&klass->methods, name, &method)) 
+		{
+			solisVMRaiseError(vm, "Undefined property '%s'.\n", name->chars);
 			return false;
 		}
 	}
@@ -297,7 +303,7 @@ do {																		\
 			ptr->as.number = -ptr->as.number;
 		else
 		{
-			printf("Negate error\n");
+			solisVMRaiseError( vm, "Negate error\n");
 			return INTERPRET_RUNTIME_ERROR;
 		}
 		DISPATCH();
@@ -474,7 +480,7 @@ do {																		\
 
 		if (obj == NULL)
 		{
-			printf("Object does not contain operator: %s\n", vm->operatorStrings[op]->chars);
+			solisVMRaiseError(vm, "Object does not contain operator: %s\n", vm->operatorStrings[op]->chars);
 			return INTERPRET_RUNTIME_ERROR;
 		}
 
@@ -645,7 +651,7 @@ do {																		\
 
 		if (!callValue(vm, *(vm->sp - 1 - argCount), argCount))
 		{
-			printf("Failed to call function\n");
+			solisVMRaiseError(vm, "Failed to call function\n");
 			return INTERPRET_RUNTIME_ERROR;
 		}
 
@@ -798,7 +804,7 @@ do {																		\
 
 			}
 
-			printf("Can't get field from class.\n");
+			solisVMRaiseError(vm, "Can't get field from class.\n");
 			return INTERPRET_RUNTIME_ERROR;
 			
 		}
@@ -814,7 +820,7 @@ do {																		\
 				Value val;
 				if (!solisHashTableGet(&enumObj->fields, name, &val))
 				{
-					printf("Failed to get field from enum\n");
+					solisVMRaiseError( vm, "Failed to get field from enum\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 
@@ -853,7 +859,7 @@ do {																		\
 				}
 				else
 				{
-					printf("Can't get field from instance.\n");
+					solisVMRaiseError(vm, "Can't get field from instance.\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 
@@ -862,7 +868,7 @@ do {																		\
 			default:
 				// Return an error
 				// We can't access the fields
-				printf("Object does not have fields\n");
+				solisVMRaiseError(vm, "Object does not have fields\n");
 				return INTERPRET_RUNTIME_ERROR;
 				break;
 			}
@@ -904,7 +910,7 @@ do {																		\
 
 				if (error == 2)
 				{
-					printf("Cannot set field that does not exist in class\n");
+					solisVMRaiseError(vm, "Cannot set field that does not exist in class\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 
@@ -922,7 +928,7 @@ do {																		\
 				{
 					// Delete it from the hash table
 					solisHashTableDelete(&klass->statics, name);
-					printf("Can't set a static field that doesn't exist in class\n");
+					solisVMRaiseError(vm, "Can't set a static field that doesn't exist in class\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 
@@ -935,7 +941,7 @@ do {																		\
 			default:
 				// Return an error
 				// We can't access the fields
-				printf("Can't get field\n");
+				solisVMRaiseError(vm, "Can't get field\n");
 				return INTERPRET_RUNTIME_ERROR;
 				break;
 			}
@@ -952,7 +958,7 @@ do {																		\
 
 		if (!invoke(vm, method, argCount))
 		{
-			printf("Can't invoke\n");
+			solisVMRaiseError(vm, "Can't invoke method '%s'\n", method->chars);
 			return INTERPRET_RUNTIME_ERROR;
 		}
 
@@ -991,29 +997,6 @@ do {																		\
 #undef DISPATCH
 #undef READ_CONSTANT
 #undef READ_CONSTANT_LONG
-}
-
-static bool call(VM* vm, ObjFunction* function, int argCount) 
-{
-
-	assert(false);
-	//if (argCount != function->arity)
-	//{
-	//	// TODO: Better errors
-	//	return false;
-	//}
-
-	//if (vm->frameCount == FRAMES_MAX)
-	//{
-	//	// TODO: Same better errors
-	//	return false;
-	//}
-
-	//CallFrame* frame = &vm->frames[vm->frameCount++];
-	//frame->function = function;
-	//frame->ip = function->chunk.code;
-	//frame->slots = vm->sp - argCount - 1;
-	//return true;
 }
 
 
@@ -1066,8 +1049,6 @@ static bool callValue(VM* vm, Value callee, int argCount) {
 		Object* obj = SOLIS_AS_OBJECT(callee);
 
 		switch (obj->type) {
-		case OBJ_FUNCTION:
-			return call(vm, (ObjFunction*)obj, argCount);
 		case OBJ_CLOSURE:
 			return callClosure(vm, (ObjClosure*)obj, argCount);
 		case OBJ_NATIVE_FUNCTION:
@@ -1232,4 +1213,21 @@ void solisDumpGlobals(VM* vm)
 		printf("\n");
 		
 	}
+}
+
+void solisVMRaiseError(VM* vm, const char* message, ...)
+{
+
+	terminalPushForeground(TERMINAL_FG_RED);
+	terminalPrintf("runtime error");
+	terminalPopStyle();
+	terminalPrintf(": ");
+
+	va_list args;
+	va_start(args, message);
+
+	terminal_vPrintf(message, args);
+
+	va_end(args);
+	
 }
