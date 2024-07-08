@@ -179,6 +179,7 @@ typedef struct
 	bool panicMode;
 
 	const char* source;
+	const char* sourceName;
 
 } Parser;
 
@@ -249,7 +250,10 @@ static void errorAt(Token* token, const char* message)
 	terminalPushForeground(TERMINAL_FG_RED);
 	terminalPrintf("error");
 	terminalPopStyle();
-	terminalPrintf(": %s\n", message);
+	if (token->type == TOKEN_ERROR)
+		terminalPrintf(": % s\n", token->start);
+	else 
+		terminalPrintf(": % s\n", message);
 
 	int lineStart, lineEnd;
 	findLineIndices(parser.source, token->line - 1, &lineStart, &lineEnd);
@@ -258,7 +262,7 @@ static void errorAt(Token* token, const char* message)
 
 	int off = tokenIndex - lineStart;
 
-	terminalPrintf("-->  %d:%d\n", token->line, off < 0 ? 0 : off);
+	terminalPrintf("--> %s:%d:%d\n", parser.sourceName, token->line, off < 0 ? 0 : off);
 
 	terminalPushForeground(TERMINAL_FG_BLUE);
 
@@ -1693,7 +1697,7 @@ static ParseRule* getRule(SolisTokenType type) {
 	return &rules[type];
 }
 
-ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int globalCount)
+ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int globalCount, const char* sourceName)
 {
 	parser.hadError = false;
 	parser.panicMode = false;
@@ -1717,6 +1721,7 @@ ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int gl
 
 	parser.tokenList = tokenList;
 	parser.source = source;
+	parser.sourceName = sourceName;
 
 	advance();
 	

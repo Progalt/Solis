@@ -60,8 +60,9 @@ void clockNative(VM* vm)
 
 int main(void) {
 
+    const char* filepath = "F:/Dev/Solis/Testbed/lists.solis";
 
-    char* fileContent = readFileIntoString("F:/Dev/Solis/Testbed/lists.solis");
+    char* fileContent = readFileIntoString(filepath);
     if (fileContent == NULL) 
     {
         printf("Failed to read file\n");
@@ -73,7 +74,7 @@ int main(void) {
     
     solisPushGlobalCFunction(&vm, "clock", clockNative, 0);
 
-	InterpretResult result = solisInterpret(&vm, fileContent);
+	InterpretResult result = solisInterpret(&vm, fileContent, filepath);
 
     if (result == INTERPRET_RUNTIME_ERROR)
     {

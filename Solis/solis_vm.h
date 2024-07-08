@@ -77,7 +77,7 @@ struct VM
 /*
 	This interprets a source string with the given VM
 */
-InterpretResult solisInterpret(VM* vm, const char* source);
+InterpretResult solisInterpret(VM* vm, const char* source, const char* sourceName);
 
 /*
 	Initialises a VM ready to be used

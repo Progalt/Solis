@@ -145,7 +145,7 @@ static void repl()
                 continue;
             }
 
-            InterpretResult result = solisInterpret(&vm, file);
+            InterpretResult result = solisInterpret(&vm, file, filepath);
 
             if (result == INTERPRET_COMPILE_ERROR)
             {
@@ -172,7 +172,7 @@ static void repl()
                 continue;
             }
 
-            InterpretResult result = solisInterpret(&vm, file);
+            InterpretResult result = solisInterpret(&vm, file, last_filepath);
 
             if (result == INTERPRET_COMPILE_ERROR)
             {
@@ -199,7 +199,7 @@ static void repl()
         else
         {
 
-            InterpretResult result = solisInterpret(&vm, line);
+            InterpretResult result = solisInterpret(&vm, line, "repl");
 
             if (result == INTERPRET_COMPILE_ERROR)
             {
@@ -233,12 +233,6 @@ int main(int argc, char* argv[])
 {
     terminalInit();
 
-    terminalPushForeground(TERMINAL_FG_CYAN);
-    terminalPrintf("Hello World\n");
-    terminalPushForeground(TERMINAL_FG_RED);
-    terminalPrintf("Hello World\n");
-    terminalPopStyle();
-    terminalPrintf("Hello World\n");
 
 	// No arguments
 	if (argc <= 1)
@@ -291,7 +285,7 @@ int main(int argc, char* argv[])
 
     solisInitVM(&vm);
 
-    InterpretResult result = solisInterpret(&vm, file);
+    InterpretResult result = solisInterpret(&vm, file, argv[1]);
 
     if (result == INTERPRET_COMPILE_ERROR)
     {

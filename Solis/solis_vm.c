@@ -1129,11 +1129,11 @@ static bool callOperator(VM* vm, int op, int numArgs)
 	return true;
 }
 
-InterpretResult solisInterpret(VM* vm, const char* source)
+InterpretResult solisInterpret(VM* vm, const char* source, const char* sourceName)
 {
 	
 
-	ObjFunction* function = solisCompile(vm, source, &vm->globalMap, vm->globals.count);
+	ObjFunction* function = solisCompile(vm, source, &vm->globalMap, vm->globals.count, sourceName);
 
 	if (function == NULL)
 	{

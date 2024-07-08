@@ -260,7 +260,7 @@ void solisInitialiseCore(VM* vm)
     solisPushGlobalCFunction(vm, "__c_printf", core_printf, 1);
 
 
-    InterpretResult result = solisInterpret(vm, coreModuleSource);
+    InterpretResult result = solisInterpret(vm, coreModuleSource, "Core");
 
     if (result == INTERPRET_RUNTIME_ERROR || result == INTERPRET_COMPILE_ERROR)
     {
