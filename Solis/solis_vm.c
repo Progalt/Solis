@@ -1223,7 +1223,7 @@ void solisDumpGlobals(VM* vm)
 // TODO: Duplicate functions
 // Probably should remove these 
 
-void findLineIndicesVm(const char* str, int lineNumber, int* startIndex, int* endIndex) {
+int findLineIndicesVm(const char* str, int lineNumber, int* startIndex, int* endIndex) {
 	int currentLine = 0;
 	int i = 0;
 
@@ -1249,17 +1249,21 @@ void findLineIndicesVm(const char* str, int lineNumber, int* startIndex, int* en
 	}
 
 	if (*startIndex == -1 || *endIndex == -1) {
-		printf("Line %d not found.\n", lineNumber);
+		return -1;
 	}
 }
 
 
-static void printSourceLineVm(FILE* const stream, const char* source, int line)
+static void printSourceLineVm( const char* source, int line)
 {
 	int start = 0, end = 0;
-	findLineIndicesVm(source, line - 1, &start, &end);
+	if (findLineIndicesVm(source, line - 1, &start, &end) == -1)
+	{
+		terminalPrintf("\n");
+		return;
+	}
 
-	fprintf(stream, "%.*s\n", end - start, source + start);
+	terminalPrintf( "%.*s\n", end - start, source + start);
 
 
 }
@@ -1290,10 +1294,26 @@ void solisVMRaiseError(VM* vm, const char* message, ...)
 	if (vm->source)
 	{
 		terminalPushForeground(TERMINAL_FG_BLUE);
+
+		terminalPrintf("%4d | ", line - 1);
+		terminalPushForeground(TERMINAL_FG_WHITE);
+		printSourceLineVm(vm->source, line - 1);
+		terminalPopStyle();
+
 		terminalPrintf("     |\n");
+
 		terminalPrintf("%4d | ", line);
-		printSourceLineVm(stderr, vm->source, line);
+		terminalPushForeground(TERMINAL_FG_RED);
+		printSourceLineVm( vm->source, line);
+		terminalPopStyle();
+
 		terminalPrintf("     |\n");
+		
+		terminalPrintf("%4d | ", line + 1);
+		terminalPushForeground(TERMINAL_FG_WHITE);
+		printSourceLineVm(vm->source, line + 1);
+		terminalPopStyle();
+
 		terminalPopStyle();
 	}
 
