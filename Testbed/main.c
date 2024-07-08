@@ -76,10 +76,6 @@ int main(void) {
 
 	InterpretResult result = solisInterpret(&vm, fileContent, filepath);
 
-    if (result == INTERPRET_RUNTIME_ERROR)
-    {
-        printf("Interpreter runtime error. \n");
-    }
 
     // solisDumpGlobals(&vm);
 

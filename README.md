@@ -34,3 +34,9 @@ is built in support for more types.
 
 
 With a fully featured C API for embedding the language easily. 
+
+
+### Resources: 
+- The amazing https://craftinginterpreters.com/
+- https://www.lua.org/
+- https://wren.io/

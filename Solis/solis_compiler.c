@@ -1541,28 +1541,6 @@ static void is_(bool canAssign)
 
 	emitByte(OP_IS);
 
-	uint8_t type = 0;
-
-	// There isn't much we can do ahead of time here 
-	// Other than make it so we don't have to do string comparisons at runtime 
-
-	if (strcmp(str->chars, "number") == 0)
-		type = VALUE_NUMERIC;
-	else if (strcmp(str->chars, "bool") == 0)
-		type = VALUE_TRUE;		// Just emit a true for bool 
-	else if (strcmp(str->chars, "null") == 0)
-		type = VALUE_NULL;
-	else if (strcmp(str->chars, "string") == 0)
-		type = VALUE_OBJECT + OBJ_STRING;
-	else
-	{
-		// Its either a class or instance
-
-		type = VALUE_OBJECT + OBJ_CLASS;
-	}
-
-	// Emit the type
-	emitByte(type);
 	emitShort(constant);
 
 	

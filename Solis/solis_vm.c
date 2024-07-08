@@ -664,42 +664,16 @@ do {																		\
 	}
 	CASE_CODE(IS) :
 	{
-		uint8_t type = READ_BYTE();
+		
 		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
 
 		Value* obj = PEEK_PTR();
 
-		// This isn't the best
+		ObjClass* classObj = solisGetClassForValue(vm, *obj);
 
-		// we need a special check for bool
-		if (type == VALUE_TRUE && SOLIS_IS_BOOL(*obj))
+		if (strcmp(name->chars, classObj->name->chars) == 0)
 		{
-			*obj = SOLIS_BOOL_VALUE(true);
-		}
-		else if (solisIsValueType(*obj, (ValueType)type) && !SOLIS_IS_OBJECT(*obj))
-		{
-			*obj = SOLIS_BOOL_VALUE(true);
-		}
-		else if (solisIsValueType(*obj, VALUE_OBJECT))
-		{
-			if (type == VALUE_OBJECT + OBJ_CLASS)
-			{
-				if (SOLIS_IS_INSTANCE(*obj))
-					*obj = SOLIS_BOOL_VALUE(strcmp(SOLIS_AS_INSTANCE(*obj)->klass->name->chars, name->chars) == 0);
-				else
-					*obj = SOLIS_BOOL_VALUE(strcmp(SOLIS_AS_CLASS(*obj)->name->chars, name->chars) == 0);
-			}
-			else
-			{
-				if (solisIsObjType(*obj, (ObjectType)(type - VALUE_OBJECT)))
-				{
-					*obj = SOLIS_BOOL_VALUE(true);
-				}
-				else
-				{
-					*obj = SOLIS_BOOL_VALUE(false);
-				}
-			}
+			 *obj = SOLIS_BOOL_VALUE(true);
 		}
 		else
 		{

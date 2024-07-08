@@ -1,5 +1,10 @@
 
-
-
 var x = 10
-x.blah()
+
+if x is Number then
+	println("Number")
+end
+
+if x is String then
+	println("String")
+end
