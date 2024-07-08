@@ -16,13 +16,19 @@ typedef enum {
 
 SOLIS_DECLARE_BUFFER(Value, Value);
 
+SOLIS_DECLARE_BUFFER(Int, int);
+
 struct Chunk
 {
 	uint8_t* code;
 	int count;
 	int capacity;
 
-	int* lines;
+	// We treat each new int as a new line. The number is the last bytecode index that appears on that line. 
+	// So technically this should be the same length as the number of lines in the file 
+	IntBuffer lines;
+
+	int lastLine;
 
 	ValueBuffer constants;
 };
@@ -31,7 +37,7 @@ void solisInitChunk(VM* vm, Chunk* chunk);
 
 void solisFreeChunk(VM* vm, Chunk* chunk);
 
-void solisWriteChunk(VM* vm, Chunk* chunk, uint8_t byte);
+void solisWriteChunk(VM* vm, Chunk* chunk, uint8_t byte, int line);
 
 int solisAddConstant(VM* vm, Chunk* chunk, Value value);
 

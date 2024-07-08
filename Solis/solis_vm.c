@@ -35,6 +35,9 @@ void solisInitVM(VM* vm)
 	vm->sp = vm->stack;
 	vm->objects = NULL;
 
+	vm->moduleName = NULL;
+	vm->source = NULL;
+
 	vm->openUpvalues = NULL;
 	vm->frameCount = 0;
 	vm->frames = NULL;
@@ -151,7 +154,6 @@ static bool invokeFromClass(VM* vm, ObjClass* klass, ObjString* name, int argCou
 	{
 		if (!solisHashTableGet(&klass->statics, name, &method)) 
 		{
-			solisVMRaiseError(vm, "Undefined static '%s'.\n", name->chars);
 			return false;
 		}
 	}
@@ -159,7 +161,6 @@ static bool invokeFromClass(VM* vm, ObjClass* klass, ObjString* name, int argCou
 	{
 		if (!solisHashTableGet(&klass->methods, name, &method)) 
 		{
-			solisVMRaiseError(vm, "Undefined property '%s'.\n", name->chars);
 			return false;
 		}
 	}
@@ -245,6 +246,7 @@ do {																		\
 #define STACK_TRACE()
 #endif
 
+#define GET_CURRENT_INST() vm->currentInstruction =  (int)(ip - closure->function->chunk.code)
 
 #if SOLIS_COMPUTED_GOTO
 
@@ -260,6 +262,7 @@ do {																		\
 #define DISPATCH()                                                          \
       do                                                                    \
       {																		\
+		GET_CURRENT_INST();													\
         STACK_TRACE();														\
         goto *dispatchTable[instruction = READ_BYTE()];						\
       } while (false)
@@ -804,7 +807,7 @@ do {																		\
 
 			}
 
-			solisVMRaiseError(vm, "Can't get field from class.\n");
+			solisVMRaiseError(vm, "Can't get field from class: '%s'\n", name);
 			return INTERPRET_RUNTIME_ERROR;
 			
 		}
@@ -1123,6 +1126,8 @@ InterpretResult solisInterpret(VM* vm, const char* source, const char* sourceNam
 
 	// solisDisassembleChunk(&function->chunk, "Script");
 	
+	vm->moduleName = sourceName;
+	vm->source = source;
 	solisPush(vm, SOLIS_OBJECT_VALUE(function));
 
 	ObjClosure* closure = solisNewClosure(vm, function);
@@ -1215,8 +1220,59 @@ void solisDumpGlobals(VM* vm)
 	}
 }
 
+// TODO: Duplicate functions
+// Probably should remove these 
+
+void findLineIndicesVm(const char* str, int lineNumber, int* startIndex, int* endIndex) {
+	int currentLine = 0;
+	int i = 0;
+
+	*startIndex = -1;
+	*endIndex = -1;
+
+	while (str[i] != '\0') {
+		if (currentLine == lineNumber) {
+			if (*startIndex == -1) {
+				*startIndex = i;
+			}
+			if (str[i] == '\n' || str[i + 1] == '\0') {
+				*endIndex = (str[i] == '\n') ? i : i + 1;
+				break;
+			}
+		}
+
+		if (str[i] == '\n') {
+			currentLine++;
+		}
+
+		i++;
+	}
+
+	if (*startIndex == -1 || *endIndex == -1) {
+		printf("Line %d not found.\n", lineNumber);
+	}
+}
+
+
+static void printSourceLineVm(FILE* const stream, const char* source, int line)
+{
+	int start = 0, end = 0;
+	findLineIndicesVm(source, line - 1, &start, &end);
+
+	fprintf(stream, "%.*s\n", end - start, source + start);
+
+
+}
+
 void solisVMRaiseError(VM* vm, const char* message, ...)
 {
+	CallFrame* currentFrame = &vm->frames[vm->frameCount - 1];
+	int instOffset = vm->currentInstruction;
+	Chunk* chunk = &currentFrame->closure->function->chunk;
+
+	// Get the line
+	int line = currentFrame->closure->function->chunk.lines.data[instOffset];
+
 
 	terminalPushForeground(TERMINAL_FG_RED);
 	terminalPrintf("runtime error");
@@ -1227,6 +1283,19 @@ void solisVMRaiseError(VM* vm, const char* message, ...)
 	va_start(args, message);
 
 	terminal_vPrintf(message, args);
+
+	if (vm->moduleName)
+		terminalPrintf("--> %s:%d\n", vm->moduleName, line);
+
+	if (vm->source)
+	{
+		terminalPushForeground(TERMINAL_FG_BLUE);
+		terminalPrintf("     |\n");
+		terminalPrintf("%4d | ", line);
+		printSourceLineVm(stderr, vm->source, line);
+		terminalPrintf("     |\n");
+		terminalPopStyle();
+	}
 
 	va_end(args);
 	

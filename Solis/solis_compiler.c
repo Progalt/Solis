@@ -27,11 +27,6 @@ typedef struct Upvalue
 
 // Forward declare some functions
 
-SOLIS_DECLARE_BUFFER(Int, int);
-
-
-SOLIS_DEFINE_BUFFER(Int, int);
-
 
 
 SOLIS_DECLARE_BUFFER(Upvalue, Upvalue);
@@ -439,13 +434,13 @@ static Chunk* currentChunk()
 
 static void emitByte(uint8_t byte)
 {
-	solisWriteChunk(current->vm, currentChunk(), byte);
+	solisWriteChunk(current->vm, currentChunk(), byte, parser.current.line);
 }
 
 static void emitBytes(uint8_t byte, uint8_t byte2)
 {
-	solisWriteChunk(current->vm, currentChunk(), byte);
-	solisWriteChunk(current->vm, currentChunk(), byte2);
+	solisWriteChunk(current->vm, currentChunk(), byte, parser.current.line);
+	solisWriteChunk(current->vm, currentChunk(), byte2, parser.current.line);
 }
 
 static void emitShort(uint16_t s)

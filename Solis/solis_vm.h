@@ -59,6 +59,9 @@ struct VM
 	uint64_t allocatedBytes;
 	uint64_t nextGC;
 
+	int currentInstruction;
+	const char* moduleName;
+	const char* source;
 
 	int greyCount;
 	int greyCapacity;

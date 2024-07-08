@@ -9,6 +9,8 @@
 
 SOLIS_DEFINE_BUFFER(Value, Value);
 
+SOLIS_DEFINE_BUFFER(Int, int);
+
 
 static int simpleInstruction(const char* name, int offset) {
 	printf("%s\n", name);
@@ -102,6 +104,9 @@ void solisInitChunk(VM* vm, Chunk* chunk)
 	chunk->capacity = 0;
 	chunk->code = NULL;
 	solisValueBufferInit(vm, &chunk->constants);
+
+	solisIntBufferInit(vm, &chunk->lines);
+	chunk->lastLine = 0;
 }
 
 void solisFreeChunk(VM* vm, Chunk* chunk)
@@ -109,10 +114,11 @@ void solisFreeChunk(VM* vm, Chunk* chunk)
 	solisReallocate(vm, chunk->code, sizeof(uint8_t) * chunk->capacity, 0);
 	solisInitChunk(vm, chunk);
 	solisValueBufferClear(vm, &chunk->constants);
+	solisIntBufferClear(vm, &chunk->lines);
 }
 
 
-void solisWriteChunk(VM* vm, Chunk* chunk, uint8_t byte)
+void solisWriteChunk(VM* vm, Chunk* chunk, uint8_t byte, int line)
 {
 	if(chunk->capacity < chunk->count + 1) {
 		int oldCapacity = chunk->capacity;
@@ -120,6 +126,10 @@ void solisWriteChunk(VM* vm, Chunk* chunk, uint8_t byte)
 		
 		chunk->code = (uint8_t*)solisReallocate(vm, chunk->code, sizeof(uint8_t) * oldCapacity, sizeof(uint8_t) * chunk->capacity);
 	}
+
+
+	// This is a bad way to store the line numbers
+	solisIntBufferWrite(vm, &chunk->lines, line);
 
 	chunk->code[chunk->count] = byte;
 	chunk->count++;
