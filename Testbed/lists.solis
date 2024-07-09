@@ -1,9 +1,16 @@
 
 
+function dllDoSomething(x)
+	println("From Solis not loaded")
+end
+
 var lib = FFI.loadLibrary("SolisFFITest.dll")
 
 var ret = lib()
 
-if ret != true then
+
+if ret == false then
 	println("Failed to load functions")
 end
+
+dllDoSomething(10)

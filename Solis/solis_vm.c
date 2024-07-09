@@ -1134,16 +1134,31 @@ Value solisPeek(VM* vm, int offset)
 
 void solisPushGlobal(VM* vm, const char* name, Value value)
 {
-	solisValueBufferWrite(vm, &vm->globals, value);
-
-	int idx = vm->globals.count - 1;
 
 	ObjString* str = solisCopyString(vm, name, strlen(name));
 
 	// Do this for gc later on 
 	solisPush(vm, SOLIS_OBJECT_VALUE(str));
 
-	solisHashTableInsert(&vm->globalMap, SOLIS_AS_STRING(solisPeek(vm, 0)), SOLIS_NUMERIC_VALUE((double)idx));
+	Value val;
+	if (solisHashTableGet(&vm->globalMap, str, &val))
+	{
+		// We have the value already
+
+		int idx = (int)SOLIS_AS_NUMBER(val);
+
+		vm->globals.data[idx] = value;
+
+	}
+	else
+	{
+
+		solisValueBufferWrite(vm, &vm->globals, value);
+
+		int idx = vm->globals.count - 1;
+
+		solisHashTableInsert(&vm->globalMap, SOLIS_AS_STRING(solisPeek(vm, 0)), SOLIS_NUMERIC_VALUE((double)idx));
+	}
 
 	solisPop(vm);
 }
