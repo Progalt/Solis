@@ -143,6 +143,11 @@ static void skipWhitespace() {
 			return;
 		}*/
 
+		if (c == '-' && peekNext() == '-')
+		{
+			while (peek() != '\n' && !isAtEnd()) advance();
+		}
+
 		if (c == ' ' || c == '\r' || c == '\t')
 		{
 			advance();
@@ -215,9 +220,6 @@ Token solisScanToken()
 {
 	skipWhitespace();
 
-	// BUG: Comments don't work... 
-	// FIXME 
-
 	scanner.start = scanner.current;
 
 	if (isAtEnd())
@@ -242,10 +244,7 @@ Token solisScanToken()
 	case '{': return makeToken(TOKEN_LEFT_BRACE);
 	case '}': return makeToken(TOKEN_RIGHT_BRACE);
 	case '+': return makeToken(TOKEN_PLUS);
-	case '-':
-	{
-		return makeToken(TOKEN_MINUS);
-	}
+	case '-': return makeToken(TOKEN_MINUS);
 	case '/': return makeToken(match('/') ? TOKEN_SLASH_SLASH : TOKEN_SLASH);
 	case '*': return makeToken(match('*') ? TOKEN_STAR_STAR : TOKEN_STAR);
 	case '.': return makeToken(match('.') ? TOKEN_DOT_DOT : TOKEN_DOT);

@@ -1,5 +1,7 @@
 
 
+-- Comment
+
 function dllDoSomething(x) end
 
 var lib = FFI.loadLibrary("SolisFFITest.dll")

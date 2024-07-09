@@ -54,7 +54,6 @@ void solisInitVM(VM* vm, bool sandboxed)
 	vm->greyCount = 0;
 	vm->greyStack = NULL;
 
-	vm->doingGC = false;
 
 	solisInitHashTable(&vm->strings, vm);
 	solisInitHashTable(&vm->globalMap, vm);
