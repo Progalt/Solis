@@ -60,7 +60,7 @@ void clockNative(VM* vm)
 
 int main(void) {
 
-    const char* filepath = "F:/Dev/Solis/Testbed/lists.solis";
+    const char* filepath = "F:/Dev/Solis/Testbed/loadlib.solis";
 
     char* fileContent = readFileIntoString(filepath);
     if (fileContent == NULL) 
@@ -70,7 +70,7 @@ int main(void) {
     }
 
 	VM vm;
-	solisInitVM(&vm);
+	solisInitVM(&vm, false);
     
     solisPushGlobalCFunction(&vm, "clock", clockNative, 0);
 

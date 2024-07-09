@@ -293,7 +293,7 @@ void ffi_loadLibrary(VM* vm)
 
 }
 
-void solisInitialiseCore(VM* vm)
+void solisInitialiseCore(VM* vm, bool sandboxed)
 {
     // const char* str = read_file_into_cstring("F:/Dev/Solis/Solis/core.solis");
 
@@ -343,17 +343,17 @@ void solisInitialiseCore(VM* vm)
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->listClass), OPERATOR_SUBSCRIPT_GET, list_operator_subscriptGet);
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->listClass), OPERATOR_SUBSCRIPT_SET, list_operator_subscriptSet);
 
+    // Only load these functions in if we are sandboxing the VM
+    if (!sandboxed)
+    {
 
-    // Set up some OS stuff
+        Value osClass = solisCreateClass(vm, "OS");
+
+        solisAddClassNativeStaticMethod(vm, osClass, "getPlatformString", os_getPlatformString, 0);
 
 
+        Value ffiClass = solisCreateClass(vm, "FFI");
 
-    Value osClass = solisCreateClass(vm, "OS");
-
-    solisAddClassNativeStaticMethod(vm, osClass, "getPlatformString", os_getPlatformString, 0);
-
-
-    Value ffiClass = solisCreateClass(vm, "FFI");
-
-    solisAddClassNativeStaticMethod(vm, ffiClass, "loadLibrary", ffi_loadLibrary, 1);
+        solisAddClassNativeStaticMethod(vm, ffiClass, "loadLibrary", ffi_loadLibrary, 1);
+    }
 }

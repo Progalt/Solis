@@ -30,6 +30,7 @@ typedef struct {
 
 struct VM
 {
+	bool sandboxed;
 
 	CallFrame* frames;
 	int frameCount;
@@ -85,7 +86,7 @@ InterpretResult solisInterpret(VM* vm, const char* source, const char* sourceNam
 /*
 	Initialises a VM ready to be used
 */
-void solisInitVM(VM* vm);
+void solisInitVM(VM* vm, bool sandboxed);
 
 /*
 	Frees all the memory associated with the VM. 

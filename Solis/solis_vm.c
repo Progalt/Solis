@@ -24,13 +24,15 @@ static int __openVMs = 0;
 
 
 
-void solisInitVM(VM* vm)
+void solisInitVM(VM* vm, bool sandboxed)
 {
 
 	if (__openVMs == 0)
 		terminalInit();
 
 	__openVMs++;
+
+	vm->sandboxed = sandboxed;
 
 	vm->sp = vm->stack;
 	vm->objects = NULL;
@@ -71,7 +73,7 @@ void solisInitVM(VM* vm)
 
 
 
-	solisInitialiseCore(vm);
+	solisInitialiseCore(vm, sandboxed);
 
 
 }
@@ -1140,6 +1142,7 @@ void solisPushGlobal(VM* vm, const char* name, Value value)
 	// Do this for gc later on 
 	solisPush(vm, SOLIS_OBJECT_VALUE(str));
 
+	// We want to check if the value already exists and overwrite it at that position
 	Value val;
 	if (solisHashTableGet(&vm->globalMap, str, &val))
 	{

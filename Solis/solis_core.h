@@ -5,6 +5,6 @@
 
 #include "solis_vm.h"
 
-void solisInitialiseCore(VM* vm);
+void solisInitialiseCore(VM* vm, bool sandboxed);
 
 #endif
