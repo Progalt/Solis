@@ -1,10 +1,9 @@
 
-var x = 10
 
-if x is Number then
-	println("Number")
-end
+var lib = FFI.loadLibrary("SolisFFITest.dll")
 
-if x is String then
-	println("String")
+var ret = lib()
+
+if ret != true then
+	println("Failed to load functions")
 end

@@ -253,6 +253,46 @@ void list_operator_subscriptSet(VM* vm)
 }
 
 
+void os_getPlatformString(VM* vm)
+{
+    ObjString* str = solisCopyString(vm, SOLIS_PLATFORM_STRING, strlen(SOLIS_PLATFORM_STRING));
+
+    solisSetReturnValue(vm, SOLIS_OBJECT_VALUE(str));
+
+}
+
+void ffi_loadLibrary(VM* vm)
+{
+    Value path = solisGetArgument(vm, 0);
+
+    LibraryHandle handle = solisOpenLibrary(SOLIS_AS_CSTRING(path));
+
+    if (!handle)
+    {
+        // Failed to load the library
+        // TODO: Error check
+
+        return;
+    }
+
+
+    // We want to grab solis_openlib
+
+    SolisNativeSignature openlib = (SolisNativeSignature)solisGetProcAddress(handle, "solis_openlib");
+
+    if (!openlib)
+    {
+
+        return;
+    }
+
+    ObjNative* nativeFunc = solisNewNativeFunction(vm, openlib);
+
+    // return it
+    solisSetReturnValue(vm, SOLIS_OBJECT_VALUE(nativeFunc));
+
+}
+
 void solisInitialiseCore(VM* vm)
 {
     // const char* str = read_file_into_cstring("F:/Dev/Solis/Solis/core.solis");
@@ -303,4 +343,17 @@ void solisInitialiseCore(VM* vm)
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->listClass), OPERATOR_SUBSCRIPT_GET, list_operator_subscriptGet);
     solisAddClassNativeOperator(vm, SOLIS_OBJECT_VALUE(vm->listClass), OPERATOR_SUBSCRIPT_SET, list_operator_subscriptSet);
 
+
+    // Set up some OS stuff
+
+
+
+    Value osClass = solisCreateClass(vm, "OS");
+
+    solisAddClassNativeStaticMethod(vm, osClass, "getPlatformString", os_getPlatformString, 0);
+
+
+    Value ffiClass = solisCreateClass(vm, "FFI");
+
+    solisAddClassNativeStaticMethod(vm, ffiClass, "loadLibrary", ffi_loadLibrary, 1);
 }

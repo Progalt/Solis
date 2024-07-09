@@ -4,6 +4,7 @@
 
 #include "solis_common.h"
 #include "solis_value.h"
+#include "solis_os.h"
 
 /*
 	Function signature for C functions
@@ -72,6 +73,8 @@ Value solisGetInstanceField(VM* vm, Value instance, const char* name);
 void solisAddClassNativeConstructor(VM* vm, Value klassValue, SolisNativeSignature func);
 
 void solisAddClassNativeMethod(VM* vm, Value klassValue, const char* name, SolisNativeSignature func, int arity);
+
+void solisAddClassNativeStaticMethod(VM* vm, Value klassValue, const char* name, SolisNativeSignature func, int arity);
 
 void solisAddClassNativeOperator(VM* vm, Value klassValue, Operators op, SolisNativeSignature func);
 
