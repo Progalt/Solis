@@ -250,7 +250,7 @@ do {																		\
 #define STACK_TRACE()
 #endif
 
-#define GET_CURRENT_INST() vm->currentInstruction =  (int)(ip - closure->function->chunk.code)
+#define WRITE_CURRENT_INSTRUCTION() vm->currentInstruction =  (int)(ip - closure->function->chunk.code)
 
 #if SOLIS_COMPUTED_GOTO
 
@@ -266,7 +266,6 @@ do {																		\
 #define DISPATCH()                                                          \
       do                                                                    \
       {																		\
-		GET_CURRENT_INST();													\
         STACK_TRACE();														\
         goto *dispatchTable[instruction = READ_BYTE()];						\
       } while (false)
@@ -275,7 +274,6 @@ do {																		\
 
 #define INTERPRET_LOOP							\
 	main_loop:									\
-		GET_CURRENT_INST();						\
 		STACK_TRACE();							\
 		switch(instruction = READ_BYTE())		\
 
@@ -388,6 +386,7 @@ do {																		\
 
 		if (obj == NULL)
 		{
+			WRITE_CURRENT_INSTRUCTION();
 			solisVMRaiseError(vm, "Object does not contain operator: %s\n", vm->operatorStrings[op]->chars);
 			return INTERPRET_RUNTIME_ERROR;
 		}
@@ -550,6 +549,7 @@ do {																		\
 
 		if (!callValue(vm, *(vm->sp - 1 - argCount), argCount))
 		{
+			WRITE_CURRENT_INSTRUCTION();
 			solisVMRaiseError(vm, "Failed to call function\n");
 			return INTERPRET_RUNTIME_ERROR;
 		}
@@ -677,6 +677,7 @@ do {																		\
 
 			}
 
+			WRITE_CURRENT_INSTRUCTION();
 			solisVMRaiseError(vm, "Can't get field from class: '%s'\n", name);
 			return INTERPRET_RUNTIME_ERROR;
 			
@@ -693,6 +694,7 @@ do {																		\
 				Value val;
 				if (!solisHashTableGet(&enumObj->fields, name, &val))
 				{
+					WRITE_CURRENT_INSTRUCTION();
 					solisVMRaiseError( vm, "Failed to get field from enum\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
@@ -732,6 +734,7 @@ do {																		\
 				}
 				else
 				{
+					WRITE_CURRENT_INSTRUCTION();
 					solisVMRaiseError(vm, "Can't get field from instance.\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
@@ -741,6 +744,7 @@ do {																		\
 			default:
 				// Return an error
 				// We can't access the fields
+				WRITE_CURRENT_INSTRUCTION();
 				solisVMRaiseError(vm, "Object does not have fields\n");
 				return INTERPRET_RUNTIME_ERROR;
 				break;
@@ -783,6 +787,7 @@ do {																		\
 
 				if (error == 2)
 				{
+					WRITE_CURRENT_INSTRUCTION();
 					solisVMRaiseError(vm, "Cannot set field that does not exist in class\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
@@ -801,6 +806,8 @@ do {																		\
 				{
 					// Delete it from the hash table
 					solisHashTableDelete(&klass->statics, name);
+
+					WRITE_CURRENT_INSTRUCTION();
 					solisVMRaiseError(vm, "Can't set a static field that doesn't exist in class\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
@@ -814,6 +821,7 @@ do {																		\
 			default:
 				// Return an error
 				// We can't access the fields
+				WRITE_CURRENT_INSTRUCTION();
 				solisVMRaiseError(vm, "Can't get field\n");
 				return INTERPRET_RUNTIME_ERROR;
 				break;
@@ -831,6 +839,7 @@ do {																		\
 
 		if (!invoke(vm, method, argCount))
 		{
+			WRITE_CURRENT_INSTRUCTION();
 			solisVMRaiseError(vm, "Can't invoke method '%s'\n", method->chars);
 			return INTERPRET_RUNTIME_ERROR;
 		}
