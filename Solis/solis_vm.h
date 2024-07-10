@@ -76,6 +76,8 @@ struct VM
 	ObjString* operatorStrings[OPERATOR_COUNT];
 
 	ObjModule* currentModule;
+
+	bool errorRaised;
 };
 
 

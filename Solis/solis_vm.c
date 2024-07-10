@@ -53,6 +53,7 @@ void solisInitVM(VM* vm, bool sandboxed)
 	vm->greyCapacity = 0;
 	vm->greyCount = 0;
 	vm->greyStack = NULL;
+	vm->errorRaised = false;
 
 
 	solisInitHashTable(&vm->strings, vm);
@@ -250,7 +251,10 @@ do {																		\
 #define STACK_TRACE()
 #endif
 
-#define WRITE_CURRENT_INSTRUCTION() vm->currentInstruction =  (int)(ip - closure->function->chunk.code)
+
+#define CHECK_ERROR()			\
+		if (vm->errorRaised)	\
+			return INTERPRET_RUNTIME_ERROR;
 
 #if SOLIS_COMPUTED_GOTO
 
@@ -267,6 +271,7 @@ do {																		\
       do                                                                    \
       {																		\
         STACK_TRACE();														\
+		CHECK_ERROR();														\
         goto *dispatchTable[instruction = READ_BYTE()];						\
       } while (false)
 
@@ -275,6 +280,7 @@ do {																		\
 #define INTERPRET_LOOP							\
 	main_loop:									\
 		STACK_TRACE();							\
+		CHECK_ERROR();							\
 		switch(instruction = READ_BYTE())		\
 
 #define CASE_CODE(name) case OP_##name
@@ -386,7 +392,6 @@ do {																		\
 
 		if (obj == NULL)
 		{
-			WRITE_CURRENT_INSTRUCTION();
 			solisVMRaiseError(vm, "Object does not contain operator: %s\n", vm->operatorStrings[op]->chars);
 			return INTERPRET_RUNTIME_ERROR;
 		}
@@ -549,7 +554,6 @@ do {																		\
 
 		if (!callValue(vm, *(vm->sp - 1 - argCount), argCount))
 		{
-			WRITE_CURRENT_INSTRUCTION();
 			solisVMRaiseError(vm, "Failed to call function\n");
 			return INTERPRET_RUNTIME_ERROR;
 		}
@@ -677,7 +681,6 @@ do {																		\
 
 			}
 
-			WRITE_CURRENT_INSTRUCTION();
 			solisVMRaiseError(vm, "Can't get field from class: '%s'\n", name);
 			return INTERPRET_RUNTIME_ERROR;
 			
@@ -694,7 +697,6 @@ do {																		\
 				Value val;
 				if (!solisHashTableGet(&enumObj->fields, name, &val))
 				{
-					WRITE_CURRENT_INSTRUCTION();
 					solisVMRaiseError( vm, "Failed to get field from enum\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
@@ -734,7 +736,6 @@ do {																		\
 				}
 				else
 				{
-					WRITE_CURRENT_INSTRUCTION();
 					solisVMRaiseError(vm, "Can't get field from instance.\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
@@ -744,7 +745,6 @@ do {																		\
 			default:
 				// Return an error
 				// We can't access the fields
-				WRITE_CURRENT_INSTRUCTION();
 				solisVMRaiseError(vm, "Object does not have fields\n");
 				return INTERPRET_RUNTIME_ERROR;
 				break;
@@ -787,7 +787,6 @@ do {																		\
 
 				if (error == 2)
 				{
-					WRITE_CURRENT_INSTRUCTION();
 					solisVMRaiseError(vm, "Cannot set field that does not exist in class\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
@@ -807,7 +806,6 @@ do {																		\
 					// Delete it from the hash table
 					solisHashTableDelete(&klass->statics, name);
 
-					WRITE_CURRENT_INSTRUCTION();
 					solisVMRaiseError(vm, "Can't set a static field that doesn't exist in class\n");
 					return INTERPRET_RUNTIME_ERROR;
 				}
@@ -821,7 +819,6 @@ do {																		\
 			default:
 				// Return an error
 				// We can't access the fields
-				WRITE_CURRENT_INSTRUCTION();
 				solisVMRaiseError(vm, "Can't get field\n");
 				return INTERPRET_RUNTIME_ERROR;
 				break;
@@ -839,7 +836,6 @@ do {																		\
 
 		if (!invoke(vm, method, argCount))
 		{
-			WRITE_CURRENT_INSTRUCTION();
 			solisVMRaiseError(vm, "Can't invoke method '%s'\n", method->chars);
 			return INTERPRET_RUNTIME_ERROR;
 		}
@@ -908,6 +904,7 @@ static bool callClosure(VM* vm, ObjClosure* closure, int argCount)
 
 static bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs)
 {
+
 	if (vm->apiStack != NULL)
 	{
 		return false;
@@ -1166,6 +1163,8 @@ static void printSourceLineVm( const char* source, int line)
 
 void solisVMRaiseError(VM* vm, const char* message, ...)
 {
+	vm->currentInstruction = (int)(vm->frames[vm->frameCount - 1].ip - vm->currentModule->closure->function->chunk.code);
+
 	CallFrame* currentFrame = &vm->frames[vm->frameCount - 1];
 	int instOffset = vm->currentInstruction;
 	Chunk* chunk = &currentFrame->closure->function->chunk;
@@ -1214,5 +1213,7 @@ void solisVMRaiseError(VM* vm, const char* message, ...)
 	}
 
 	va_end(args);
+
+	vm->errorRaised = true;
 	
 }
