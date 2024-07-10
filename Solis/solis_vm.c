@@ -356,106 +356,6 @@ do {																		\
 
 		DISPATCH();
 	}
-	//CASE_CODE(ADD) :
-	//{
-	//	//// Instead of popping the value lower on the stack we can just assign it to the new value avoiding unneeded operations
-	//	//Value a = POP();
-	//	//Value* val = PEEK_PTR();
-
-	//	//// Check if the values are numeric values
-	//	//if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-	//	//	val->as.number = val->as.number + a.as.number;
-
-	//	//if (SOLIS_IS_STRING(*val) && SOLIS_IS_STRING(a))
-	//	//{
-	//	//	ObjString* bstr = SOLIS_AS_STRING(*val);
-	//	//	ObjString* astr = SOLIS_AS_STRING(a);
-	//	//	*val = SOLIS_OBJECT_VALUE(solisConcatenateStrings(vm, bstr, astr));
-	//	//}
-
-	//	if (!callOperator(vm, OPERATOR_ADD, 1))
-	//	{
-	//		return INTERPRET_RUNTIME_ERROR;
-	//	}
-
-	//	DISPATCH();
-	//}
-	//CASE_CODE(SUBTRACT) :
-	//{
-	//	//Value a = POP();
-	//	//Value* val = PEEK_PTR();
-
-	//	//// Check if the values are numeric values
-	//	//if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-	//	//	val->as.number = val->as.number - a.as.number;
-
-	//	if (!callOperator(vm, OPERATOR_MINUS, 1))
-	//	{
-	//		return INTERPRET_RUNTIME_ERROR;
-	//	}
-
-	//	DISPATCH();
-	//}
-	//CASE_CODE(MULTIPLY) :
-	//{
-	//	Value a = POP();
-	//	Value* val = PEEK_PTR();
-
-	//	// Check if the values are numeric values
-	//	if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-	//		val->as.number = val->as.number * a.as.number;
-
-	//	DISPATCH();
-	//}
-	//CASE_CODE(DIVIDE) :
-	//{
-	//	Value a = POP();
-	//	Value* val = PEEK_PTR();
-
-	//	// Check if the values are numeric values
-	//	if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-	//		val->as.number = val->as.number / a.as.number;
-
-	//	DISPATCH();
-	//}
-	//CASE_CODE(FLOOR_DIVIDE) :
-	//{
-	//	Value a = POP();
-	//	Value* val = PEEK_PTR();
-
-	//	if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-	//		val->as.number = floor(val->as.number / a.as.number);
-
-	//	DISPATCH();
-	//}
-	//CASE_CODE(POWER) :
-	//{
-	//	Value a = POP();
-	//	Value* val = PEEK_PTR();
-
-	//	// Check if the values are numeric values
-	//	if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-	//		val->as.number = pow(val->as.number,  a.as.number);
-
-	//	DISPATCH();
-	//}
-	//CASE_CODE(SUBSCRIPT_GET) :
-	//{
-	//	if (!callOperator(vm, OPERATOR_SUBSCRIPT_GET, 1))
-	//	{
-	//		return INTERPRET_RUNTIME_ERROR;
-	//	}
-
-	//	DISPATCH();
-	//}
-	//CASE_CODE(SUBSCRIPT_SET) :
-	//{
-	//	if (!callOperator(vm, OPERATOR_SUBSCRIPT_SET, 2))
-	//	{
-	//		return INTERPRET_RUNTIME_ERROR;
-	//	}
-	//	DISPATCH();
-	//}
 	{
 		int op = 0;
 		int argCount = 0;
@@ -534,20 +434,6 @@ do {																		\
 	}
 	CASE_CODE(DEFINE_GLOBAL) :
 	{
-		//ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
-
-		//Value idx;
-		////solisHashTableInsert(&vm->globalMap, name, SOLIS_NUMERIC_VALUE((double)idx));
-
-		//if (solisHashTableGet(&vm->currentModule->globalMap, name, &idx))
-		//{
-		//	vm->currentModule->globals.data[(int)SOLIS_AS_NUMBER(idx)] = PEEK();
-		//}
-
-		////solisValueBufferWrite(vm, &vm->globals, PEEK());
-
-		//POP();
-
 		DISPATCH();
 	}
 	CASE_CODE(SET_GLOBAL) :
