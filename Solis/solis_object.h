@@ -186,6 +186,16 @@ struct ObjList
 #define SOLIS_IS_LIST(value) solisIsObjType(value, OBJ_LIST)
 #define SOLIS_AS_LIST(value) ((ObjList*)SOLIS_AS_OBJECT(value))
 
+struct ObjModule
+{
+	Object obj;
+
+	ValueBuffer globals;
+	HashTable globalMap;
+
+	ObjClosure* closure;
+};
+
 /*
 	Returns the specified value is equal to the type
 	If the value is not an object it returns false.
@@ -233,5 +243,7 @@ ObjBoundMethod* solisNewBoundMethod(VM* vm, Value receiver, ObjClosure* closure)
 ObjBoundMethod* solisNewNativeBoundMethod(VM* vm, Value receiver, ObjNative* closure);
 
 ObjList* solisNewList(VM* vm);
+
+ObjModule* solisNewModule(VM* vm);
 
 #endif // SOLIS_OBJECT_H

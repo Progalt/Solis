@@ -407,8 +407,8 @@ struct sCompiler
 	int scopeDepth;
 
 	// Each global variable is assigned an index as it is created 
-	HashTable globalTable;
-	int globalCount;
+	/*HashTable globalTable;
+	int globalCount;*/
 
 
 	Local locals[UINT8_COUNT];
@@ -422,6 +422,8 @@ struct sCompiler
 	FunctionType type;
 
 	UpvalueBuffer upvalues;
+
+	ObjModule* currentModule;
 };
 
 Compiler* current = NULL;
@@ -461,17 +463,17 @@ static void emitReturn() {
 	emitByte(OP_RETURN);
 }
 
-static void initCompiler(VM* vm, Compiler* compiler, FunctionType type)
+static void initCompiler(VM* vm, Compiler* compiler, FunctionType type, ObjModule* mdl)
 {
 	compiler->function = NULL;
 	compiler->type = type;
 	compiler->scopeDepth = 0;
 	compiler->localCount = 0;
 	compiler->parent = NULL;
-	
+	compiler->currentModule = mdl;
 
 	compiler->vm = vm;
-	compiler->globalCount = 0;
+	//compiler->globalCount = 0;
 	compiler->withinLoop = false;
 
 	compiler->parent = current;
@@ -480,7 +482,7 @@ static void initCompiler(VM* vm, Compiler* compiler, FunctionType type)
 
 	solisIntBufferInit(vm, &compiler->breakStatements);
 
-	solisInitHashTable(&compiler->globalTable, vm);
+	//solisInitHashTable(&compiler->globalTable, vm);
 
 	solisUpvalueBufferInit(vm, &compiler->upvalues);
 
@@ -513,7 +515,7 @@ static ObjFunction* endCompiler(Compiler* compiler)
 {
 	emitReturn();
 
-	solisFreeHashTable(&compiler->globalTable);
+	// solisFreeHashTable(&compiler->globalTable);
 	// solisUpvalueBufferClear(&compiler->upvalues);
 	solisIntBufferClear(compiler->vm, &compiler->breakStatements);
 
@@ -818,19 +820,30 @@ static void defineVariable(uint16_t global, bool addToGlobals)
 		return;
 	}
 
+	int idx = 0;
 	if (addToGlobals)
 	{
+
+
 		// Add the global to the hash table of globals
-		double index = (double)current->globalCount;
+		double index = (double)current->currentModule->globals.count;
+		idx = (int)index;
+
+		solisValueBufferWrite(current->vm, &current->currentModule->globals, SOLIS_NULL_VALUE());
+
 		ObjString* str = SOLIS_AS_STRING(current->function->chunk.constants.data[global]);
 
-		solisHashTableInsert(&current->globalTable, str, SOLIS_NUMERIC_VALUE(index));
+		
+		solisHashTableInsert(&current->currentModule->globalMap, str, SOLIS_NUMERIC_VALUE(index));
 
-		current->globalCount++;
 	}
 
-	emitByte(OP_DEFINE_GLOBAL);
-	emitShort(global);
+	//emitByte(OP_DEFINE_GLOBAL);
+	//emitShort(global);
+	emitByte(OP_SET_GLOBAL);
+	emitShort(idx);
+	
+	emitByte(OP_POP);
 }
 
 static void variableDeclaration()
@@ -891,7 +904,7 @@ static int resolveGlobalVariable(Compiler* compiler, Token name)
 	}
 
 
-	if (!solisHashTableGet(&globalCompiler->globalTable, nameStr, &val))
+	if (!solisHashTableGet(&globalCompiler->currentModule->globalMap, nameStr, &val))
 	{
 		return -1;
 	}
@@ -1264,19 +1277,27 @@ static void functionDeclaration()
 
 	// Add the global to the hash table of globals
 	// We need to do it ahead of time here to allow for recursion
-	double index = (double)current->globalCount;
-	solisHashTableInsert(&current->globalTable, SOLIS_AS_STRING(current->function->chunk.constants.data[global]), SOLIS_NUMERIC_VALUE(index));
-	current->globalCount++;
-	
+	double index = (double)current->currentModule->globals.count;
+
+	// Write a NULL buffer value
+	solisValueBufferWrite(current->vm, &current->currentModule->globals, SOLIS_NULL_VALUE());
+
+	solisHashTableInsert(&current->currentModule->globalMap, SOLIS_AS_STRING(current->function->chunk.constants.data[global]), SOLIS_NUMERIC_VALUE(index));
+
 	markInitialized();
 	function(TYPE_FUNCTION);
-	defineVariable(global, false);
+	//defineVariable(global, false);
+
+	emitByte(OP_SET_GLOBAL);
+	emitShort((int)index);
+
+	emitByte(OP_POP);
 }
 
 static void function(FunctionType type)
 {
 	Compiler compiler;
-	initCompiler(current->vm, &compiler, type);
+	initCompiler(current->vm, &compiler, type, current->currentModule);
 
 	beginScope();
 
@@ -1670,7 +1691,7 @@ static ParseRule* getRule(SolisTokenType type) {
 	return &rules[type];
 }
 
-ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int globalCount, const char* sourceName)
+bool solisCompile(VM* vm, const char* source, ObjModule* mdl, const char* sourceName)
 {
 	parser.hadError = false;
 	parser.panicMode = false;
@@ -1678,15 +1699,16 @@ ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int gl
 
 	// Setup the compiler
 
+
 	Compiler compiler;
-	initCompiler(vm, &compiler, TYPE_SCRIPT);
+	initCompiler(vm, &compiler, TYPE_SCRIPT, mdl);
 
 	// Copy our globals into the compiler globals
-	if (globals != NULL)
+	/*if (globals != NULL)
 	{
 		solisHashTableCopy(globals, &compiler.globalTable);
 		compiler.globalCount = globalCount;
-	}
+	}*/
 
 	TokenList tokenList = solisScanSource(vm, source);
 
@@ -1706,7 +1728,13 @@ ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int gl
 
 	ObjFunction* function = endCompiler(&compiler);
 	solisFreeTokenList(&tokenList);
-	return parser.hadError ? NULL : function;
+	// return parser.hadError ? NULL : function;
+
+	solisPush(vm, SOLIS_OBJECT_VALUE(function));
+	mdl->closure = solisNewClosure(vm, function);
+	solisPop(vm);
+
+	return !parser.hadError;
 }
 
 
@@ -1717,8 +1745,10 @@ void solisMarkCompilerRoots(VM* vm)
 	while (compiler != NULL) {
 		markObject(vm, (Object*)compiler->function);
 
-		markTable(vm, &compiler->globalTable);
-	
+		// markTable(vm, &compiler->globalTable);
+		
+		// Mark the current module
+		markObject(vm, (Object*)compiler->currentModule);
 		
 
 		compiler = compiler->parent;

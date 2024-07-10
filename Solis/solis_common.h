@@ -45,6 +45,8 @@ typedef struct ObjList ObjList;
 
 typedef struct ObjUserdata ObjUserdata;
 
+typedef struct ObjModule ObjModule;
+
 typedef enum
 {
     VALUE_NULL,
@@ -66,7 +68,8 @@ typedef enum
     OBJ_CLASS, 
     OBJ_INSTANCE,
     OBJ_BOUND_METHOD, 
-    OBJ_LIST
+    OBJ_LIST,
+    OBJ_MODULE
 } ObjectType;
 
 typedef enum

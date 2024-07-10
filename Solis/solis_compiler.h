@@ -18,7 +18,7 @@ typedef enum
 	TYPE_SCRIPT, 
 } FunctionType;
 
-ObjFunction* solisCompile(VM* vm, const char* source, HashTable* globals, int globalCount, const char* sourceName);
+bool solisCompile(VM* vm, const char* source, ObjModule* mdl, const char* sourceName);
 
 void solisMarkCompilerRoots(VM* vm);
 

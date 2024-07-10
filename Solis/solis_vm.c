@@ -56,8 +56,10 @@ void solisInitVM(VM* vm, bool sandboxed)
 
 
 	solisInitHashTable(&vm->strings, vm);
-	solisInitHashTable(&vm->globalMap, vm);
-	solisValueBufferInit(vm, &vm->globals);
+	/*solisInitHashTable(&vm->globalMap, vm);
+	solisValueBufferInit(vm, &vm->globals);*/
+
+	vm->currentModule = solisNewModule(vm);
 
 	// Initialise the operator strings 
 	vm->operatorStrings[OPERATOR_ADD] = solisCopyString(vm, "+", 1);
@@ -95,8 +97,8 @@ void solisFreeVM(VM* vm)
 	SOLIS_FREE_ARRAY(vm, CallFrame, vm->frames, vm->frameCapacity);
 
 	solisFreeHashTable(&vm->strings);
-	solisFreeHashTable(&vm->globalMap);
-	solisValueBufferClear(vm, &vm->globals);
+	/*solisFreeHashTable(&vm->globalMap);
+	solisValueBufferClear(vm, &vm->globals);*/
 	freeObjects(vm);
 
 	__openVMs--;
@@ -272,6 +274,7 @@ do {																		\
 
 #define INTERPRET_LOOP							\
 	main_loop:									\
+		GET_CURRENT_INST();						\
 		STACK_TRACE();							\
 		switch(instruction = READ_BYTE())		\
 
@@ -530,25 +533,30 @@ do {																		\
 	}
 	CASE_CODE(DEFINE_GLOBAL) :
 	{
-		ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
+		//ObjString* name = SOLIS_AS_STRING(READ_CONSTANT_LONG());
 
-		int idx = vm->globals.count;
-		solisHashTableInsert(&vm->globalMap, name, SOLIS_NUMERIC_VALUE((double)idx));
+		//Value idx;
+		////solisHashTableInsert(&vm->globalMap, name, SOLIS_NUMERIC_VALUE((double)idx));
 
-		solisValueBufferWrite(vm, &vm->globals, PEEK());
+		//if (solisHashTableGet(&vm->currentModule->globalMap, name, &idx))
+		//{
+		//	vm->currentModule->globals.data[(int)SOLIS_AS_NUMBER(idx)] = PEEK();
+		//}
 
-		POP();
+		////solisValueBufferWrite(vm, &vm->globals, PEEK());
+
+		//POP();
 
 		DISPATCH();
 	}
 	CASE_CODE(SET_GLOBAL) :
 	{
-		vm->globals.data[READ_SHORT()] = PEEK();
+		vm->currentModule->globals.data[READ_SHORT()] = PEEK();
 		DISPATCH();
 	}
 	CASE_CODE(GET_GLOBAL) :
 	{
-		PUSH(vm->globals.data[READ_SHORT()]);
+		PUSH(vm->currentModule->globals.data[READ_SHORT()]);
 		DISPATCH();
 	}
 	CASE_CODE(SET_LOCAL) :
@@ -1092,9 +1100,9 @@ InterpretResult solisInterpret(VM* vm, const char* source, const char* sourceNam
 {
 	
 
-	ObjFunction* function = solisCompile(vm, source, &vm->globalMap, vm->globals.count, sourceName);
+	bool ret = solisCompile(vm, source, vm->currentModule, sourceName);
 
-	if (function == NULL)
+	if (ret == false)
 	{
 		return INTERPRET_COMPILE_ERROR;
 	}
@@ -1103,10 +1111,9 @@ InterpretResult solisInterpret(VM* vm, const char* source, const char* sourceNam
 	
 	vm->moduleName = sourceName;
 	vm->source = source;
-	solisPush(vm, SOLIS_OBJECT_VALUE(function));
 
-	ObjClosure* closure = solisNewClosure(vm, function);
-	solisPop(vm);
+	ObjClosure* closure = vm->currentModule->closure;
+
 	solisPush(vm, SOLIS_OBJECT_VALUE(closure));
 	callClosure(vm, closure, 0);
 	
@@ -1143,23 +1150,23 @@ void solisPushGlobal(VM* vm, const char* name, Value value)
 
 	// We want to check if the value already exists and overwrite it at that position
 	Value val;
-	if (solisHashTableGet(&vm->globalMap, str, &val))
+	if (solisHashTableGet(&vm->currentModule->globalMap, str, &val))
 	{
 		// We have the value already
 
 		int idx = (int)SOLIS_AS_NUMBER(val);
 
-		vm->globals.data[idx] = value;
+		vm->currentModule->globals.data[idx] = value;
 
 	}
 	else
 	{
 
-		solisValueBufferWrite(vm, &vm->globals, value);
+		solisValueBufferWrite(vm, &vm->currentModule->globals, value);
 
-		int idx = vm->globals.count - 1;
+		int idx = vm->currentModule->globals.count - 1;
 
-		solisHashTableInsert(&vm->globalMap, SOLIS_AS_STRING(solisPeek(vm, 0)), SOLIS_NUMERIC_VALUE((double)idx));
+		solisHashTableInsert(&vm->currentModule->globalMap, SOLIS_AS_STRING(solisPeek(vm, 0)), SOLIS_NUMERIC_VALUE((double)idx));
 	}
 
 	solisPop(vm);
@@ -1168,12 +1175,12 @@ void solisPushGlobal(VM* vm, const char* name, Value value)
 Value solisGetGlobal(VM* vm, const char* name)
 {
 	Value val;
-	if (solisHashTableGet(&vm->globalMap, solisCopyString(vm, name, strlen(name)), &val))
+	if (solisHashTableGet(&vm->currentModule->globalMap, solisCopyString(vm, name, strlen(name)), &val))
 	{
 		// We have a value
 		int idx = (int)SOLIS_AS_NUMBER(val);
 
-		return vm->globals.data[idx];
+		return vm->currentModule->globals.data[idx];
 	}
 
 	return SOLIS_NULL_VALUE();
@@ -1182,7 +1189,7 @@ Value solisGetGlobal(VM* vm, const char* name)
 bool solisGlobalExists(VM* vm, const char* name)
 {
 	Value val;
-	if (solisHashTableGet(&vm->globalMap, solisCopyString(vm, name, strlen(name)), &val))
+	if (solisHashTableGet(&vm->currentModule->globalMap, solisCopyString(vm, name, strlen(name)), &val))
 	{
 		return true;
 	}
@@ -1202,10 +1209,10 @@ void solisPushGlobalCFunction(VM* vm, const char* name, SolisNativeSignature fun
 
 void solisDumpGlobals(VM* vm)
 {
-	for (int i = 0; i < vm->globals.count; i++)
+	for (int i = 0; i < vm->currentModule->globals.count; i++)
 	{
 		printf("Global %d: ", i);
-		solisPrintValue(vm->globals.data[i]);
+		solisPrintValue(vm->currentModule->globals.data[i]);
 		printf("\n");
 		
 	}

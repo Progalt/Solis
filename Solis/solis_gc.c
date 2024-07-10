@@ -71,8 +71,10 @@ static void markRoots(VM* vm)
     }
 
     // Mark the two objects associated with globals
-    markTable(vm, &vm->globalMap);
-    markValueBuffer(vm, &vm->globals);
+   /* markTable(vm, &vm->globalMap);
+    markValueBuffer(vm, &vm->globals);*/
+
+    markObject(vm, (Object*)vm->currentModule);
 
     markObject(vm, (Object*)vm->numberClass);
     markObject(vm, (Object*)vm->stringClass);
@@ -161,6 +163,17 @@ static void blackenObject(VM* vm, Object* object)
         ObjList* list = (ObjList*)object;
 
         markValueBuffer(vm, &list->values);
+
+        break;
+    }
+    case OBJ_MODULE:
+    {
+
+        ObjModule* mdl = (ObjModule*)object;
+
+        markTable(vm, &mdl->globalMap);
+        markValueBuffer(vm, &mdl->globals);
+        markObject(vm, (Object*)mdl->closure);
 
         break;
     }

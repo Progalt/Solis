@@ -106,6 +106,15 @@ void solisFreeObject(VM* vm, Object* object)
 		SOLIS_FREE(vm, ObjList, object);
 		break;
 	}
+	case OBJ_MODULE:
+	{
+
+		ObjModule* mdl = (ObjModule*)object;
+		solisValueBufferClear(vm, &mdl->globals);
+		solisFreeHashTable(&mdl->globalMap);
+
+		break;
+	}
 	}
 }
 
@@ -301,4 +310,14 @@ ObjList* solisNewList(VM* vm)
 	solisValueBufferInit(vm, &list->values);
 
 	return list;
+}
+
+ObjModule* solisNewModule(VM* vm)
+{
+	ObjModule* mdl = ALLOCATE_OBJ(vm, ObjModule, OBJ_MODULE);
+
+	solisInitHashTable(&mdl->globalMap, vm);
+	solisValueBufferInit(vm, &mdl->globals);
+
+	return mdl;
 }

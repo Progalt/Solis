@@ -47,10 +47,10 @@ struct VM
 	// List of interned strings for the VM
 	HashTable strings;
 
-	// So we can map names to global indexes
-	HashTable globalMap;
+	//// So we can map names to global indexes
+	//HashTable globalMap;
 
-	ValueBuffer globals;
+	//ValueBuffer globals;
 
 	ObjUpvalue* openUpvalues;
 
@@ -74,6 +74,8 @@ struct VM
 	ObjClass* listClass;
 
 	ObjString* operatorStrings[OPERATOR_COUNT];
+
+	ObjModule* currentModule;
 };
 
 
