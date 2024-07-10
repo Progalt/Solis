@@ -80,7 +80,9 @@ static void help()
     printf("- repl -> starts the repl for running code.\n");
     printf("          :help can be typed to get repl help while within the repl.\n\n");
 
-    printf("- solis {filepath} -> executes a file immediately with a clean VM.\n");
+    printf("- solis {filepath} -> executes a file immediately with a clean VM.\n\n");
+
+    printf("- run -> Checks for a package file in the working directory and then buils and runs it.\n");
 
 }
 
@@ -95,7 +97,7 @@ static void repl()
     char line[256];
 
     VM vm;
-    solisInitVM(&vm);
+    solisInitVM(&vm, false);
 
     char* last_filepath = NULL;
 
@@ -283,7 +285,7 @@ int main(int argc, char* argv[])
     // Initialise and run the VM with the code
     VM vm;
 
-    solisInitVM(&vm);
+    solisInitVM(&vm, false);
 
     InterpretResult result = solisInterpret(&vm, file, argv[1]);
 

@@ -231,6 +231,7 @@ static InterpretResult run(VM* vm)
 #define PEEK() (*(vm->sp - 1))
 #define PEEK_OFF(offset) (*(vm->sp - 1 - offset))
 #define PEEK_PTR() (vm->sp - 1)
+#define DROP() (--vm->sp)
 
 #ifdef SOLIS_DEBUG_TRACE_EXECUTION
 #define STACK_TRACE()														\
@@ -505,7 +506,7 @@ do {																		\
 
 	CASE_CODE(POP) :
 	{
-		POP();
+		DROP();
 		DISPATCH();
 	}
 	CASE_CODE(CREATE_LIST) :
@@ -524,7 +525,7 @@ do {																		\
 
 		for (uint16_t i = 0; i < size; i++)
 		{
-			POP();
+			DROP();
 		}
 
 		PUSH(SOLIS_OBJECT_VALUE(list));
@@ -585,7 +586,7 @@ do {																		\
 	{
 
 		closeUpvalues(vm, vm->sp - 1);
-		POP();
+		DROP();
 
 		DISPATCH();
 	}
@@ -709,7 +710,7 @@ do {																		\
 		solisHashTableCopy(&SOLIS_AS_CLASS(superclass)->methods, &subclass->methods);
 		solisHashTableCopy(&SOLIS_AS_CLASS(superclass)->fields, &subclass->fields);
 
-		POP();
+		DROP();
 		DISPATCH();
 	}
 	CASE_CODE(DEFINE_FIELD) :
@@ -721,7 +722,7 @@ do {																		\
 
 		solisHashTableInsert(&klass->fields, name, val);
 
-		POP();
+		DROP();
 		DISPATCH();
 	}
 	CASE_CODE(DEFINE_STATIC) :
@@ -734,7 +735,7 @@ do {																		\
 
 		solisHashTableInsert(instruction == OP_DEFINE_METHOD ? &klass->methods : &klass->statics, name, val);
 
-		POP();
+		DROP();
 
 		DISPATCH();
 	}
@@ -749,7 +750,7 @@ do {																		\
 
 		klass->constructor = SOLIS_AS_CLOSURE(val);
 
-		POP();
+		DROP();
 
 		DISPATCH();
 	}
@@ -767,7 +768,7 @@ do {																		\
 			Value value;
 			if (solisHashTableGet(&objectClass->statics, name, &value))
 			{
-				POP();
+				DROP();
 				PUSH(value);
 
 				DISPATCH();
@@ -783,7 +784,7 @@ do {																		\
 					bound = solisNewNativeBoundMethod(vm, PEEK(), SOLIS_AS_NATIVE(value));
 
 
-				POP();
+				DROP();
 				PUSH(SOLIS_OBJECT_VALUE(bound));
 
 				DISPATCH();
@@ -811,7 +812,7 @@ do {																		\
 				}
 
 				// Pop the enum value off the stack
-				POP();
+				DROP();
 				PUSH(val);
 
 				break;
@@ -823,7 +824,7 @@ do {																		\
 				Value value;
 				if (solisHashTableGet(&instance->fields, name, &value))
 				{
-					POP();
+					DROP();
 					PUSH(value);
 				}
 				else if (solisHashTableGet(&instance->klass->methods, name, &value))
@@ -835,12 +836,12 @@ do {																		\
 					else 
 						bound = solisNewNativeBoundMethod(vm, SOLIS_OBJECT_VALUE(instance), SOLIS_AS_NATIVE(value));
 
-					POP();
+					DROP();
 					PUSH(SOLIS_OBJECT_VALUE(bound));
 				}
 				else if (solisHashTableGet(&instance->klass->statics, name, &value))
 				{
-					POP();
+					DROP();
 					PUSH(value);
 				}
 				else
@@ -901,7 +902,7 @@ do {																		\
 				}
 
 				Value value = POP();
-				POP();
+				DROP();
 				PUSH(value);
 
 				break;
@@ -919,7 +920,7 @@ do {																		\
 				}
 
 				Value value = POP();
-				POP();
+				DROP();
 				PUSH(value);
 
 				break;
@@ -959,7 +960,7 @@ do {																		\
 
 		if (vm->frameCount == 0)
 		{
-			POP();
+			DROP();
 			return INTERPRET_ALL_GOOD;
 		}
 
@@ -1098,7 +1099,7 @@ static bool callOperator(VM* vm, int op, int numArgs)
 
 InterpretResult solisInterpret(VM* vm, const char* source, const char* sourceName)
 {
-	
+	//solisFreeChunk(vm->currentModule->)
 
 	bool ret = solisCompile(vm, source, vm->currentModule, sourceName);
 
@@ -1249,6 +1250,8 @@ int findLineIndicesVm(const char* str, int lineNumber, int* startIndex, int* end
 	if (*startIndex == -1 || *endIndex == -1) {
 		return -1;
 	}
+
+	return 0;
 }
 
 

@@ -64,6 +64,8 @@ static Keyword keywords[] =
 	{ "static", 6, TOKEN_STATIC },
 	{ "self", 4, TOKEN_SELF },
 
+	{ "import", 6, TOKEN_IMPORT },
+
 	{ NULL, 0, TOKEN_EOF }
 };
 

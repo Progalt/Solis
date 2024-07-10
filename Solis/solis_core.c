@@ -232,11 +232,15 @@ void list_removeAt(VM* vm)
 void list_operator_subscriptGet(VM* vm)
 {
     ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
-    int idx = (int)SOLIS_AS_NUMBER(solisGetArgument(vm, 0));
 
-    // TODO: Safety checks
+    Value getter = solisGetArgument(vm, 0);
 
-    solisSetReturnValue(vm, list->values.data[idx]);
+    if (SOLIS_IS_NUMERIC(getter))
+    {
+        int idx = (int)SOLIS_AS_NUMBER(getter);
+
+        solisSetReturnValue(vm, list->values.data[idx]);
+    }
 }
 
 void list_operator_subscriptSet(VM* vm)

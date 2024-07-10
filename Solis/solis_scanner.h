@@ -83,6 +83,8 @@ typedef enum SolisTokenType
 
 	TOKEN_RETURN,
 
+	TOKEN_IMPORT, 
+
 	TOKEN_LINE, 
 	TOKEN_EOF,
 
