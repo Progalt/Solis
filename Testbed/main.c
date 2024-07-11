@@ -51,11 +51,13 @@ char* readFileIntoString(const char* filename) {
 }
 
 
-void clockNative(VM* vm)
+bool clockNative(VM* vm)
 {
     double time = (double)clock() / CLOCKS_PER_SEC;
 
     solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(time));
+
+    return true;
 }
 
 int main(void) {

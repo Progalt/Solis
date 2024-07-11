@@ -54,17 +54,19 @@ char* read_file_into_cstring(const char* filename) {
 }
 
 
-void core_printf(VM* vm)
+bool core_printf(VM* vm)
 {
 
     printf("%s\n", SOLIS_AS_CSTRING(solisGetArgument(vm, 0)));
 
     solisSetReturnValue(vm, SOLIS_NULL_VALUE());
+
+    return true;
 }
 
 
 
-void num_toString(VM* vm)
+bool num_toString(VM* vm)
 {
     double num = SOLIS_AS_NUMBER(solisGetSelf(vm));
 
@@ -74,53 +76,53 @@ void num_toString(VM* vm)
     Value ret = SOLIS_OBJECT_VALUE(solisCopyString(vm, buffer, length));
 
     solisSetReturnValue(vm, ret);
+
+    return true;
 }
 
-void num_add(VM* vm)
+bool num_add(VM* vm)
 {
-    Value obj2 = vm->apiStack[1];
-
-    if (SOLIS_IS_NUMERIC(obj2))
+    if (SOLIS_IS_NUMERIC(vm->apiStack[1]))
     {
-        //solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(num1 + SOLIS_AS_NUMBER(obj2)));
-        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) + SOLIS_AS_NUMBER(obj2));
+        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) + SOLIS_AS_NUMBER(vm->apiStack[1]));
     }
+
+    return true;
 }
 
-void num_minus(VM* vm)
+bool num_minus(VM* vm)
 {
-    Value obj2 = vm->apiStack[1];
-
-    if (SOLIS_IS_NUMERIC(obj2))
+    if (SOLIS_IS_NUMERIC(vm->apiStack[1]))
     {
-        // solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE(num1 - SOLIS_AS_NUMBER(obj2)));
-        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) - SOLIS_AS_NUMBER(obj2));
+        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) - SOLIS_AS_NUMBER(vm->apiStack[1]));
     }
+
+    return true;
 }
 
-void num_mul(VM* vm)
+bool num_mul(VM* vm)
 {
-    Value obj2 = vm->apiStack[1];
 
-    if (SOLIS_IS_NUMERIC(obj2))
+    if (SOLIS_IS_NUMERIC(vm->apiStack[1]))
     {
-        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) * SOLIS_AS_NUMBER(obj2));
-        return;
+        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) * SOLIS_AS_NUMBER(vm->apiStack[1]));
     }
+
+    return true;
 }
 
-void num_div(VM* vm)
+bool num_div(VM* vm)
 {
-    Value obj2 = vm->apiStack[1];
 
-    if (SOLIS_IS_NUMERIC(obj2))
+    if (SOLIS_IS_NUMERIC(vm->apiStack[1]))
     {
-        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) / SOLIS_AS_NUMBER(obj2));
-        return;
+        vm->apiStack[0] = SOLIS_NUMERIC_VALUE(SOLIS_AS_NUMBER(vm->apiStack[0]) / SOLIS_AS_NUMBER(vm->apiStack[1]));
     }
+
+    return true;
 }
 
-void num_dotdot(VM* vm)
+bool num_dotdot(VM* vm)
 {
     Value obj2 = solisGetArgument(vm, 0);
 
@@ -135,9 +137,11 @@ void num_dotdot(VM* vm)
 
         solisSetReturnValue(vm, SOLIS_OBJECT_VALUE(inst));
     }
+
+    return true;
 }
 
-void num_pow(VM* vm)
+bool num_pow(VM* vm)
 {
     Value obj2 = vm->apiStack[1];
 
@@ -145,9 +149,11 @@ void num_pow(VM* vm)
     {
         vm->apiStack[0] = SOLIS_NUMERIC_VALUE(pow(SOLIS_AS_NUMBER(vm->apiStack[0]), SOLIS_AS_NUMBER(obj2)));
     }
+
+    return true;
 }
 
-void num_int_divide(VM* vm)
+bool num_int_divide(VM* vm)
 {
     Value obj2 = vm->apiStack[1];
 
@@ -155,19 +161,25 @@ void num_int_divide(VM* vm)
     {
         vm->apiStack[0] = SOLIS_NUMERIC_VALUE(floor(SOLIS_AS_NUMBER(vm->apiStack[0]) / SOLIS_AS_NUMBER(obj2)));
     }
+
+    return true;
 }
 
-void num_truncate(VM* vm)
+bool num_truncate(VM* vm)
 {
     vm->apiStack[0] = SOLIS_NUMERIC_VALUE(trunc(SOLIS_AS_NUMBER(vm->apiStack[0])));
+
+    return true;
 }
 
-void string_length(VM* vm)
+bool string_length(VM* vm)
 {
     solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE((double)(SOLIS_AS_STRING(solisGetSelf(vm))->length)));
+
+    return true;
 }
 
-void string_add(VM* vm)
+bool string_add(VM* vm)
 {
     
     ObjString* bstr = SOLIS_AS_STRING(vm->apiStack[0]);
@@ -177,10 +189,10 @@ void string_add(VM* vm)
         vm->apiStack[0] = SOLIS_OBJECT_VALUE(solisConcatenateStrings(vm, bstr, astr));
     }
 
-
+    return true;
 }
 
-void list_at(VM* vm)
+bool list_at(VM* vm)
 {
     int idx = (int)SOLIS_AS_NUMBER(solisGetArgument(vm, 0));
 
@@ -188,24 +200,30 @@ void list_at(VM* vm)
 
     
     solisSetReturnValue(vm, list->values.data[idx]);
+
+    return true;
 }
 
-void list_length(VM* vm)
+bool list_length(VM* vm)
 {
     ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
     solisSetReturnValue(vm, SOLIS_NUMERIC_VALUE((double)list->values.count));
+
+    return true;
 }
 
-void list_append(VM* vm)
+bool list_append(VM* vm)
 {
     ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
 
     solisValueBufferWrite(vm, &list->values, solisGetArgument(vm, 0));
 
     solisSetReturnValue(vm, SOLIS_NULL_VALUE());
+
+    return true;
 }
 
-void list_insert(VM* vm)
+bool list_insert(VM* vm)
 {
     ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
 
@@ -222,14 +240,16 @@ void list_insert(VM* vm)
     list->values.data[idx] = solisGetArgument(vm, 1);
 
     solisSetReturnValue(vm, SOLIS_NULL_VALUE());
+
+    return true;
 }
 
-void list_removeAt(VM* vm)
+bool list_removeAt(VM* vm)
 {
-
+    return true;
 }
 
-void list_operator_subscriptGet(VM* vm)
+bool list_operator_subscriptGet(VM* vm)
 {
     ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
 
@@ -241,9 +261,11 @@ void list_operator_subscriptGet(VM* vm)
 
         solisSetReturnValue(vm, list->values.data[idx]);
     }
+
+    return true;
 }
 
-void list_operator_subscriptSet(VM* vm)
+bool list_operator_subscriptSet(VM* vm)
 {
     ObjList* list = SOLIS_AS_LIST(solisGetSelf(vm));
     int idx = (int)SOLIS_AS_NUMBER(solisGetArgument(vm, 0));
@@ -254,18 +276,21 @@ void list_operator_subscriptSet(VM* vm)
     list->values.data[idx] = val;
 
     solisSetReturnValue(vm, SOLIS_NULL_VALUE());
+
+    return true;
 }
 
 
-void os_getPlatformString(VM* vm)
+bool os_getPlatformString(VM* vm)
 {
     ObjString* str = solisCopyString(vm, SOLIS_PLATFORM_STRING, strlen(SOLIS_PLATFORM_STRING));
 
     solisSetReturnValue(vm, SOLIS_OBJECT_VALUE(str));
 
+    return true;
 }
 
-void ffi_loadLibrary(VM* vm)
+bool ffi_loadLibrary(VM* vm)
 {
     Value path = solisGetArgument(vm, 0);
 
@@ -276,7 +301,7 @@ void ffi_loadLibrary(VM* vm)
         // Failed to load the library
         // TODO: Error check
 
-        return;
+        return false;
     }
 
 
@@ -287,13 +312,15 @@ void ffi_loadLibrary(VM* vm)
     if (!openlib)
     {
 
-        return;
+        return false;
     }
 
     ObjNative* nativeFunc = solisNewNativeFunction(vm, openlib);
 
     // return it
     solisSetReturnValue(vm, SOLIS_OBJECT_VALUE(nativeFunc));
+
+    return true;
 
 }
 

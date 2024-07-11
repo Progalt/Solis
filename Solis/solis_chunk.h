@@ -5,7 +5,7 @@
 #include "solis_common.h"
 #include "solis_value.h"
 
-typedef enum {
+typedef enum  {
 
 #define OPCODE(code) OP_##code,
 #include "solis_opcode.h"

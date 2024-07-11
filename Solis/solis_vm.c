@@ -208,6 +208,8 @@ static InterpretResult run(VM* vm)
 	uint8_t* ip = frame->ip;
 	ObjClosure* closure = frame->closure;
 
+	Value* globals = vm->currentModule->globals.data;
+
 
 #define STORE_FRAME() frame->ip = ip
 
@@ -251,11 +253,6 @@ do {																		\
 #define STACK_TRACE()
 #endif
 
-	// Check for an error that has been raised
-	// TODO: For native functions maybe make it return a bool of success and then route that into the VM instead of this. 
-#define CHECK_ERROR()			\
-		if (vm->errorRaised)	\
-			return INTERPRET_RUNTIME_ERROR;
 
 #if SOLIS_COMPUTED_GOTO
 
@@ -272,7 +269,6 @@ do {																		\
       do                                                                    \
       {																		\
         STACK_TRACE();														\
-		CHECK_ERROR();														\
         goto *dispatchTable[instruction = READ_BYTE()];						\
       } while (false)
 
@@ -281,7 +277,6 @@ do {																		\
 #define INTERPRET_LOOP							\
 	main_loop:									\
 		STACK_TRACE();							\
-		CHECK_ERROR();							\
 		switch(instruction = READ_BYTE())		\
 
 #define CASE_CODE(name) case OP_##name
@@ -311,9 +306,9 @@ do {																		\
 	{
 		// Just negate the value on the stack
 		// No need to pop and push 
-		Value* ptr = PEEK_PTR();
-		if (SOLIS_IS_NUMERIC(*ptr))
-			*ptr = SOLIS_NUMERIC_VALUE(-SOLIS_AS_NUMBER(*ptr));
+		// TODO: Improve this
+		if (SOLIS_IS_NUMERIC(PEEK()))
+			PUSH(SOLIS_NUMERIC_VALUE(-SOLIS_AS_NUMBER(POP())));
 		else
 		{
 			solisVMRaiseError( vm, "Negate error\n");
@@ -362,8 +357,16 @@ do {																		\
 		DISPATCH();
 	}
 	{
-		int op = 0;
-		int argCount = 0;
+		// These need to 8 bit for speed
+		uint8_t op = 0;
+		uint8_t argCount = 0;
+
+	CASE_CODE(SUBSCRIPT_SET) :
+
+		op = OPERATOR_SUBSCRIPT_SET;
+		argCount = 2;
+
+		goto completeOpCall;
 
 	CASE_CODE(ADD) :
 	CASE_CODE(SUBTRACT) :
@@ -377,13 +380,6 @@ do {																		\
 
 		op = instruction - OP_ADD;
 		argCount = 1;
-
-		goto completeOpCall;
-		
-	CASE_CODE(SUBSCRIPT_SET) :
-		
-		op = OPERATOR_SUBSCRIPT_SET;
-		argCount = 2;
 
 	completeOpCall:
 
@@ -399,11 +395,17 @@ do {																		\
 
 		if (obj->type == OBJ_NATIVE_FUNCTION)
 		{
-			callNativeFunction(vm, ((ObjNative*)obj)->nativeFunction, argCount);
+			if (!callNativeFunction(vm, ((ObjNative*)obj)->nativeFunction, argCount))
+			{
+				return INTERPRET_RUNTIME_ERROR;
+			}
 		}
 		else
 		{
-			callClosure(vm, ((ObjClosure*)obj), argCount);
+			if (!callClosure(vm, ((ObjClosure*)obj), argCount))
+			{
+				return INTERPRET_RUNTIME_ERROR;
+			}
 		}
 
 		DISPATCH();
@@ -416,24 +418,26 @@ do {																		\
 	}
 	CASE_CODE(CREATE_LIST) :
 	{
-		uint16_t size = READ_SHORT();
-
-		ObjList* list = solisNewList(vm);
-
-		// This is not the fastest method 
-		// TODO: FIXME 
-
-		for (uint16_t i = 0; i < size; i++)
 		{
-			solisValueBufferWrite(vm, &list->values, solisPeek(vm, size - i - 1));
-		}
+			uint16_t size = READ_SHORT();
 
-		for (uint16_t i = 0; i < size; i++)
-		{
-			DROP();
-		}
+			ObjList* list = solisNewList(vm);
 
-		PUSH(SOLIS_OBJECT_VALUE(list));
+			// This is not the fastest method 
+			// TODO: FIXME 
+
+			for (uint16_t i = 0; i < size; i++)
+			{
+				solisValueBufferWrite(vm, &list->values, solisPeek(vm, size - i - 1));
+			}
+
+			for (uint16_t i = 0; i < size; i++)
+			{
+				DROP();
+			}
+
+			PUSH(SOLIS_OBJECT_VALUE(list));
+		}
 
 		DISPATCH();
 	}
@@ -443,12 +447,12 @@ do {																		\
 	}
 	CASE_CODE(SET_GLOBAL) :
 	{
-		vm->currentModule->globals.data[READ_SHORT()] = PEEK();
+		globals[READ_SHORT()] = PEEK();
 		DISPATCH();
 	}
 	CASE_CODE(GET_GLOBAL) :
 	{
-		PUSH(vm->currentModule->globals.data[READ_SHORT()]);
+		PUSH(globals[READ_SHORT()]);
 		DISPATCH();
 	}
 	CASE_CODE(SET_LOCAL) :
@@ -464,13 +468,11 @@ do {																		\
 	CASE_CODE(GET_UPVALUE) :
 	{
 		PUSH(*frame->closure->upvalues[READ_SHORT()]->location);
-
 		DISPATCH();
 	}
 	CASE_CODE(SET_UPVALUE) :
 	{
 		*frame->closure->upvalues[READ_SHORT()]->location = PEEK();
-
 		DISPATCH();
 	}
 	CASE_CODE(CLOSE_UPVALUE) :
@@ -483,9 +485,11 @@ do {																		\
 	}
 	CASE_CODE(JUMP_IF_FALSE) :
 	{
-		uint16_t offset = READ_SHORT();
-		if (solisIsFalsy(PEEK()))
-			ip += offset;
+		{
+			uint16_t offset = READ_SHORT();
+			if (solisIsFalsy(PEEK()))
+				ip += offset;
+		}
 
 		DISPATCH();
 	}
@@ -493,14 +497,12 @@ do {																		\
 	{
 		uint16_t offset = READ_SHORT();
 		ip += offset;
-
 		DISPATCH();
 	}
 	CASE_CODE(LOOP) :
 	{
 		uint16_t offset = READ_SHORT();
 		ip -= offset;
-
 		DISPATCH();
 	}
 	CASE_CODE(CLOSURE) :
@@ -879,7 +881,7 @@ do {																		\
 }
 
 
-static bool callClosure(VM* vm, ObjClosure* closure, int argCount)
+static inline bool callClosure(VM* vm, ObjClosure* closure, int argCount)
 {
 	if (argCount != closure->function->arity)
 	{
@@ -903,7 +905,7 @@ static bool callClosure(VM* vm, ObjClosure* closure, int argCount)
 	return true;
 }
 
-static bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs)
+static inline bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs)
 {
 
 	if (vm->apiStack != NULL)
@@ -914,57 +916,55 @@ static bool callNativeFunction(VM* vm, SolisNativeSignature func, int numArgs)
 	// we want to add the caller into it as well
 	vm->apiStack = vm->sp - (numArgs + 1);
 
-	func(vm);
+	bool success = func(vm);
 
 	vm->sp = vm->apiStack + 1;
 
 	vm->apiStack = NULL;
 
-	return true;
+	return success;
 }
 
-static bool callValue(VM* vm, Value callee, int argCount) {
-	if (SOLIS_IS_OBJECT(callee)) {
+static bool callValue(VM* vm, Value callee, int argCount) 
+{
+	if (!SOLIS_IS_OBJECT(callee))
+		return false;
 
-		Object* obj = SOLIS_AS_OBJECT(callee);
+	Object* obj = SOLIS_AS_OBJECT(callee);
 
-		switch (obj->type) {
-		case OBJ_CLOSURE:
-			return callClosure(vm, (ObjClosure*)obj, argCount);
-		case OBJ_NATIVE_FUNCTION:
+	switch (obj->type) {
+	case OBJ_CLOSURE:
+		return callClosure(vm, (ObjClosure*)obj, argCount);
+	case OBJ_NATIVE_FUNCTION:
+		return callNativeFunction(vm, ((ObjNative*)obj)->nativeFunction, argCount);
+	case OBJ_CLASS:
+	{
+		ObjClass* klass = (ObjClass*)obj;
+		vm->sp[-argCount - 1] = SOLIS_OBJECT_VALUE(solisNewInstance(vm, klass));
+
+		// Call the constructor if we have one 
+		if (klass->constructor)
+			return callClosure(vm, klass->constructor, argCount);
+
+		return true;
+	}
+	case OBJ_BOUND_METHOD:
+	{
+		ObjBoundMethod* bound = (ObjBoundMethod*)obj;
+		vm->sp[-argCount - 1] = bound->receiver;
+		if (bound->nativeFunction)
 		{
-			return callNativeFunction(vm, ((ObjNative*)obj)->nativeFunction, argCount);
+			return callNativeFunction(vm, bound->native->nativeFunction, argCount);
 		}
-		case OBJ_CLASS:
+		else
 		{
-			ObjClass* klass = (ObjClass*)obj;
-			vm->sp[-argCount - 1] = SOLIS_OBJECT_VALUE(solisNewInstance(vm, klass));
-
-			// Call the constructor if we have one 
-			if (klass->constructor)
-			{
-				return callClosure(vm, klass->constructor, argCount);
-			}
-
-			return true;
-		}
-		case OBJ_BOUND_METHOD:
-		{
-			ObjBoundMethod* bound = (ObjBoundMethod*)obj;
-			vm->sp[-argCount - 1] = bound->receiver;
-			if (bound->nativeFunction)
-			{
-				return callNativeFunction(vm, bound->native->nativeFunction, argCount);
-			}
-			else
-			{
-				return callClosure(vm, bound->method, argCount);
-			}
-		}
-		default:
-			break; // Non-callable object type.
+			return callClosure(vm, bound->method, argCount);
 		}
 	}
+	default:
+		break; // Non-callable object type.
+	}
+	
 	return false;
 }
 
@@ -1164,9 +1164,10 @@ static void printSourceLineVm( const char* source, int line)
 
 void solisVMRaiseError(VM* vm, const char* message, ...)
 {
-	vm->currentInstruction = (int)(vm->frames[vm->frameCount - 1].ip - vm->currentModule->closure->function->chunk.code);
-
 	CallFrame* currentFrame = &vm->frames[vm->frameCount - 1];
+
+	vm->currentInstruction = (int)(currentFrame->ip - currentFrame->closure->function->chunk.code);
+
 	int instOffset = vm->currentInstruction;
 	Chunk* chunk = &currentFrame->closure->function->chunk;
 
@@ -1183,6 +1184,8 @@ void solisVMRaiseError(VM* vm, const char* message, ...)
 	va_start(args, message);
 
 	terminal_vPrintf(message, args);
+
+	terminalPrintf("\n");
 
 	if (vm->moduleName)
 		terminalPrintf("--> %s:%d\n", vm->moduleName, line);

@@ -9,7 +9,7 @@
 /*
 	Function signature for C functions
 */
-typedef void(*SolisNativeSignature)(VM*);
+typedef bool(*SolisNativeSignature)(VM*);
 
 /*
 	These functions help with binding C code to the Solis VM. 
