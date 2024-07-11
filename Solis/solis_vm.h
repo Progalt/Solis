@@ -152,29 +152,41 @@ void solisDumpGlobals(VM* vm);
 
 static inline ObjClass* solisGetClassForValue(VM* vm, Value value)
 {
+
+#ifdef SOLIS_NAN_BOXING
+
+	if (SOLIS_IS_NUMERIC(value))
+		return vm->numberClass;
+	if (SOLIS_IS_OBJECT(value))
+		return SOLIS_AS_OBJECT(value)->classObj;
+
+
+	switch (SOLIS_GET_TAG(value))
+	{
+	case TAG_FALSE: return vm->boolClass;
+	case TAG_TRUE: return vm->boolClass;
+	case TAG_NAN: return vm->numberClass;
+	default: 
+		break;
+	}
+
+#else
+
 	if (SOLIS_IS_CLASS(value))
 		return SOLIS_AS_CLASS(value);
+	if (SOLIS_IS_OBJECT(value))
+		return SOLIS_AS_OBJECT(value)->classObj;
 
-	switch (value.type)
+	switch (solisGetValueType(value))
 	{
 	case VALUE_FALSE: return vm->boolClass;
 	case VALUE_TRUE: return vm->boolClass;
 	case VALUE_NULL: return NULL;
 	case VALUE_NUMERIC: return vm->numberClass;
-	case VALUE_OBJECT: 
-	{
-		switch (SOLIS_AS_OBJECT(value)->type)
-		{
-		case OBJ_STRING: return vm->stringClass;
-		case OBJ_LIST: return vm->listClass;
-		case OBJ_INSTANCE: return SOLIS_AS_INSTANCE(value)->klass;
-		default:
-			break;
-		}
-	}
 	default:
 		break;
 	}
+#endif
 
 	return NULL;
 }

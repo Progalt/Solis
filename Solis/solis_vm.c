@@ -251,7 +251,8 @@ do {																		\
 #define STACK_TRACE()
 #endif
 
-
+	// Check for an error that has been raised
+	// TODO: For native functions maybe make it return a bool of success and then route that into the VM instead of this. 
 #define CHECK_ERROR()			\
 		if (vm->errorRaised)	\
 			return INTERPRET_RUNTIME_ERROR;
@@ -312,7 +313,7 @@ do {																		\
 		// No need to pop and push 
 		Value* ptr = PEEK_PTR();
 		if (SOLIS_IS_NUMERIC(*ptr))
-			ptr->as.number = -ptr->as.number;
+			*ptr = SOLIS_NUMERIC_VALUE(-SOLIS_AS_NUMBER(*ptr));
 		else
 		{
 			solisVMRaiseError( vm, "Negate error\n");
@@ -340,11 +341,11 @@ do {																		\
 	{
 
 		Value a = POP();
-		Value* val = PEEK_PTR();
+		Value val = POP();
 
 		// Check if the values are numeric values
-		if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-			*val = SOLIS_BOOL_VALUE(val->as.number > a.as.number);
+		if (SOLIS_IS_NUMERIC(val) && SOLIS_IS_NUMERIC(a))
+			PUSH(SOLIS_BOOL_VALUE(SOLIS_AS_NUMBER(val) > SOLIS_AS_NUMBER(a)));
 
 		DISPATCH();
 	}
@@ -352,11 +353,11 @@ do {																		\
 	{
 
 		Value a = POP();
-		Value* val = PEEK_PTR();
+		Value val = POP();
 
 		// Check if the values are numeric values
-		if (SOLIS_IS_NUMERIC(*val) && SOLIS_IS_NUMERIC(a))
-			*val = SOLIS_BOOL_VALUE(val->as.number < a.as.number);
+		if (SOLIS_IS_NUMERIC(val) && SOLIS_IS_NUMERIC(a))
+			PUSH(SOLIS_BOOL_VALUE(SOLIS_AS_NUMBER(val) < SOLIS_AS_NUMBER(a)));
 
 		DISPATCH();
 	}

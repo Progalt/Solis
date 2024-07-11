@@ -261,6 +261,7 @@ ObjClass* solisNewClass(VM* vm, ObjString* name)
 	klass->name = name;
 
 	klass->constructor = NULL;
+	klass->obj.classObj = klass;
 
 	solisInitHashTable(&klass->fields, vm);
 	solisInitHashTable(&klass->methods, vm);

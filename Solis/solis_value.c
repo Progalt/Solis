@@ -57,7 +57,7 @@ void solisPrintValueType(Value value)
 		return;
 	}
 
-	switch (value.type)
+	switch (solisGetValueType(value))
 	{
 	case VALUE_NULL:
 		printf("Null");
@@ -126,19 +126,20 @@ void solisPrintValue(Value value)
 		return;
 	}
 
-	switch (value.type)
+	switch (solisGetValueType(value))
 	{
 	case VALUE_NULL:
 		printf("null");
 		break;
 	case VALUE_TRUE:
-		printf("true");
-		break;
 	case VALUE_FALSE:
-		printf("false");
+		if (SOLIS_AS_BOOL(value))
+			printf("true");
+		else
+			printf("false");
 		break;
 	case VALUE_NUMERIC:
-		printf("%g", value.as.number);
+		printf("%g", SOLIS_AS_NUMBER(value));
 		break;
 	default:
 		printf("Unknown value type");
