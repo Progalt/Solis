@@ -299,7 +299,7 @@ bool ffi_loadLibrary(VM* vm)
     if (!handle)
     {
         // Failed to load the library
-        // TODO: Error check
+        solisVMRaiseError(vm, "Failed to find and load library: %s\n", SOLIS_AS_CSTRING(path));
 
         return false;
     }
@@ -311,7 +311,7 @@ bool ffi_loadLibrary(VM* vm)
 
     if (!openlib)
     {
-
+        solisVMRaiseError(vm, "Failed to find solis_openlib function in library: %s\n", SOLIS_AS_CSTRING(path));
         return false;
     }
 
@@ -387,4 +387,5 @@ void solisInitialiseCore(VM* vm, bool sandboxed)
 
         solisAddClassNativeStaticMethod(vm, ffiClass, "loadLibrary", ffi_loadLibrary, 1);
     }
+    
 }

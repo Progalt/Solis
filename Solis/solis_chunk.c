@@ -280,6 +280,10 @@ int solisDisassembleInstruction(Chunk* chunk, int offset)
 		return simpleInstruction("OP_INHERIT", offset);
 	case OP_INVOKE:
 		return invokeInstruction("OP_INVOKE", chunk, offset);
+	case OP_CREATE_LIST:
+		return simpleInstruction("OP_CREATE_LIST", offset);
+	case OP_APPEND_LIST:
+		return simpleInstruction("OP_APPEND_LIST", offset);
 	default:
 		printf("Unknown opcode %d\n", instruction);
 		return offset + 1;

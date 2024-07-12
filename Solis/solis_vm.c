@@ -55,6 +55,11 @@ void solisInitVM(VM* vm, bool sandboxed)
 	vm->greyStack = NULL;
 	vm->errorRaised = false;
 
+	vm->boolClass = NULL;
+	vm->stringClass = NULL;
+	vm->numberClass = NULL;
+	vm->listClass = NULL;
+
 
 	solisInitHashTable(&vm->strings, vm);
 	/*solisInitHashTable(&vm->globalMap, vm);
@@ -76,7 +81,6 @@ void solisInitVM(VM* vm, bool sandboxed)
 
 
 	solisInitialiseCore(vm, sandboxed);
-
 
 }
 
@@ -383,7 +387,9 @@ do {																		\
 
 	completeOpCall:
 
-		ObjClass* klass = solisGetClassForValue(vm, PEEK_OFF(argCount));
+		Value val = PEEK_OFF(argCount);
+
+		ObjClass* klass = solisGetClassForValue(vm, val);
 
 		Object* obj = klass->operators[op];
 
@@ -419,14 +425,14 @@ do {																		\
 	CASE_CODE(CREATE_LIST) :
 	{
 		{
-			uint16_t size = READ_SHORT();
+			//uint16_t size = READ_SHORT();
 
 			ObjList* list = solisNewList(vm);
 
 			// This is not the fastest method 
 			// TODO: FIXME 
 
-			for (uint16_t i = 0; i < size; i++)
+			/*for (uint16_t i = 0; i < size; i++)
 			{
 				solisValueBufferWrite(vm, &list->values, solisPeek(vm, size - i - 1));
 			}
@@ -434,10 +440,22 @@ do {																		\
 			for (uint16_t i = 0; i < size; i++)
 			{
 				DROP();
-			}
+			}*/
 
 			PUSH(SOLIS_OBJECT_VALUE(list));
 		}
+
+		DISPATCH();
+	}
+	CASE_CODE(APPEND_LIST) :
+	{
+		Value list = PEEK_OFF(1);
+		Value val = PEEK();
+
+		ObjList* l = SOLIS_AS_LIST(list);
+		solisValueBufferWrite(vm, &l->values, val);
+
+		DROP();
 
 		DISPATCH();
 	}

@@ -158,7 +158,18 @@ static inline ObjClass* solisGetClassForValue(VM* vm, Value value)
 	if (SOLIS_IS_NUMERIC(value))
 		return vm->numberClass;
 	if (SOLIS_IS_OBJECT(value))
-		return SOLIS_AS_OBJECT(value)->classObj;
+	{
+		// This is a bit scuffed
+		ObjClass* klass = SOLIS_AS_OBJECT(value)->classObj;
+
+		if (klass != NULL)
+			return klass;
+
+		if (SOLIS_IS_STRING(value))
+			return vm->stringClass;
+		else if (SOLIS_IS_LIST(value))
+			return vm->listClass;
+	}
 
 
 	switch (SOLIS_GET_TAG(value))
@@ -175,7 +186,18 @@ static inline ObjClass* solisGetClassForValue(VM* vm, Value value)
 	if (SOLIS_IS_CLASS(value))
 		return SOLIS_AS_CLASS(value);
 	if (SOLIS_IS_OBJECT(value))
-		return SOLIS_AS_OBJECT(value)->classObj;
+	{
+		// This is a bit scuffed
+		ObjClass* klass = SOLIS_AS_OBJECT(value)->classObj;
+
+		if (klass != NULL)
+			return klass;
+
+		if (SOLIS_IS_STRING(value))
+			return vm->stringClass;
+		else if (SOLIS_IS_LIST(value))
+			return vm->listClass;
+	}
 
 	switch (solisGetValueType(value))
 	{

@@ -1,0 +1,13 @@
+
+
+function doSomething()
+
+	var l = [ 0, 1, 2, 3 , 4 ]
+
+	println("Hello World")
+	println(l)
+end
+
+while true do 
+	doSomething()
+end 

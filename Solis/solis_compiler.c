@@ -1624,20 +1624,22 @@ static void dot(bool canAssign)
 static void arrayCreate(bool canAssign)
 {
 	uint16_t size = 0;
+
+	emitByte(OP_CREATE_LIST);
+
 	// Check if we have any elements
 	if (!check(TOKEN_RIGHT_BRACKET))
 	{
 		do {
 			expression();
 
+			emitByte(OP_APPEND_LIST);
 			size++;
 		} while (match(TOKEN_COMMA));
 	}
 
 	consume(TOKEN_RIGHT_BRACKET, "Expected ']' at end of list");
 
-	emitByte(OP_CREATE_LIST);
-	emitShort(size);
 }
 
 static void arrayAssign(bool canAssign)

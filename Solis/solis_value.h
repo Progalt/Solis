@@ -18,7 +18,10 @@ void solisFreeObject(VM* vm, Object* object);
 #define ALLOCATE_OBJ(vm, type, objectType) \
     (type*)solisAllocateObject(vm, sizeof(type), objectType) 
 
+// Just enable NaN boxing on release
+#if !defined(_DEBUG) && !defined(SOLIS_DONT_NAN_BOX)
 #define SOLIS_NAN_BOXING
+#endif
 
 #ifdef SOLIS_NAN_BOXING
 

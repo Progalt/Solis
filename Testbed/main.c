@@ -62,7 +62,7 @@ bool clockNative(VM* vm)
 
 int main(void) {
 
-    const char* filepath = "F:/Dev/Solis/Testbed/fib.solis";
+    const char* filepath = "F:/Dev/Solis/Testbed/testing.solis";
 
     char* fileContent = readFileIntoString(filepath);
     if (fileContent == NULL) 
