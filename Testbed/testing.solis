@@ -1,5 +1,9 @@
 
 
+var t = 0xB72  
+println(t)
+
+
 class Vector2
 	
 	var x = 0

@@ -80,6 +80,11 @@ static bool isDigit(char c)
 	return c >= '0' && c <= '9';
 }
 
+static bool isHex(char c)
+{ 
+	return isDigit(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+}
+
 static bool isAtEnd() 
 {
 	return *scanner.current == '\0';
@@ -178,7 +183,18 @@ static Token string()
 
 static Token number()
 {
+	// This is for hex numbers
+	if (peek() == 'x')
+	{
+		advance();
+
+		while (isHex(peek())) advance();
+
+		return makeToken(TOKEN_NUMBER);
+	}
+
 	while (isDigit(peek())) advance();
+
 
 	if (peek() == '.' && isDigit(peekNext()))
 	{
