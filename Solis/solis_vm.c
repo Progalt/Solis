@@ -1054,6 +1054,29 @@ InterpretResult solisCallFunction(VM* vm, Value function, Value* args, int argCo
 
 }
 
+InterpretResult solisCallInstanceMethod(VM* vm, Value instance, const char* methodName, Value* args, int argCount)
+{
+	if (!SOLIS_IS_INSTANCE(instance))
+		return INTERPRET_COMPILE_ERROR;
+
+	ObjString* str = solisCopyString(vm, methodName, strlen(methodName));
+	solisPush(vm, SOLIS_OBJECT_VALUE(str));
+
+	ObjInstance* inst = SOLIS_AS_INSTANCE(instance);
+
+	Value method;
+	if (!solisHashTableGet(&inst->klass->methods, str, &method))
+	{
+		solisPop(vm);
+		return INTERPRET_COMPILE_ERROR;
+	}
+
+	solisPush(vm, instance);
+
+	return solisCallFunction(vm, method, args, argCount);
+
+}
+
 void solisPushGlobal(VM* vm, const char* name, Value value)
 {
 

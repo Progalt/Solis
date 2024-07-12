@@ -83,6 +83,12 @@ int main(void) {
     Value args[] = { SOLIS_NUMERIC_VALUE(0.22) };
     solisCallFunction(&vm, update, args, 1);
 
+    Value barrel = solisGetGlobal(&vm, "Barrel");
+
+    Value barrelInstance = solisCreateClassInstance(&vm, "barrelObject", barrel);
+
+    solisCallInstanceMethod(&vm, barrelInstance, "start", NULL, 0);
+
     // solisDumpGlobals(&vm);
 
 	solisFreeVM(&vm);

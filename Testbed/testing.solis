@@ -30,3 +30,13 @@ function update(dt)
 	println(pos.y)
 
 end
+
+class Barrel 
+
+
+	function start()
+		println("Barrel start")
+	end
+
+end
+

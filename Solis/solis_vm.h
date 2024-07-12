@@ -99,6 +99,8 @@ void solisFreeVM(VM* vm);
 
 InterpretResult solisCallFunction(VM* vm, Value function, Value* args, int argCount);
 
+InterpretResult solisCallInstanceMethod(VM* vm, Value instance, const char* methodName, Value* args, int argCount);
+
 /*
 	Pushes a value onto the VM stack
 */

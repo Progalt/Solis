@@ -96,6 +96,16 @@ Value solisCreateClass(VM* vm, const char* name)
 	return SOLIS_OBJECT_VALUE(klass);
 }
 
+Value solisCreateClassInstance(VM* vm, const char* name, Value klass)
+{
+
+	ObjInstance* instance = solisNewInstance(vm, SOLIS_AS_CLASS(klass));
+
+	solisPushGlobal(vm, name, SOLIS_OBJECT_VALUE(instance));
+
+	return SOLIS_OBJECT_VALUE(instance);
+}
+
 void solisAddClassField(VM* vm, Value klassValue, const char* name, bool isStatic, Value defaultValue)
 {
 	ObjClass* klass = SOLIS_AS_CLASS(klassValue);

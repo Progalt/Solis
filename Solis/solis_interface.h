@@ -54,6 +54,8 @@ void solisBindEnumEntry(VM* vm, Value enumObj, const char* name);
 */
 Value solisCreateClass(VM* vm, const char* name);
 
+Value solisCreateClassInstance(VM* vm, const char* name, Value klass);
+
 /*
 	Add a class field to a class. 
 */
