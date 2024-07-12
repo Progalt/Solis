@@ -113,6 +113,7 @@ bool solisHashTableGet(HashTable* table, ObjString* key, Value* value)
 	return true;
 }
 
+
 bool solisHashTableDelete(HashTable* table, ObjString* key)
 {
 	if (table->count == 0) 

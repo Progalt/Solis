@@ -78,6 +78,10 @@ int main(void) {
 
 	InterpretResult result = solisInterpret(&vm, fileContent, filepath);
 
+    Value update = solisGetGlobal(&vm, "update");
+
+    Value args[] = { SOLIS_NUMERIC_VALUE(0.22) };
+    solisCallFunction(&vm, update, args, 1);
 
     // solisDumpGlobals(&vm);
 

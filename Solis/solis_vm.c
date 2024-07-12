@@ -424,31 +424,14 @@ do {																		\
 	}
 	CASE_CODE(CREATE_LIST) :
 	{
-		{
-			//uint16_t size = READ_SHORT();
-
-			ObjList* list = solisNewList(vm);
-
-			// This is not the fastest method 
-			// TODO: FIXME 
-
-			/*for (uint16_t i = 0; i < size; i++)
-			{
-				solisValueBufferWrite(vm, &list->values, solisPeek(vm, size - i - 1));
-			}
-
-			for (uint16_t i = 0; i < size; i++)
-			{
-				DROP();
-			}*/
-
-			PUSH(SOLIS_OBJECT_VALUE(list));
-		}
-
+		ObjList* list = solisNewList(vm);
+		PUSH(SOLIS_OBJECT_VALUE(list));
 		DISPATCH();
 	}
 	CASE_CODE(APPEND_LIST) :
 	{
+		// Peek the value on the stack and append it to the list. 
+		// This op is only used during list creation. 
 		Value list = PEEK_OFF(1);
 		Value val = PEEK();
 
@@ -1050,6 +1033,25 @@ Value solisPop(VM* vm)
 Value solisPeek(VM* vm, int offset)
 {
 	return (*(vm->sp - 1 - offset));
+}
+
+InterpretResult solisCallFunction(VM* vm, Value function, Value* args, int argCount)
+{
+
+	if (!SOLIS_IS_CLOSURE(function))
+		return INTERPRET_COMPILE_ERROR;
+
+	ObjClosure* closure = SOLIS_AS_CLOSURE(function);
+
+	for (int i = 0; i < argCount; i++)
+		solisPush(vm, args[i]);
+
+	callClosure(vm, closure, argCount);
+
+	// TODO: Check if its running
+
+	return run(vm);
+
 }
 
 void solisPushGlobal(VM* vm, const char* name, Value value)

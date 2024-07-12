@@ -1,13 +1,32 @@
 
 
-function doSomething()
+class Vector2
+	
+	var x = 0
+	var y = 0
 
-	var l = [ 0, 1, 2, 3 , 4 ]
+	Vector2()
 
-	println("Hello World")
-	println(l)
+	end
+
+	static function init(sx, sy)
+		var out = Vector2()
+
+		out.x = sx
+		out.y = sy
+
+		return out
+	end
+
+
 end
 
-while true do 
-	doSomething()
-end 
+function update(dt)
+	
+	var pos = Vector2.init(2, 2)
+
+	println(dt)
+	println(pos.x)
+	println(pos.y)
+
+end

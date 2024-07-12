@@ -97,7 +97,7 @@ void solisInitVM(VM* vm, bool sandboxed);
 */
 void solisFreeVM(VM* vm);
 
-
+InterpretResult solisCallFunction(VM* vm, Value function, Value* args, int argCount);
 
 /*
 	Pushes a value onto the VM stack
