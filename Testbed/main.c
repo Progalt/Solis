@@ -60,9 +60,9 @@ bool clockNative(VM* vm)
     return true;
 }
 
-char* importerFunc(const char* name)
+static char* importerFunc(const char* name)
 {
-
+    return NULL;
 }
 
 int main(void) 

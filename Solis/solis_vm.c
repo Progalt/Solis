@@ -203,7 +203,7 @@ static bool invoke(VM* vm, ObjString* name, int argCount)
 	
 }
 
-void solisSetImporter(VM* vm, SolisImporter* importerFunc)
+void solisSetImporter(VM* vm, SolisImporter importerFunc)
 {
 	vm->importerFunc = importerFunc;
 }
@@ -246,6 +246,7 @@ static InterpretResult run(VM* vm)
 #define PEEK_PTR() (vm->sp - 1)
 #define DROP() (--vm->sp)
 
+#define SOLIS_DEBUG_TRACE_EXECUTION
 #ifdef SOLIS_DEBUG_TRACE_EXECUTION
 #define STACK_TRACE()														\
 do {																		\
@@ -865,6 +866,14 @@ do {																		\
 		if (!vm->importerFunc)
 		{
 			solisVMRaiseError(vm, "Solis needs an Importer function to handle reading from file for importing. This has not been assigned.");
+			return INTERPRET_RUNTIME_ERROR;
+		}
+		ObjString* moduleName = SOLIS_AS_STRING(POP());
+		char* src = vm->importerFunc(moduleName->chars);
+
+		if (src == NULL)
+		{
+			solisVMRaiseError(vm, "Failed to load module %s.", moduleName->chars);
 			return INTERPRET_RUNTIME_ERROR;
 		}
 

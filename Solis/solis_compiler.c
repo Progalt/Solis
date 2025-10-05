@@ -1536,8 +1536,8 @@ static void importStatement()
 		error("Imports can only be used in top-level code.");
 	}
 
-	string(false);
 	consume(TOKEN_STRING, "Expected module name string after import");
+	string(false);
 	emitByte(OP_IMPORT);
 }
 

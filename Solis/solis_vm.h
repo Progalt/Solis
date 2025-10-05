@@ -83,7 +83,7 @@ struct VM
 	SolisImporter importerFunc;
 };
 
-void solisSetImporter(VM* vm, SolisImporter* importerFunc);
+void solisSetImporter(VM* vm, SolisImporter importerFunc);
 
 /*
 	This interprets a source string with the given VM
