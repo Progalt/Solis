@@ -33,6 +33,7 @@ void solisInitVM(VM* vm, bool sandboxed)
 	__openVMs++;
 
 	vm->sandboxed = sandboxed;
+	vm->importerFunc = NULL;
 
 	vm->sp = vm->stack;
 	vm->objects = NULL;
@@ -200,6 +201,11 @@ static bool invoke(VM* vm, ObjString* name, int argCount)
 		
 	return invokeFromClass(vm, klass, name, argCount, isStatic);
 	
+}
+
+void solisSetImporter(VM* vm, SolisImporter* importerFunc)
+{
+	vm->importerFunc = importerFunc;
 }
 
 static InterpretResult run(VM* vm)
@@ -746,6 +752,13 @@ do {																		\
 
 				break;
 			}
+			case OBJ_MODULE:
+			{
+				ObjModule* mdl = (ObjModule*)object;
+				solisVMRaiseError(vm, "Accessing Modules isn't supported yet");
+				return INTERPRET_RUNTIME_ERROR;
+				break;
+			}
 			default:
 				// Return an error
 				// We can't access the fields
@@ -849,7 +862,14 @@ do {																		\
 	}
 	CASE_CODE(IMPORT) :
 	{
+		if (!vm->importerFunc)
+		{
+			solisVMRaiseError(vm, "Solis needs an Importer function to handle reading from file for importing. This has not been assigned.");
+			return INTERPRET_RUNTIME_ERROR;
+		}
+
 		solisVMRaiseError(vm, "Importing not yet implemented");
+		return INTERPRET_RUNTIME_ERROR;
 
 		DISPATCH();
 	}

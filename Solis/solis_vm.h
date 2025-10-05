@@ -11,6 +11,7 @@
 #define FRAMES_MAX 64
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
 
+typedef char* (*SolisImporter)(const char*);
 
 typedef enum
 {
@@ -78,8 +79,11 @@ struct VM
 	ObjModule* currentModule;
 
 	bool errorRaised;
+
+	SolisImporter importerFunc;
 };
 
+void solisSetImporter(VM* vm, SolisImporter* importerFunc);
 
 /*
 	This interprets a source string with the given VM

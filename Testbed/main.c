@@ -60,6 +60,11 @@ bool clockNative(VM* vm)
     return true;
 }
 
+char* importerFunc(const char* name)
+{
+
+}
+
 int main(void) 
 {
 
@@ -74,6 +79,7 @@ int main(void)
 
 	VM vm;
 	solisInitVM(&vm, false);
+    solisSetImporter(&vm, importerFunc);
     
     solisPushGlobalCFunction(&vm, "clock", clockNative, 0);
 
