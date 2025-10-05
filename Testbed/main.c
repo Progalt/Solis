@@ -62,7 +62,43 @@ bool clockNative(VM* vm)
 
 static char* importerFunc(const char* name)
 {
-    return NULL;
+    const char* baseDir = "F:/GamesFuture/Solis/Testbed/";
+    const char* ext = ".solis";
+    size_t pathLen = strlen(baseDir) + strlen(name) + strlen(ext) + 1;
+
+    char* fullPath = (char*)malloc(pathLen);
+    if (!fullPath) {
+        return NULL; // Allocation failed
+    }
+
+    snprintf(fullPath, pathLen, "%s%s%s", baseDir, name, ext);
+
+    FILE* file = fopen(fullPath, "rb");
+    if (!file) {
+        free(fullPath);
+        return NULL;
+    }
+
+    // Determine file size
+    fseek(file, 0, SEEK_END);
+    long fileSize = ftell(file);
+    rewind(file);
+
+    // Allocate buffer to load file contents (+1 for null-terminator)
+    char* buffer = (char*)malloc(fileSize + 1);
+    if (!buffer) {
+        fclose(file);
+        free(fullPath);
+        return NULL;
+    }
+
+    // Read the file into buffer
+    fread(buffer, 1, fileSize, file);
+    buffer[fileSize] = '\0'; // Null-terminate
+
+    fclose(file);
+    free(fullPath);
+    return buffer;
 }
 
 int main(void) 

@@ -17,6 +17,7 @@
 
 #include "solis_vm.h"
 #include "terminal.h"
+#include "solis_value.h"
 
 typedef struct Upvalue
 {
@@ -1529,6 +1530,9 @@ static void returnStatement()
 	}
 }
 
+
+
+
 static void importStatement()
 {
 	if (current->type != TYPE_SCRIPT)
@@ -1536,9 +1540,70 @@ static void importStatement()
 		error("Imports can only be used in top-level code.");
 	}
 
+	error("Import statements current don't work.");
+
 	consume(TOKEN_STRING, "Expected module name string after import");
-	string(false);
-	emitByte(OP_IMPORT);
+
+	// Get module path 
+
+	const char* modulePath = parser.previous.start + 1; 
+	int pathLength = parser.previous.length - 2; 
+	
+	char* path = (char*)malloc(pathLength + 1);
+	memcpy(path, modulePath, pathLength);
+	path[pathLength] = '\0';
+
+	ObjModule* importedModule = solisCompileModule(current->vm, path);
+
+	free(path);
+
+	emitConstant(SOLIS_OBJECT_VALUE(importedModule->closure));
+	emitByte(OP_CALL_0);
+	emitByte(OP_POP);
+}
+
+// This is not a good place for this code but it works for now...
+
+ObjModule* solisCompileModule(VM* vm, const char* modulePath)
+{
+	ObjString* pathStr = solisCopyString(vm, modulePath, strlen(modulePath));
+	Value cachedModule;
+
+	// Check cache first
+	if (solisHashTableGet(&vm->moduleCache, pathStr, &cachedModule)) {
+		return SOLIS_AS_MODULE(cachedModule);
+	}
+
+	if (!vm->importerFunc)
+	{
+		return NULL;
+	}
+
+	Parser savedParser = parser;
+
+	char* source = vm->importerFunc(modulePath);
+	if (source == NULL)
+	{
+		error("Could not read module");
+		return NULL;
+	}
+
+	ObjModule* module = solisNewModule(vm);
+
+	solisHashTableInsert(&vm->moduleCache, pathStr,
+		SOLIS_OBJECT_VALUE(module));
+
+	if (!solisCompile(vm, source, module, modulePath))
+	{
+		free(source);
+		return NULL;
+	}
+
+	free(source);
+
+	parser = savedParser;
+
+	return module;
 }
 
 static void and_(bool canAssign)

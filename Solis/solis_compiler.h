@@ -20,6 +20,8 @@ typedef enum
 
 bool solisCompile(VM* vm, const char* source, ObjModule* mdl, const char* sourceName);
 
+ObjModule* solisCompileModule(VM* vm, const char* modulePath);
+
 void solisMarkCompilerRoots(VM* vm);
 
 #endif // SOLIS_COMPILER_H

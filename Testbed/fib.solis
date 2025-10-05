@@ -1,5 +1,5 @@
 
-import "hello" 
+import "hello"
 
 function fib(n)
 
@@ -12,13 +12,15 @@ function fib(n)
 
 end
 
-var iters = 5
+
+
+var iters = 1
 var i = 0
 
 var start = clock()
 
 while i < iters do 
-	println(fib(28))
+	println(fib(5))
 
 	i = i + 1
 end
@@ -27,3 +29,4 @@ var elapsed = clock() - start
 
 println("Elapsed: ")
 println(elapsed)
+

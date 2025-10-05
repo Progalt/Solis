@@ -63,6 +63,7 @@ void solisInitVM(VM* vm, bool sandboxed)
 
 
 	solisInitHashTable(&vm->strings, vm);
+	solisInitHashTable(&vm->moduleCache, vm);
 	/*solisInitHashTable(&vm->globalMap, vm);
 	solisValueBufferInit(vm, &vm->globals);*/
 
@@ -103,6 +104,7 @@ void solisFreeVM(VM* vm)
 	SOLIS_FREE_ARRAY(vm, CallFrame, vm->frames, vm->frameCapacity);
 
 	solisFreeHashTable(&vm->strings);
+	solisFreeHashTable(&vm->moduleCache);
 	/*solisFreeHashTable(&vm->globalMap);
 	solisValueBufferClear(vm, &vm->globals);*/
 	freeObjects(vm);
@@ -246,7 +248,7 @@ static InterpretResult run(VM* vm)
 #define PEEK_PTR() (vm->sp - 1)
 #define DROP() (--vm->sp)
 
-#define SOLIS_DEBUG_TRACE_EXECUTION
+// #define SOLIS_DEBUG_TRACE_EXECUTION
 #ifdef SOLIS_DEBUG_TRACE_EXECUTION
 #define STACK_TRACE()														\
 do {																		\
@@ -859,27 +861,6 @@ do {																		\
 		}
 
 		LOAD_FRAME();
-		DISPATCH();
-	}
-	CASE_CODE(IMPORT) :
-	{
-		if (!vm->importerFunc)
-		{
-			solisVMRaiseError(vm, "Solis needs an Importer function to handle reading from file for importing. This has not been assigned.");
-			return INTERPRET_RUNTIME_ERROR;
-		}
-		ObjString* moduleName = SOLIS_AS_STRING(POP());
-		char* src = vm->importerFunc(moduleName->chars);
-
-		if (src == NULL)
-		{
-			solisVMRaiseError(vm, "Failed to load module %s.", moduleName->chars);
-			return INTERPRET_RUNTIME_ERROR;
-		}
-
-		solisVMRaiseError(vm, "Importing not yet implemented");
-		return INTERPRET_RUNTIME_ERROR;
-
 		DISPATCH();
 	}
 	CASE_CODE(RETURN) :

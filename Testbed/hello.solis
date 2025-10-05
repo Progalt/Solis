@@ -1,0 +1,5 @@
+
+
+function helloPrint()
+	println("Hello from Hello")
+end

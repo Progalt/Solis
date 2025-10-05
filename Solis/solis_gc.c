@@ -75,6 +75,7 @@ static void markRoots(VM* vm)
     markValueBuffer(vm, &vm->globals);*/
 
     markObject(vm, (Object*)vm->currentModule);
+    markTable(vm, &vm->moduleCache);
 
     markObject(vm, (Object*)vm->numberClass);
     markObject(vm, (Object*)vm->stringClass);

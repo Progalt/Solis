@@ -196,6 +196,9 @@ struct ObjModule
 	ObjClosure* closure;
 };
 
+#define SOLIS_IS_MODULE(value) solisIsObjType(value, OBJ_MODULE)
+#define SOLIS_AS_MODULE(value) ((ObjModule*)SOLIS_AS_OBJECT(value))
+
 /*
 	Returns the specified value is equal to the type
 	If the value is not an object it returns false.

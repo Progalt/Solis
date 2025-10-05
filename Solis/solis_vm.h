@@ -48,6 +48,8 @@ struct VM
 	// List of interned strings for the VM
 	HashTable strings;
 
+	HashTable moduleCache; 
+
 	//// So we can map names to global indexes
 	//HashTable globalMap;
 

@@ -1,7 +1,10 @@
 
+import "hello"
 
 function helloWorld() 
 	println("Hello World")
 end
 
 helloWorld()
+
+helloPrint()
