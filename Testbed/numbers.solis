@@ -28,6 +28,7 @@ println(str.length())
 var b = true
 
 println(b)
+println(false)
 
 var list = [ 10, 12, 13 ]
 

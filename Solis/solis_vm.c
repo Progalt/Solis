@@ -847,6 +847,12 @@ do {																		\
 		LOAD_FRAME();
 		DISPATCH();
 	}
+	CASE_CODE(IMPORT) :
+	{
+		solisVMRaiseError(vm, "Importing not yet implemented");
+
+		DISPATCH();
+	}
 	CASE_CODE(RETURN) :
 	{
 		Value result = POP();

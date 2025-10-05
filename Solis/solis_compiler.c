@@ -85,6 +85,7 @@ static void whileStatement();
 static void forStatement();
 static void breakStatement();
 static void returnStatement();
+static void importStatement();
 
 static void arrayCreate(bool canAssign);
 static void arrayAssign(bool canAssign);
@@ -156,6 +157,7 @@ ParseRule rules[] = {
   [TOKEN_IS] = { NULL, is_, PREC_CALL }, 
   [TOKEN_SELF] = { self, NULL, PREC_NONE },
   [TOKEN_DOT_DOT] = { NULL, binary, PREC_CALL },
+  [TOKEN_IMPORT] = { NULL, NULL, PREC_NONE },
   [TOKEN_EOF] = {NULL,     NULL,   PREC_NONE},
 };
 
@@ -728,6 +730,10 @@ static void statement()
 	else if (match(TOKEN_BREAK))
 	{
 		breakStatement();
+	}
+	else if (match(TOKEN_IMPORT))
+	{
+		importStatement();
 	}
 	else
 	{
@@ -1521,6 +1527,18 @@ static void returnStatement()
 
 		emitReturn();
 	}
+}
+
+static void importStatement()
+{
+	if (current->type != TYPE_SCRIPT)
+	{
+		error("Imports can only be used in top-level code.");
+	}
+
+	string(false);
+	consume(TOKEN_STRING, "Expected module name string after import");
+	emitByte(OP_IMPORT);
 }
 
 static void and_(bool canAssign)

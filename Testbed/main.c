@@ -60,9 +60,10 @@ bool clockNative(VM* vm)
     return true;
 }
 
-int main(void) {
+int main(void) 
+{
 
-    const char* filepath = "F:/Dev/Solis/Testbed/testing.solis";
+    const char* filepath = "F:/GamesFuture/Solis/Testbed/fib.solis";
 
     char* fileContent = readFileIntoString(filepath);
     if (fileContent == NULL) 
@@ -77,17 +78,6 @@ int main(void) {
     solisPushGlobalCFunction(&vm, "clock", clockNative, 0);
 
 	InterpretResult result = solisInterpret(&vm, fileContent, filepath);
-
-    Value update = solisGetGlobal(&vm, "update");
-
-    Value args[] = { SOLIS_NUMERIC_VALUE(0.22) };
-    solisCallFunction(&vm, update, args, 1);
-
-    Value barrel = solisGetGlobal(&vm, "Barrel");
-
-    Value barrelInstance = solisCreateClassInstance(&vm, "barrelObject", barrel);
-
-    solisCallInstanceMethod(&vm, barrelInstance, "start", NULL, 0);
 
     // solisDumpGlobals(&vm);
 
