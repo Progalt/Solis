@@ -36,6 +36,21 @@ is built in support for more types.
 With a fully featured C API for embedding the language easily. 
 
 
+### Some optimisations
+
+On release builds Nan-Boxing is used to pack values into 64 bits, similar to stuff like V8 and LuaJIT. 
+
+On Clang (I think GCC too, but it's not tested) Jump Tables are used instead of standard switch statements. 
+
+### Compiling
+
+A C compliant compiler is needed, and that's about it. It doesn't depend on anything but the stdlib, in some cases
+it may depend on the OS APIs like Windows API. 
+
+I recommend Clang, over something like MSVC. The Clang C Compiler has Jump Tables, which do provide a pretty good optimisation 
+over standard switches. 
+
+
 ### Resources: 
 - The amazing https://craftinginterpreters.com/
 - https://www.lua.org/
