@@ -1,12 +1,9 @@
 
-import "hello"
-
 function fib(n)
 
 	if n < 2 then
 		return n
 	end
-
 
 	return fib(n - 2) + fib(n - 1)
 
@@ -14,13 +11,13 @@ end
 
 
 
-var iters = 1
+var iters = 3
 var i = 0
 
 var start = clock()
 
 while i < iters do 
-	println(fib(5))
+	println(fib(10))
 
 	i = i + 1
 end
@@ -30,3 +27,4 @@ var elapsed = clock() - start
 println("Elapsed: ")
 println(elapsed)
 
+std.testFunc()

@@ -187,9 +187,38 @@ static bool invokeFromClass(VM* vm, ObjClass* klass, ObjString* name, int argCou
 	}
 }
 
+static bool invokeFromModule(VM* vm, ObjModule* module, ObjString* name, int argCount, bool isStatic) {
+	Value method;
+
+	
+
+	Value num = { 0 };
+	if (!solisHashTableGet(&module->globalMap, name, &num))
+	{
+		return false;
+	}
+
+	method = module->globals.data[(int)SOLIS_AS_NUMBER(num)];
+
+	if (SOLIS_IS_CLOSURE(method))
+		return callClosure(vm, SOLIS_AS_CLOSURE(method), argCount);
+	else
+	{
+		if (argCount != SOLIS_AS_NATIVE(method)->arity)
+			return false;
+
+		return callNativeFunction(vm, SOLIS_AS_NATIVE(method)->nativeFunction, argCount);
+	}
+}
+
 static bool invoke(VM* vm, ObjString* name, int argCount) 
 {
 	Value receiver = solisPeek(vm, argCount);
+
+	if (SOLIS_IS_MODULE(receiver))
+	{
+		return invokeFromModule(vm, SOLIS_AS_MODULE(receiver), name, argCount, false);
+	}
 
 	ObjClass* klass = NULL;
 	if (!SOLIS_IS_INSTANCE(receiver))
@@ -1095,7 +1124,11 @@ InterpretResult solisCallInstanceMethod(VM* vm, Value instance, const char* meth
 
 void solisPushGlobal(VM* vm, const char* name, Value value)
 {
+	solisPushGlobalToModule(vm, vm->currentModule, name, value);
+}
 
+void solisPushGlobalToModule(VM* vm, ObjModule* module, const char* name, Value value)
+{
 	ObjString* str = solisCopyString(vm, name, strlen(name));
 
 	// Do this for gc later on 
@@ -1103,23 +1136,23 @@ void solisPushGlobal(VM* vm, const char* name, Value value)
 
 	// We want to check if the value already exists and overwrite it at that position
 	Value val;
-	if (solisHashTableGet(&vm->currentModule->globalMap, str, &val))
+	if (solisHashTableGet(&module->globalMap, str, &val))
 	{
 		// We have the value already
 
 		int idx = (int)SOLIS_AS_NUMBER(val);
 
-		vm->currentModule->globals.data[idx] = value;
+		module->globals.data[idx] = value;
 
 	}
 	else
 	{
 
-		solisValueBufferWrite(vm, &vm->currentModule->globals, value);
+		solisValueBufferWrite(vm, &module->globals, value);
 
-		int idx = vm->currentModule->globals.count - 1;
+		int idx = module->globals.count - 1;
 
-		solisHashTableInsert(&vm->currentModule->globalMap, SOLIS_AS_STRING(solisPeek(vm, 0)), SOLIS_NUMERIC_VALUE((double)idx));
+		solisHashTableInsert(&module->globalMap, SOLIS_AS_STRING(solisPeek(vm, 0)), SOLIS_NUMERIC_VALUE((double)idx));
 	}
 
 	solisPop(vm);
@@ -1127,13 +1160,18 @@ void solisPushGlobal(VM* vm, const char* name, Value value)
 
 Value solisGetGlobal(VM* vm, const char* name)
 {
+	return solisGetGlobalFromModule(vm, vm->currentModule, name);
+}
+
+Value solisGetGlobalFromModule(VM* vm, ObjModule* module, const char* name)
+{
 	Value val;
-	if (solisHashTableGet(&vm->currentModule->globalMap, solisCopyString(vm, name, strlen(name)), &val))
+	if (solisHashTableGet(&module->globalMap, solisCopyString(vm, name, strlen(name)), &val))
 	{
 		// We have a value
 		int idx = (int)SOLIS_AS_NUMBER(val);
 
-		return vm->currentModule->globals.data[idx];
+		return module->globals.data[idx];
 	}
 
 	return SOLIS_NULL_VALUE();
@@ -1152,11 +1190,16 @@ bool solisGlobalExists(VM* vm, const char* name)
 
 void solisPushGlobalCFunction(VM* vm, const char* name, SolisNativeSignature func, int arity)
 {
+	solisPushGlobalCFunctionToModule(vm, vm->currentModule, name, func, arity);
+}
+
+void solisPushGlobalCFunctionToModule(VM* vm, ObjModule* module, const char* name, SolisNativeSignature func, int arity)
+{
 	ObjNative* nativeFunc = solisNewNativeFunction(vm, func);
 	nativeFunc->arity = arity;
 
 	solisPush(vm, SOLIS_OBJECT_VALUE(nativeFunc));
-	solisPushGlobal(vm, name, solisPeek(vm, 0));
+	solisPushGlobalToModule(vm, module, name, solisPeek(vm, 0));
 	solisPop(vm);
 }
 

@@ -127,10 +127,14 @@ Value solisPeek(VM* vm, int offset);
 */
 void solisPushGlobal(VM* vm, const char* name, Value value);
 
+void solisPushGlobalToModule(VM* vm, ObjModule* module, const char* name, Value value);
+
 /*
 	Returns global as it is currently within the VM 
 */
 Value solisGetGlobal(VM* vm, const char* name);
+
+Value solisGetGlobalFromModule(VM* vm, ObjModule* module, const char* name);
 
 /*
 	Checks if a global of name exists 
@@ -141,6 +145,8 @@ bool solisGlobalExists(VM* vm, const char* name);
 	Pushes a global C function to the global list
 */
 void solisPushGlobalCFunction(VM* vm, const char* name, SolisNativeSignature func, int arity);
+
+void solisPushGlobalCFunctionToModule(VM* vm, ObjModule* module, const char* name, SolisNativeSignature func, int arity);
 
 /*
 	Raises a VM error at the current line being executed 

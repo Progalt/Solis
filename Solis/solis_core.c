@@ -324,6 +324,12 @@ bool ffi_loadLibrary(VM* vm)
 
 }
 
+bool module_test(VM* vm)
+{
+    printf("Module Func call\n");
+    return true; 
+}
+
 void solisInitialiseCore(VM* vm, bool sandboxed)
 {
     // const char* str = read_file_into_cstring("F:/Dev/Solis/Solis/core.solis");
@@ -387,5 +393,10 @@ void solisInitialiseCore(VM* vm, bool sandboxed)
 
         solisAddClassNativeStaticMethod(vm, ffiClass, "loadLibrary", ffi_loadLibrary, 1);
     }
+
+    ObjModule* moduleTest = solisNewModule(vm);
+    solisPushGlobalCFunctionToModule(vm, moduleTest, "testFunc", module_test, 0);
+
+    solisPushGlobal(vm, "std", SOLIS_OBJECT_VALUE(moduleTest));
     
 }
