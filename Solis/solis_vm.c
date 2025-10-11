@@ -190,8 +190,8 @@ static bool invokeFromClass(VM* vm, ObjClass* klass, ObjString* name, int argCou
 static bool invokeFromModule(VM* vm, ObjModule* module, ObjString* name, int argCount, bool isStatic) {
 	Value method;
 
-	
-
+	// Get the global index out of the hash map 
+	// This is why module/class calls are slower than just straight functions at the moment
 	Value num = { 0 };
 	if (!solisHashTableGet(&module->globalMap, name, &num))
 	{
@@ -199,6 +199,8 @@ static bool invokeFromModule(VM* vm, ObjModule* module, ObjString* name, int arg
 	}
 
 	method = module->globals.data[(int)SOLIS_AS_NUMBER(num)];
+
+	// TODO: Better checks here
 
 	if (SOLIS_IS_CLOSURE(method))
 		return callClosure(vm, SOLIS_AS_CLOSURE(method), argCount);
@@ -215,6 +217,7 @@ static bool invoke(VM* vm, ObjString* name, int argCount)
 {
 	Value receiver = solisPeek(vm, argCount);
 
+	// Check if this is a module
 	if (SOLIS_IS_MODULE(receiver))
 	{
 		return invokeFromModule(vm, SOLIS_AS_MODULE(receiver), name, argCount, false);
