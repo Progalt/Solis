@@ -197,6 +197,9 @@ static inline ObjClass* solisGetClassForValue(VM* vm, Value value)
 
 #else
 
+	if (SOLIS_IS_MODULE(value))
+		return NULL;
+
 	if (SOLIS_IS_CLASS(value))
 		return SOLIS_AS_CLASS(value);
 	if (SOLIS_IS_OBJECT(value))

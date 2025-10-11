@@ -27,4 +27,6 @@ var elapsed = clock() - start
 println("Elapsed: ")
 println(elapsed)
 
+println(std.someValue)
+
 std.testFunc()

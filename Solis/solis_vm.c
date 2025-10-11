@@ -187,7 +187,8 @@ static bool invokeFromClass(VM* vm, ObjClass* klass, ObjString* name, int argCou
 	}
 }
 
-static bool invokeFromModule(VM* vm, ObjModule* module, ObjString* name, int argCount, bool isStatic) {
+static bool invokeFromModule(VM* vm, ObjModule* module, ObjString* name, int argCount) 
+{
 	Value method;
 
 	// Get the global index out of the hash map 
@@ -220,7 +221,7 @@ static bool invoke(VM* vm, ObjString* name, int argCount)
 	// Check if this is a module
 	if (SOLIS_IS_MODULE(receiver))
 	{
-		return invokeFromModule(vm, SOLIS_AS_MODULE(receiver), name, argCount, false);
+		return invokeFromModule(vm, SOLIS_AS_MODULE(receiver), name, argCount);
 	}
 
 	ObjClass* klass = NULL;
@@ -790,8 +791,19 @@ do {																		\
 			case OBJ_MODULE:
 			{
 				ObjModule* mdl = (ObjModule*)object;
-				solisVMRaiseError(vm, "Accessing Modules isn't supported yet");
-				return INTERPRET_RUNTIME_ERROR;
+				// TODO: Maybe just go direct
+				Value val = solisGetGlobalFromModule(vm, mdl, name->chars);
+				if (!SOLIS_IS_NULL(val))
+				{
+					DROP();
+					PUSH(val);
+				}
+				else
+				{
+					solisVMRaiseError(vm, "Can't get value from module.\n");
+					return INTERPRET_RUNTIME_ERROR;
+				}
+				
 				break;
 			}
 			default:

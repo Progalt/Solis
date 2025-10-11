@@ -396,6 +396,7 @@ void solisInitialiseCore(VM* vm, bool sandboxed)
 
     ObjModule* moduleTest = solisNewModule(vm);
     solisPushGlobalCFunctionToModule(vm, moduleTest, "testFunc", module_test, 0);
+    solisPushGlobalToModule(vm, moduleTest, "someValue", SOLIS_NUMERIC_VALUE(164.2));
 
     solisPushGlobal(vm, "std", SOLIS_OBJECT_VALUE(moduleTest));
     
